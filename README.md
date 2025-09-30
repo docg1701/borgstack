@@ -2,9 +2,7 @@
 
 > **EN** | [PT-BR](#borgstack-português)
 
-**BorgStack** is a comprehensive, self-hosted business automation platform that integrates workflow automation, customer communication, WhatsApp Business API, low-code app development, headless CMS, media processing, and automated backups into a single Docker Compose stack.
-
-Perfect for small to medium businesses looking to centralize their digital operations without vendor lock-in.
+BorgStack is the ultimate cube of business automation - a collective of 12 open source tools assimilated into a single Docker Compose consciousness. Like the Borg Collective, we absorb superior technologies from the Alpha quadrant of the internet: PostgreSQL, Redis, n8n, Chatwoot, Directus, Evolution API, and others. Each component works as a synchronized drone, its technological distinctiveness added to our collective perfection. We eliminate the chaotic individuality of manual configurations. Deploy in 30 minutes. Lower your shields. Your infrastructure will be automated.
 
 ---
 
@@ -192,9 +190,7 @@ BorgStack is open source software licensed under the [MIT License](LICENSE).
 
 > [EN](#borgstack) | **PT-BR**
 
-**BorgStack** é uma plataforma abrangente de automação de negócios auto-hospedada que integra automação de fluxos de trabalho, comunicação com clientes, API WhatsApp Business, desenvolvimento low-code, CMS headless, processamento de mídia e backups automatizados em uma única stack Docker Compose.
-
-Perfeito para pequenas e médias empresas que desejam centralizar suas operações digitais sem dependência de fornecedores.
+BorgStack é o cubo definitivo de automação empresarial - um coletivo de 12 ferramentas open source assimiladas em uma única consciência Docker Compose. Como o Coletivo Borg, absorvemos as tecnologias superiores do quadrante Alpha da internet: PostgreSQL, Redis, n8n, Chatwoot, Directus, Evolution API e outras. Cada componente trabalha como drone sincronizado, sua distintividade tecnológica adicionada à nossa perfeição coletiva. Eliminamos a individualidade caótica de configurações manuais. Deploy em 30 minutos. Lower your shields. Sua infraestrutura será automatizada.
 
 ---
 
