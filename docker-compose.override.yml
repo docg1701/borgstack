@@ -1,0 +1,92 @@
+# BorgStack - Local Development Overrides
+# Docker Compose v2 Format
+#
+# This file provides local development-specific configurations.
+# It is automatically merged with docker-compose.yml when running `docker compose up`
+# in a development environment.
+#
+# Purpose:
+# - Expose service ports to localhost for debugging and testing
+# - Mount local directories for live configuration editing
+# - Disable resource limits for easier local development
+# - Enable verbose logging for troubleshooting
+#
+# IMPORTANT: This file should NOT be used in production.
+# Use docker-compose.prod.yml for production deployments.
+#
+# Usage:
+#   docker compose up           # Automatically uses docker-compose.yml + docker-compose.override.yml
+#   docker compose down
+
+# Example service overrides (uncomment when services are added):
+# services:
+#   postgresql:
+#     # Expose PostgreSQL port for local database tools (pgAdmin, DBeaver, etc.)
+#     ports:
+#       - "5432:5432"
+#
+#   redis:
+#     # Expose Redis port for local inspection (RedisInsight, redis-cli)
+#     ports:
+#       - "6379:6379"
+#
+#   n8n:
+#     # Expose n8n web interface
+#     ports:
+#       - "5678:5678"
+#     # Mount workflows directory for easy editing
+#     volumes:
+#       - ./config/n8n/workflows:/home/node/.n8n/workflows
+#     # Enable verbose logging
+#     environment:
+#       - N8N_LOG_LEVEL=debug
+#
+#   chatwoot:
+#     # Expose Chatwoot web interface
+#     ports:
+#       - "3000:3000"
+#     # Enable Rails development mode
+#     environment:
+#       - RAILS_ENV=development
+#       - RAILS_LOG_LEVEL=debug
+#
+#   evolution-api:
+#     # Expose Evolution API
+#     ports:
+#       - "8080:8080"
+#
+#   lowcoder:
+#     # Expose Lowcoder interface
+#     ports:
+#       - "3001:3000"
+#
+#   directus:
+#     # Expose Directus admin panel
+#     ports:
+#       - "8055:8055"
+#
+#   fileflows:
+#     # Expose FileFlows web UI
+#     ports:
+#       - "5000:5000"
+#
+#   seaweedfs:
+#     # Expose SeaweedFS S3 API and admin UI
+#     ports:
+#       - "8333:8333"  # Filer
+#       - "9333:9333"  # Master
+#
+#   duplicati:
+#     # Expose Duplicati web UI
+#     ports:
+#       - "8200:8200"
+#
+#   caddy:
+#     # Expose Caddy for local HTTPS testing
+#     # Note: Local development typically accesses services directly via ports above
+#     ports:
+#       - "80:80"
+#       - "443:443"
+#     # Mount Caddyfile for live configuration editing
+#     volumes:
+#       - ./config/caddy/Caddyfile:/etc/caddy/Caddyfile:ro

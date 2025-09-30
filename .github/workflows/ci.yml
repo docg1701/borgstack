@@ -1,0 +1,176 @@
+name: BorgStack CI
+
+# Trigger CI on push to main/feature branches and pull requests
+on:
+  push:
+    branches:
+      - main
+      - 'feature/**'
+      - 'fix/**'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  validate-docker-compose:
+    name: Validate Docker Compose Configuration
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Validate docker-compose.yml syntax
+        run: |
+          echo "Validating main docker-compose.yml..."
+          docker compose -f docker-compose.yml config --quiet
+          if [ $? -eq 0 ]; then
+            echo "✅ docker-compose.yml is valid"
+          else
+            echo "❌ docker-compose.yml validation failed"
+            exit 1
+          fi
+
+      - name: Validate docker-compose.override.yml syntax
+        run: |
+          echo "Validating docker-compose.override.yml..."
+          docker compose -f docker-compose.yml -f docker-compose.override.yml config --quiet
+          if [ $? -eq 0 ]; then
+            echo "✅ docker-compose.override.yml is valid"
+          else
+            echo "❌ docker-compose.override.yml validation failed"
+            exit 1
+          fi
+
+      - name: Validate docker-compose.prod.yml syntax
+        run: |
+          echo "Validating docker-compose.prod.yml..."
+          docker compose -f docker-compose.yml -f docker-compose.prod.yml config --quiet
+          if [ $? -eq 0 ]; then
+            echo "✅ docker-compose.prod.yml is valid"
+          else
+            echo "❌ docker-compose.prod.yml validation failed"
+            exit 1
+          fi
+
+      - name: Check for 'latest' tags in docker-compose.yml
+        run: |
+          echo "Checking for 'latest' image tags (not allowed per coding standards)..."
+          if grep -n "image:.*:latest" docker-compose.yml docker-compose.override.yml docker-compose.prod.yml 2>/dev/null; then
+            echo "❌ Found 'latest' tag(s) in Docker Compose files"
+            echo "Per coding standards, all images must use pinned versions"
+            exit 1
+          else
+            echo "✅ No 'latest' tags found"
+          fi
+
+      - name: Verify network naming conventions
+        run: |
+          echo "Verifying network naming follows 'borgstack_' prefix convention..."
+          docker compose -f docker-compose.yml config 2>/dev/null | grep -A 1 "^networks:" | grep -v "^networks:" | grep -v "^--$" | grep -v "borgstack_" && {
+            echo "❌ Found network(s) not following 'borgstack_' prefix convention"
+            exit 1
+          } || {
+            echo "✅ Network naming conventions verified"
+          }
+
+      - name: Verify volume naming conventions
+        run: |
+          echo "Verifying volume naming follows 'borgstack_' prefix convention..."
+          docker compose -f docker-compose.yml config 2>/dev/null | grep -A 1 "^volumes:" | grep -v "^volumes:" | grep -v "^--$" | grep -v "borgstack_" | grep -v "^$" && {
+            echo "❌ Found volume(s) not following 'borgstack_' prefix convention"
+            exit 1
+          } || {
+            echo "✅ Volume naming conventions verified"
+          }
+
+  verify-structure:
+    name: Verify Repository Structure
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify required directories exist
+        run: |
+          echo "Verifying directory structure..."
+
+          # Check all required directories from source-tree.md
+          REQUIRED_DIRS=(
+            "config"
+            "config/postgresql"
+            "config/redis"
+            "config/seaweedfs"
+            "config/caddy"
+            "config/n8n"
+            "config/chatwoot"
+            "config/evolution"
+            "config/duplicati"
+            "scripts"
+            "docs"
+            "docs/03-services"
+            "docs/04-integrations"
+            "tests/integration"
+            "tests/deployment"
+            ".github/workflows"
+          )
+
+          MISSING_DIRS=()
+          for dir in "${REQUIRED_DIRS[@]}"; do
+            if [ ! -d "$dir" ]; then
+              MISSING_DIRS+=("$dir")
+            fi
+          done
+
+          if [ ${#MISSING_DIRS[@]} -eq 0 ]; then
+            echo "✅ All required directories exist"
+          else
+            echo "❌ Missing directories:"
+            printf '%s\n' "${MISSING_DIRS[@]}"
+            exit 1
+          fi
+
+      - name: Verify required root files exist
+        run: |
+          echo "Verifying required root files..."
+
+          REQUIRED_FILES=(
+            "docker-compose.yml"
+            "docker-compose.override.yml"
+            "docker-compose.prod.yml"
+            ".gitignore"
+            ".env.example"
+            "README.md"
+            "LICENSE"
+          )
+
+          MISSING_FILES=()
+          for file in "${REQUIRED_FILES[@]}"; do
+            if [ ! -f "$file" ]; then
+              MISSING_FILES+=("$file")
+            fi
+          done
+
+          if [ ${#MISSING_FILES[@]} -eq 0 ]; then
+            echo "✅ All required files exist"
+          else
+            echo "❌ Missing files:"
+            printf '%s\n' "${MISSING_FILES[@]}"
+            exit 1
+          fi
+
+      - name: Verify .env is properly ignored
+        run: |
+          echo "Verifying .env files are in .gitignore..."
+          if grep -q "^\.env$" .gitignore && \
+             grep -q "^\.env\.local$" .gitignore && \
+             grep -q "^\.env\.\*\.local$" .gitignore; then
+            echo "✅ .env files are properly configured in .gitignore"
+          else
+            echo "❌ .env files are not properly configured in .gitignore"
+            exit 1
+          fi
