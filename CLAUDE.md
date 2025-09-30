@@ -5,3 +5,4 @@
 - Always check current state of docker containers, volumes, images and networks before making changes or testing the environment.
 - When troubleshooting it's best to clear docker data (old images, networks, cache, volumes etc.) before attemping a new build. Always start fresh to avoid old data mimicking real bugs.
 - When building docker-compose.yml and Dockerfiles use context7 for up-to-date documentation. If you need help, ask the user to grab official docker-compose.yml and Dockerfiles from official github repositories.
+- If code, setup, config or debug fails the same way for the second time, do use context7 to gather more info about the issue, make a plan and correct it properly.
