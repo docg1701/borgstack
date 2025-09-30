@@ -2,7 +2,7 @@
 
 > **EN** | [PT-BR](#borgstack-português)
 
-BorgStack is the ultimate cube of business automation - a collective of 12 open source tools assimilated into a single Docker Compose consciousness. Like the Borg Collective, we absorb superior technologies from the Alpha quadrant of the internet: PostgreSQL, Redis, n8n, Chatwoot, Directus, Evolution API, and others. Each component works as a synchronized drone, its technological distinctiveness added to our collective perfection. We eliminate the chaotic individuality of manual configurations. Deploy in 30 minutes. Lower your shields. Your infrastructure will be automated.
+⬛ BorgStack is the ultimate cube of business automation - a collective of 12 open source tools assimilated into a single Docker Compose consciousness. Like the Borg Collective, we absorb superior technologies from the Alpha quadrant of the internet: PostgreSQL, Redis, n8n, Chatwoot, Directus, Evolution API, and others. Each component works as a synchronized drone, its technological distinctiveness added to our collective perfection. We eliminate the chaotic individuality of manual configurations. Deploy in 30 minutes. Lower your shields. Your infrastructure will be automated.
 
 ---
 
@@ -190,7 +190,7 @@ BorgStack is open source software licensed under the [MIT License](LICENSE).
 
 > [EN](#borgstack) | **PT-BR**
 
-BorgStack é o cubo definitivo de automação empresarial - um coletivo de 12 ferramentas open source assimiladas em uma única consciência Docker Compose. Como o Coletivo Borg, absorvemos as tecnologias superiores do quadrante Alpha da internet: PostgreSQL, Redis, n8n, Chatwoot, Directus, Evolution API e outras. Cada componente trabalha como drone sincronizado, sua distintividade tecnológica adicionada à nossa perfeição coletiva. Eliminamos a individualidade caótica de configurações manuais. Deploy em 30 minutos. Lower your shields. Sua infraestrutura será automatizada.
+⬛ BorgStack é o cubo definitivo de automação empresarial - um coletivo de 12 ferramentas open source assimiladas em uma única consciência Docker Compose. Como o Coletivo Borg, absorvemos as tecnologias superiores do quadrante Alpha da internet: PostgreSQL, Redis, n8n, Chatwoot, Directus, Evolution API e outras. Cada componente trabalha como drone sincronizado, sua distintividade tecnológica adicionada à nossa perfeição coletiva. Eliminamos a individualidade caótica de configurações manuais. Deploy em 30 minutos. Lower your shields. Sua infraestrutura será automatizada.
 
 ---
 
