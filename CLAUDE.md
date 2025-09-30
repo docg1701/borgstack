@@ -1,0 +1,7 @@
+- Large containers need time to build, so always use 10 min timeouts.
+- Always check current date with "date" command, never try guess it.
+- Always use official and up-to-date docker images, unless clearly stated otherwise.
+- If running, testing or building fails twice, use context7 to search for updated documentation and try again.
+- Always check current state of docker containers, volumes, images and networks before making changes or testing the environment.
+- When troubleshooting it's best to clear docker data (old images, networks, cache, volumes etc.) before attemping a new build. Always start fresh to avoid old data mimicking real bugs.
+- When building docker-compose.yml and Dockerfiles use context7 for up-to-date documentation. If you need help, ask the user to grab official docker-compose.yml and Dockerfiles from official github repositories.
