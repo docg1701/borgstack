@@ -5,6 +5,8 @@
 - Always check current state of docker containers, volumes, images and networks before making changes or testing the environment.
 - When troubleshooting it's best to clear docker data (old images, networks, cache, volumes etc.) before attemping a new build. Always start fresh to avoid old data mimicking real bugs.
 - When building docker-compose.yml and Dockerfiles use context7 for up-to-date documentation. If you need help, ask the user to grab official docker-compose.yml and Dockerfiles from official github repositories.
-- If code, setup, config or debug fails the same way for the second time, do use context7 to gather more info about the issue, make a plan and correct it properly.
+- NEVER iterate more than 2 times on the same unresolved issue without a clear solution path.
+- After the second failure: STOP attempting fixes, analyze the root cause deeply, and use context7 to gather up-to-date documentation.
+- To FIX the issue: create a correction plan, re-evaluate it by identifying 3 alternative possible causes, adjust the plan, then execute the fix.
 - QA reviews must execute all CI workflow checks locally before approval. Show actual command output as proof.
 - NEVER write anything in story files that you didn't actually verify or execute. No claims without evidence shown to the user.
