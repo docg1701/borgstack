@@ -1,0 +1,59 @@
+# BorgStack - Docker Compose Configuration
+# Docker Compose v2 Format
+#
+# This is the main orchestration file for BorgStack.
+# Services will be added incrementally as the project develops.
+#
+# Architecture: All services share borgstack_internal network for inter-service communication
+# External access is routed through Caddy reverse proxy on borgstack_external network
+#
+# IMPORTANT: Always pin exact image versions. Never use 'latest' tag.
+
+# Services will be defined here as we build out the stack
+# services:
+#   postgresql:
+#     image: pgvector/pgvector:pg18
+#     networks:
+#       - borgstack_internal
+#     volumes:
+#       - borgstack_postgresql_data:/var/lib/postgresql/data
+#
+#   redis:
+#     image: redis:8.2-alpine
+#     networks:
+#       - borgstack_internal
+#     volumes:
+#       - borgstack_redis_data:/data
+#
+#   (Additional services: n8n, chatwoot, evolution-api, lowcoder, directus, fileflows, seaweedfs, duplicati, caddy)
+
+networks:
+  borgstack_internal:
+    driver: bridge
+    internal: true
+    # Internal network for service-to-service communication
+    # Not exposed to host - provides network isolation
+
+  borgstack_external:
+    driver: bridge
+    # External network for reverse proxy (Caddy)
+    # Only Caddy and services needing external access should connect here
+
+# Volumes will be added as services are implemented
+# All volumes must use the borgstack_ prefix
+# Example volume definitions:
+#
+# volumes:
+#   borgstack_postgresql_data:
+#   borgstack_mongodb_data:
+#   borgstack_redis_data:
+#   borgstack_n8n_data:
+#   borgstack_chatwoot_data:
+#   borgstack_evolution_data:
+#   borgstack_lowcoder_data:
+#   borgstack_directus_data:
+#   borgstack_fileflows_data:
+#   borgstack_seaweedfs_data:
+#   borgstack_duplicati_data:
+#   borgstack_caddy_data:
+#   borgstack_caddy_config:

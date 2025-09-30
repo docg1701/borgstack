@@ -1,3 +1,122 @@
-# BMAD (local only)
-.bmad-core/
-.bmad-*/
+# BorgStack - Git Ignore Configuration
+
+# ============================================
+# Environment Files (CRITICAL - NEVER COMMIT)
+# ============================================
+# These files contain secrets and credentials
+.env
+.env.local
+.env.*.local
+.env.production
+.env.staging
+
+# ============================================
+# Docker Volumes and Data
+# ============================================
+# Persistent data should not be committed
+volumes/
+data/
+*.db
+*.sqlite
+*.sqlite3
+
+# ============================================
+# Logs
+# ============================================
+*.log
+logs/
+log/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ============================================
+# Operating System Files
+# ============================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# ============================================
+# IDE and Editor Files
+# ============================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+.vim/
+*.sublime-project
+*.sublime-workspace
+
+# ============================================
+# Temporary Files
+# ============================================
+*.tmp
+*.temp
+*.bak
+*.cache
+.cache/
+
+# ============================================
+# BMAD Framework (Development Tooling)
+# ============================================
+# Keep BMAD files for project automation
+# .bmad-core/ is NOT ignored - it's part of the project
+# .bmad-local/
+# .bmad-*/
+
+# ============================================
+# Backup Files
+# ============================================
+*.backup
+*.old
+backup/
+backups/
+
+# ============================================
+# Node.js (if used for scripting)
+# ============================================
+node_modules/
+package-lock.json
+yarn.lock
+
+# ============================================
+# Python (if used for scripting)
+# ============================================
+__pycache__/
+*.py[cod]
+*.pyo
+.Python
+venv/
+env/
+.venv/
+
+# ============================================
+# SSL Certificates (use Let's Encrypt instead)
+# ============================================
+*.pem
+*.key
+*.crt
+*.cer
+*.p12
+*.pfx
+
+# ============================================
+# Docker Build Context (if needed)
+# ============================================
+# Uncomment if you have custom Dockerfiles with build context
+# .dockerignore

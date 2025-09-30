@@ -1,0 +1,162 @@
+# BorgStack - Production Configuration
+# Docker Compose v2 Format
+#
+# This file provides production-specific configurations and overrides.
+# Use this file when deploying BorgStack to production environments.
+#
+# Purpose:
+# - Enforce restart policies for high availability
+# - Set resource limits to prevent resource exhaustion
+# - Disable development-only features
+# - Configure production logging
+#
+# IMPORTANT: Do NOT expose service ports directly to the host in production.
+# All external access should go through the Caddy reverse proxy.
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml down
+
+# Example production service configurations (uncomment when services are added):
+# services:
+#   postgresql:
+#     restart: unless-stopped
+#     deploy:
+#       resources:
+#         limits:
+#           cpus: '4.0'
+#           memory: 8G
+#         reservations:
+#           cpus: '2.0'
+#           memory: 4G
+#
+#   redis:
+#     restart: unless-stopped
+#     deploy:
+#       resources:
+#         limits:
+#           cpus: '2.0'
+#           memory: 2G
+#         reservations:
+#           cpus: '0.5'
+#           memory: 512M
+#
+#   mongodb:
+#     restart: unless-stopped
+#     deploy:
+#       resources:
+#         limits:
+#           cpus: '2.0'
+#           memory: 4G
+#         reservations:
+#           cpus: '1.0'
+#           memory: 2G
+#
+#   n8n:
+#     restart: unless-stopped
+#     deploy:
+#       resources:
+#         limits:
+#           cpus: '2.0'
+#           memory: 4G
+#         reservations:
+#           cpus: '0.5'
+#           memory: 1G
+#     # Production logging
+#     environment:
+#       - N8N_LOG_LEVEL=info
+#
+#   chatwoot:
+#     restart: unless-stopped
+#     deploy:
+#       resources:
+#         limits:
+#           cpus: '2.0'
+#           memory: 4G
+#         reservations:
+#           cpus: '0.5'
+#           memory: 1G
+#     environment:
+#       - RAILS_ENV=production
+#       - RAILS_LOG_LEVEL=info
+#
+#   evolution-api:
+#     restart: unless-stopped
+#     deploy:
+#       resources:
+#         limits:
+#           cpus: '2.0'
+#           memory: 2G
+#         reservations:
+#           cpus: '0.5'
+#           memory: 512M
+#
+#   lowcoder:
+#     restart: unless-stopped
+#     deploy:
+#       resources:
+#         limits:
+#           cpus: '2.0'
+#           memory: 4G
+#         reservations:
+#           cpus: '0.5'
+#           memory: 1G
+#
+#   directus:
+#     restart: unless-stopped
+#     deploy:
+#       resources:
+#         limits:
+#           cpus: '2.0'
+#           memory: 4G
+#         reservations:
+#           cpus: '0.5'
+#           memory: 1G
+#
+#   fileflows:
+#     restart: unless-stopped
+#     deploy:
+#       resources:
+#         limits:
+#           cpus: '4.0'
+#           memory: 8G
+#         reservations:
+#           cpus: '1.0'
+#           memory: 2G
+#
+#   seaweedfs:
+#     restart: unless-stopped
+#     deploy:
+#       resources:
+#         limits:
+#           cpus: '2.0'
+#           memory: 4G
+#         reservations:
+#           cpus: '0.5'
+#           memory: 1G
+#
+#   duplicati:
+#     restart: unless-stopped
+#     deploy:
+#       resources:
+#         limits:
+#           cpus: '1.0'
+#           memory: 2G
+#         reservations:
+#           cpus: '0.25'
+#           memory: 512M
+#
+#   caddy:
+#     restart: unless-stopped
+#     # Caddy must expose ports 80 and 443 for HTTPS
+#     ports:
+#       - "80:80"
+#       - "443:443"
+#     deploy:
+#       resources:
+#         limits:
+#           cpus: '1.0'
+#           memory: 1G
+#         reservations:
+#           cpus: '0.25'
+#           memory: 256M
