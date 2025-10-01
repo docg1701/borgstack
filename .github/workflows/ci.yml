@@ -183,3 +183,67 @@ jobs:
             echo "❌ .env files are not properly configured in .gitignore"
             exit 1
           fi
+
+  validate-postgresql:
+    name: Validate PostgreSQL Configuration
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Create .env file for testing
+        run: |
+          echo "Creating temporary .env file with test credentials..."
+          cat > .env << 'EOF'
+          # Test credentials for CI pipeline
+          POSTGRES_PASSWORD=test_postgres_password_12345678
+          N8N_DB_PASSWORD=test_n8n_password_12345678
+          CHATWOOT_DB_PASSWORD=test_chatwoot_password_12345678
+          DIRECTUS_DB_PASSWORD=test_directus_password_12345678
+          EVOLUTION_DB_PASSWORD=test_evolution_password_12345678
+          EOF
+
+      - name: Verify PostgreSQL configuration in docker-compose.yml
+        run: |
+          echo "Verifying PostgreSQL service is configured..."
+
+          # Check PostgreSQL image version is pinned correctly
+          if docker compose config | grep -q "image: pgvector/pgvector:pg18"; then
+            echo "✅ PostgreSQL image correctly configured (pgvector/pgvector:pg18)"
+          else
+            echo "❌ PostgreSQL image not configured correctly"
+            exit 1
+          fi
+
+          # Check PostgreSQL is on borgstack_internal network
+          if docker compose config | grep -A 30 "postgresql:" | grep -q "borgstack_internal"; then
+            echo "✅ PostgreSQL connected to borgstack_internal network"
+          else
+            echo "❌ PostgreSQL not connected to borgstack_internal network"
+            exit 1
+          fi
+
+          # Verify volume naming convention
+          if docker compose config | grep -q "borgstack_postgresql_data"; then
+            echo "✅ Volume follows borgstack_ naming convention"
+          else
+            echo "❌ Volume does not follow naming convention"
+            exit 1
+          fi
+
+      - name: Run PostgreSQL validation tests
+        run: |
+          echo "Running comprehensive PostgreSQL validation tests..."
+          chmod +x tests/deployment/verify-postgresql.sh
+          bash tests/deployment/verify-postgresql.sh
+
+      - name: Cleanup PostgreSQL test environment
+        if: always()
+        run: |
+          echo "Cleaning up test environment..."
+          docker compose down -v --remove-orphans || true
+          rm -f .env
