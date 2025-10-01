@@ -75,13 +75,73 @@ services:
     # Load custom postgresql.conf with performance tuning
     command: postgres -c config_file=/etc/postgresql/postgresql.conf
 
-#   redis:
-#     image: redis:8.2-alpine
-#     networks:
-#       - borgstack_internal
-#     volumes:
-#       - borgstack_redis_data:/data
-#
+  # ==========================================================================
+  # Redis Cache & Queue
+  # ==========================================================================
+  # Shared cache and message queue for all application services
+  # Image: redis:8.2-alpine (Alpine Linux base for minimal footprint)
+  #
+  # Service Usage:
+  #   - n8n:      Session management, Bull queue processing (DB 0)
+  #   - Chatwoot: Session management, Sidekiq background jobs (DB 0)
+  #   - Lowcoder: Session storage (DB 0)
+  #   - Directus: Caching layer (DB 0)
+  #
+  # Connection Strings (for use in future service stories):
+  #   Standard format: redis://:${REDIS_PASSWORD}@redis:6379
+  #   n8n:             QUEUE_BULL_REDIS_HOST=redis QUEUE_BULL_REDIS_PORT=6379 QUEUE_BULL_REDIS_PASSWORD=${REDIS_PASSWORD}
+  #   Chatwoot:        REDIS_HOST=redis REDIS_PORT=6379 REDIS_PASSWORD=${REDIS_PASSWORD}
+  #   Lowcoder:        LOWCODER_REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
+  #   Directus:        REDIS_HOST=redis REDIS_PORT=6379 REDIS_PASSWORD=${REDIS_PASSWORD}
+  #
+  # Security:
+  #   - NO port exposure to host (internal network access only per Story 1.2)
+  #   - Password authentication required (--requirepass flag)
+  #   - Dangerous commands disabled (FLUSHALL, FLUSHDB, CONFIG)
+  #   - Services connect using Docker DNS: redis:6379
+  #
+  # Performance:
+  #   - Tuned for 36GB RAM server (8GB allocation)
+  #   - Memory eviction policy: allkeys-lru (optimal for cache workload)
+  #   - Persistence: RDB snapshots + AOF for durability
+  #   - Target: >10,000 ops/sec throughput
+  #
+  # Monitoring Commands:
+  #   Memory usage:    docker compose exec redis redis-cli -a ${REDIS_PASSWORD} INFO memory | grep used_memory_human
+  #   Cache hit rate:  docker compose exec redis redis-cli -a ${REDIS_PASSWORD} INFO stats | grep -E "keyspace_hits|keyspace_misses"
+  #   Connected clients: docker compose exec redis redis-cli -a ${REDIS_PASSWORD} INFO clients | grep connected_clients
+  #   Operations/sec:  docker compose exec redis redis-cli -a ${REDIS_PASSWORD} INFO stats | grep instantaneous_ops_per_sec
+  #   Benchmark:       docker compose exec redis redis-benchmark -h localhost -p 6379 -a ${REDIS_PASSWORD} -t get,set -n 100000 -q
+  # ==========================================================================
+  redis:
+    image: redis:8.2-alpine
+    container_name: borgstack_redis
+    restart: unless-stopped
+    networks:
+      - borgstack_internal
+    # ⚠️  NO ports section in production - cache must not expose ports to host
+    # ℹ️  For local development, add port mapping in docker-compose.override.yml
+    volumes:
+      - borgstack_redis_data:/data
+      - ./config/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    environment:
+      # Redis password (used in health check and passed via command line)
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    # Start Redis with custom config and password authentication
+    # --requirepass allows environment variable substitution
+    command: redis-server /usr/local/etc/redis/redis.conf --requirepass ${REDIS_PASSWORD}
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    # Memory limit matches maxmemory setting in redis.conf
+    deploy:
+      resources:
+        limits:
+          memory: 8192M
+
 #   (Additional services: n8n, chatwoot, evolution-api, lowcoder, directus, fileflows, seaweedfs, duplicati, caddy)
 
 networks:
@@ -153,9 +213,15 @@ volumes:
     # Backed up by Duplicati (Story 5.2)
     # Manual backup: docker compose exec postgresql pg_dumpall -U postgres > backup.sql
 
+  borgstack_redis_data:
+    # Redis data directory
+    # Contains: RDB snapshots (dump.rdb) and AOF file (appendonly.aof)
+    # Persistence strategy: RDB for fast restarts + AOF for durability (max 1 sec data loss)
+    # Backed up by Duplicati (Story 5.2)
+    # Manual backup: docker compose exec redis redis-cli -a ${REDIS_PASSWORD} SAVE
+
 # Additional volumes (to be added in future stories):
 #   borgstack_mongodb_data:
-#   borgstack_redis_data:
 #   borgstack_n8n_data:
 #   borgstack_chatwoot_data:
 #   borgstack_evolution_data:
