@@ -484,6 +484,20 @@ main() {
     print_info "Testing Redis 8.2 deployment with production configuration"
     echo ""
 
+    # Start Redis service for testing
+    print_info "Starting Redis service..."
+    docker compose up -d redis
+
+    # Wait for Redis to become healthy
+    print_info "Waiting for Redis health check (max 60 seconds)..."
+    timeout 60s bash -c 'until docker compose ps redis | grep -q "healthy"; do sleep 2; done' || {
+        print_fail "Redis failed to become healthy within 60 seconds"
+        docker compose logs redis
+        exit 1
+    }
+    print_info "Redis is healthy and ready for testing"
+    echo ""
+
     # Execute all tests (continue on failure to run all tests)
     set +e  # Don't exit on test failure
 
