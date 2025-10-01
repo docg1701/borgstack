@@ -21,12 +21,12 @@ As a developer, I want a monorepo structure with proper directory organization a
 As a system administrator, I want internal Docker networks configured for secure inter-service communication, so that components can communicate safely while maintaining proper isolation.
 
 **Acceptance Criteria:**
-1. Internal network `borgstack_internal` created in docker-compose.yml
-2. External network `borgstack_external` for reverse proxy connectivity
-3. Network security policies implemented between networks
-4. Service discovery via DNS names working correctly
-5. Network isolation preventing unauthorized access
-6. Port mapping properly configured for external access
+1. Internal network `borgstack_internal` validated in docker-compose.yml
+2. External network `borgstack_external` validated for reverse proxy connectivity
+3. Network security policies documented between networks
+4. Service discovery via DNS names documented (validation deferred to Story 6.1 when services exist)
+5. Network isolation configuration documented and verified in docker-compose.yml (service-level testing deferred to Stories 1.3-1.7)
+6. Port mapping strategy documented for external access
 
 ### Story 1.3 PostgreSQL Database Setup
 As a database administrator, I want PostgreSQL 18.0 with pgvector extension properly configured for SQL-compatible services, so that n8n, Chatwoot, Directus, and Evolution API have reliable data storage with vector search capabilities for RAG and LLM integrations.

@@ -70,12 +70,15 @@ jobs:
       - name: Verify network naming conventions
         run: |
           echo "Verifying network naming follows 'borgstack_' prefix convention..."
-          docker compose -f docker-compose.yml config 2>/dev/null | grep -A 1 "^networks:" | grep -v "^networks:" | grep -v "^--$" | grep -v "borgstack_" && {
-            echo "❌ Found network(s) not following 'borgstack_' prefix convention"
+          # Extract network names from docker-compose.yml and verify naming convention
+          INVALID_NETWORKS=$(sed -n '/^networks:/,/^[^ ]/{/^  [a-z_-]\+:/p}' docker-compose.yml | sed 's/:.*//; s/^  //' | grep -v "^borgstack_" || true)
+          if [ -n "$INVALID_NETWORKS" ]; then
+            echo "❌ Found network(s) not following 'borgstack_' prefix convention:"
+            echo "$INVALID_NETWORKS"
             exit 1
-          } || {
+          else
             echo "✅ Network naming conventions verified"
-          }
+          fi
 
       - name: Verify volume naming conventions
         run: |
@@ -86,6 +89,12 @@ jobs:
           } || {
             echo "✅ Volume naming conventions verified"
           }
+
+      - name: Verify network isolation configuration
+        run: |
+          echo "Running network isolation verification tests..."
+          chmod +x tests/deployment/verify-network-isolation.sh
+          ./tests/deployment/verify-network-isolation.sh
 
   verify-structure:
     name: Verify Repository Structure
