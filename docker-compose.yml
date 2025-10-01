@@ -31,13 +31,61 @@ networks:
   borgstack_internal:
     driver: bridge
     internal: true
-    # Internal network for service-to-service communication
-    # Not exposed to host - provides network isolation
+    # ════════════════════════════════════════════════════════════════════════════
+    # INTERNAL NETWORK - Service-to-Service Communication
+    # ════════════════════════════════════════════════════════════════════════════
+    # Purpose: Secure backend communication between application services and databases
+    # Security: internal: true prevents external host access - defense in depth
+    #
+    # Services connecting to this network (to be implemented in future stories):
+    #   - PostgreSQL (Story 1.3)       - Database for n8n, Chatwoot, Directus, Evolution API
+    #   - MongoDB (Story 1.4)          - Database for Lowcoder
+    #   - Redis (Story 1.7)            - Cache/queue for all services
+    #   - n8n (Story 2.1)              - Workflow automation (internal + external)
+    #   - Chatwoot (Story 3.1)         - Customer service (internal + external)
+    #   - Evolution API (Story 2.2)    - WhatsApp API (internal + external)
+    #   - Lowcoder (Story 3.3)         - App builder (internal + external)
+    #   - Directus (Story 4.1)         - Headless CMS (internal + external)
+    #   - FileFlows (Story 4.2)        - Media processing (internal + external)
+    #   - SeaweedFS (Story 1.6)        - Object storage (internal + external)
+    #   - Duplicati (Story 1.8)        - Backup system (internal only)
+    #
+    # Service Discovery (Docker DNS - automatic):
+    #   Connection strings use service names directly, no manual IP configuration:
+    #     - PostgreSQL: postgresql:5432
+    #     - MongoDB:    mongodb:27017
+    #     - Redis:      redis:6379
+    #   Example: DB_HOST=postgresql DB_PORT=5432 (DNS resolves automatically)
+    #
+    # Port Exposure Policy:
+    #   ✅ Databases/caches: NO ports section in production (internal access only)
+    #   ❌ Never expose database ports to host: prevents unauthorized direct access
+    #   ℹ️  Dev port mappings allowed in docker-compose.override.yml for debugging
 
   borgstack_external:
     driver: bridge
-    # External network for reverse proxy (Caddy)
-    # Only Caddy and services needing external access should connect here
+    # ════════════════════════════════════════════════════════════════════════════
+    # EXTERNAL NETWORK - Reverse Proxy Access
+    # ════════════════════════════════════════════════════════════════════════════
+    # Purpose: Internet-facing traffic routing through Caddy reverse proxy
+    # Security: Only Caddy exposes ports 80/443 to host - single entry point
+    #
+    # Services connecting to this network:
+    #   - Caddy (Story 1.5)            - HTTPS termination, routing (ONLY service exposing ports to host)
+    #   - Application services         - Connect to BOTH networks for DB access + external routing
+    #
+    # Multi-Network Pattern (services needing both internal DB access and external web access):
+    #   services:
+    #     n8n:
+    #       networks:
+    #         - borgstack_internal    # For PostgreSQL, Redis connections
+    #         - borgstack_external    # For Caddy reverse proxy routing
+    #
+    # Port Mapping Strategy:
+    #   ✅ Only Caddy exposes ports 80/443 to host (implemented in Story 1.5)
+    #   ✅ All external access flows through Caddy reverse proxy
+    #   ℹ️  Application services accessed via: https://service.yourdomain.com (Caddy routes internally)
+    #   ℹ️  Dev environment: docker-compose.override.yml may expose additional ports for debugging
 
 # Volumes will be added as services are implemented
 # All volumes must use the borgstack_ prefix
