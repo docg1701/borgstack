@@ -103,7 +103,8 @@ else
 fi
 
 # Verify volume naming convention (must use borgstack_ prefix)
-if docker compose config | grep -A 5 "mongodb:" | grep -q "borgstack_mongodb_data:/data/db"; then
+# docker compose config expands volume mounts to long format (source: / target:)
+if docker compose config | grep -A 50 "mongodb:" | grep -A 1 "source: borgstack_mongodb_data" | grep -q "target: /data/db"; then
     log_success "MongoDB data volume mounted at /data/db with correct naming convention"
 else
     log_error "MongoDB data volume mount not configured correctly"
