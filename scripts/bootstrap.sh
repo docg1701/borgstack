@@ -393,6 +393,7 @@ generate_env_file() {
     local directus_db_password=$(generate_password)
     local evolution_db_password=$(generate_password)
     local mongo_root_password=$(generate_password)
+    local lowcoder_db_password=$(generate_password)
     local redis_password=$(generate_password)
     local n8n_encryption_key=$(generate_password)
     local chatwoot_secret_key_base=$(generate_password)$(generate_password)
@@ -432,8 +433,8 @@ EVOLUTION_DB_PASSWORD=${evolution_db_password}
 # ============================================================================
 # MONGODB DATABASE
 # ============================================================================
-MONGO_INITDB_ROOT_USERNAME=mongoadmin
-MONGO_INITDB_ROOT_PASSWORD=${mongo_root_password}
+MONGODB_ROOT_PASSWORD=${mongo_root_password}
+LOWCODER_DB_PASSWORD=${lowcoder_db_password}
 
 # ============================================================================
 # REDIS CACHE
@@ -463,7 +464,8 @@ EOF
     echo "${CYAN}Email:${RESET} ${email}"
     echo ""
     echo "${CYAN}PostgreSQL Root:${RESET} postgres / ${postgres_password}"
-    echo "${CYAN}MongoDB Root:${RESET} mongoadmin / ${mongo_root_password}"
+    echo "${CYAN}MongoDB Root:${RESET} admin / ${mongo_root_password}"
+    echo "${CYAN}MongoDB Lowcoder:${RESET} lowcoder_user / ${lowcoder_db_password}"
     echo "${CYAN}Redis:${RESET} ${redis_password}"
     echo ""
     echo "${YELLOW}All credentials are stored in: ${env_file}${RESET}"
