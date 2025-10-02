@@ -391,14 +391,15 @@ jobs:
           fi
 
           # Verify Caddy exposes ports 80 and 443
-          if docker compose config | grep -A 20 "caddy:" | grep -E "80:80" > /dev/null 2>&1; then
+          # Note: docker compose config expands "80:80" to multi-line format with published: "80"
+          if docker compose config | grep -A 20 "caddy:" | grep "published:" | grep -q '"80"'; then
             echo "✅ Port 80 exposed"
           else
             echo "❌ Port 80 not exposed"
             exit 1
           fi
 
-          if docker compose config | grep -A 20 "caddy:" | grep -E "443:443" > /dev/null 2>&1; then
+          if docker compose config | grep -A 20 "caddy:" | grep "published:" | grep -q '"443"'; then
             echo "✅ Port 443 exposed"
           else
             echo "❌ Port 443 not exposed"
