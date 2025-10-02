@@ -1,0 +1,233 @@
+# ============================================================================
+# BorgStack - Caddy Reverse Proxy Configuration
+# ============================================================================
+#
+# Caddy 2.10 reverse proxy configuration with automatic HTTPS via Let's Encrypt
+#
+# Architecture:
+#   - Single entry point for all HTTPS traffic
+#   - Automatic SSL certificate provisioning and renewal
+#   - Routes to internal services on borgstack_external network
+#   - HTTP automatically redirects to HTTPS (built-in)
+#
+# DNS Requirements:
+#   All subdomains must have DNS A records pointing to server IP before deployment
+#   Caddy will automatically obtain SSL certificates on first request (30-60 seconds)
+#
+# Network Architecture:
+#   External Request → Caddy (port 443) → Internal Service (Docker DNS)
+#   Example: https://n8n.example.com.br → http://n8n:5678
+#
+# ============================================================================
+
+# ============================================================================
+# Global Options
+# ============================================================================
+{
+	# Let's Encrypt account email for certificate notifications
+	# Receives expiration warnings (shouldn't occur due to auto-renewal)
+	# Set EMAIL environment variable in .env file for production use
+	email {$EMAIL}
+
+	# Automatic HTTPS enabled by default (no configuration needed)
+	# HTTP to HTTPS redirection automatic
+}
+
+# ============================================================================
+# Service Reverse Proxy Blocks
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# n8n - Workflow Automation Platform
+# ----------------------------------------------------------------------------
+# Internal routing: https://n8n.{$DOMAIN} → http://n8n:5678
+# Story: 2.1 (n8n Workflow Engine)
+n8n.{$DOMAIN} {
+	# Route all requests to n8n container on borgstack_external network
+	reverse_proxy n8n:5678
+
+	# Security headers for web application
+	header {
+		# Prevent clickjacking - allow same-origin framing for embedded workflows
+		X-Frame-Options "SAMEORIGIN"
+
+		# Prevent MIME type sniffing
+		X-Content-Type-Options "nosniff"
+
+		# Control referrer information leakage
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+}
+
+# ----------------------------------------------------------------------------
+# Chatwoot - Customer Communication Platform
+# ----------------------------------------------------------------------------
+# Internal routing: https://chatwoot.{$DOMAIN} → http://chatwoot:3000
+# Story: 3.1 (Chatwoot Customer Service)
+chatwoot.{$DOMAIN} {
+	# Route all requests to Chatwoot container
+	reverse_proxy chatwoot:3000
+
+	# Security headers for web application
+	header {
+		# Prevent clickjacking - allow same-origin for widget embedding
+		X-Frame-Options "SAMEORIGIN"
+
+		# Prevent MIME type sniffing
+		X-Content-Type-Options "nosniff"
+
+		# Control referrer information leakage
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+}
+
+# ----------------------------------------------------------------------------
+# Evolution API - WhatsApp Business API Gateway
+# ----------------------------------------------------------------------------
+# Internal routing: https://evolution.{$DOMAIN} → http://evolution:8080
+# Story: 2.2 (Evolution API Integration)
+# Note: API service requiring CORS for programmatic access
+evolution.{$DOMAIN} {
+	# Route all requests to Evolution API container
+	reverse_proxy evolution:8080
+
+	# CORS preflight request handling for API clients
+	@cors_preflight {
+		method OPTIONS
+	}
+	handle @cors_preflight {
+		# Allow requests from configured origins (set CORS_ALLOWED_ORIGINS in .env)
+		# Production: Use specific origins (e.g., https://app.example.com.br)
+		# Development: Use "*" for testing (default)
+		header Access-Control-Allow-Origin "{$CORS_ALLOWED_ORIGINS}"
+
+		# Allow standard REST methods
+		header Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE"
+
+		# Allow Content-Type and Authorization headers
+		header Access-Control-Allow-Headers "Content-Type, Authorization"
+
+		# Respond with 204 No Content for preflight requests
+		respond 204
+	}
+
+	# CORS headers for actual API requests
+	# Uses CORS_ALLOWED_ORIGINS environment variable (see .env.example for configuration)
+	header Access-Control-Allow-Origin "{$CORS_ALLOWED_ORIGINS}"
+
+	# Basic security headers
+	header {
+		X-Content-Type-Options "nosniff"
+	}
+}
+
+# ----------------------------------------------------------------------------
+# Lowcoder - Low-Code Application Builder
+# ----------------------------------------------------------------------------
+# Internal routing: https://lowcoder.{$DOMAIN} → http://lowcoder:3000
+# Story: 3.2 (Lowcoder App Builder)
+lowcoder.{$DOMAIN} {
+	# Route all requests to Lowcoder container
+	reverse_proxy lowcoder:3000
+
+	# Security headers for web application
+	header {
+		# Prevent clickjacking - allow same-origin for app embedding
+		X-Frame-Options "SAMEORIGIN"
+
+		# Prevent MIME type sniffing
+		X-Content-Type-Options "nosniff"
+
+		# Control referrer information leakage
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+}
+
+# ----------------------------------------------------------------------------
+# Directus - Headless CMS and Data Management
+# ----------------------------------------------------------------------------
+# Internal routing: https://directus.{$DOMAIN} → http://directus:8055
+# Story: 4.1 (Directus CMS)
+# Note: API service requiring CORS for programmatic access
+directus.{$DOMAIN} {
+	# Route all requests to Directus container
+	reverse_proxy directus:8055
+
+	# CORS preflight request handling for API clients
+	@cors_preflight {
+		method OPTIONS
+	}
+	handle @cors_preflight {
+		# Allow requests from configured origins (set CORS_ALLOWED_ORIGINS in .env)
+		# Production: Use specific origins (e.g., https://app.example.com.br)
+		# Development: Use "*" for testing (default)
+		header Access-Control-Allow-Origin "{$CORS_ALLOWED_ORIGINS}"
+
+		# Allow standard REST methods
+		header Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE"
+
+		# Allow Content-Type and Authorization headers
+		header Access-Control-Allow-Headers "Content-Type, Authorization"
+
+		# Respond with 204 No Content for preflight requests
+		respond 204
+	}
+
+	# CORS headers for actual API requests
+	# Uses CORS_ALLOWED_ORIGINS environment variable (see .env.example for configuration)
+	header Access-Control-Allow-Origin "{$CORS_ALLOWED_ORIGINS}"
+
+	# Basic security headers
+	header {
+		X-Content-Type-Options "nosniff"
+	}
+}
+
+# ----------------------------------------------------------------------------
+# FileFlows - Automated Media Processing
+# ----------------------------------------------------------------------------
+# Internal routing: https://fileflows.{$DOMAIN} → http://fileflows:5000
+# Story: 4.2 (FileFlows Media Processing)
+fileflows.{$DOMAIN} {
+	# Route all requests to FileFlows container
+	reverse_proxy fileflows:5000
+
+	# Security headers for web application
+	header {
+		# Prevent clickjacking
+		X-Frame-Options "SAMEORIGIN"
+
+		# Prevent MIME type sniffing
+		X-Content-Type-Options "nosniff"
+
+		# Control referrer information leakage
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+}
+
+# ----------------------------------------------------------------------------
+# Duplicati - Backup Management System
+# ----------------------------------------------------------------------------
+# Internal routing: https://duplicati.{$DOMAIN} → http://duplicati:8200
+# Story: 5.2 (Duplicati Backup)
+# Note: Stricter security headers for backup system access
+duplicati.{$DOMAIN} {
+	# Route all requests to Duplicati container
+	reverse_proxy duplicati:8200
+
+	# Security headers for sensitive backup system
+	header {
+		# Prevent all framing - backup system should not be embedded
+		X-Frame-Options "DENY"
+
+		# Prevent MIME type sniffing
+		X-Content-Type-Options "nosniff"
+
+		# Control referrer information leakage
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+}
+
+# ============================================================================
+# End of Configuration
+# ============================================================================

@@ -142,7 +142,86 @@ services:
         limits:
           memory: 8192M
 
-#   (Additional services: n8n, chatwoot, evolution-api, lowcoder, directus, fileflows, seaweedfs, duplicati, caddy)
+  # ==========================================================================
+  # Caddy Reverse Proxy
+  # ==========================================================================
+  # HTTPS termination and routing gateway for all web services
+  # Image: caddy:2.10-alpine (Alpine Linux base for minimal footprint)
+  #
+  # Architecture:
+  #   - Single entry point for all HTTPS traffic (ONLY service exposing ports to host)
+  #   - Automatic SSL certificate provisioning and renewal via Let's Encrypt
+  #   - Routes to internal services on borgstack_external network using Docker DNS
+  #   - HTTP to HTTPS redirection automatic (built-in Caddy feature)
+  #
+  # Service Access Patterns (configured in config/caddy/Caddyfile):
+  #   https://n8n.{DOMAIN}      → http://n8n:5678       (Story 2.1)
+  #   https://chatwoot.{DOMAIN} → http://chatwoot:3000  (Story 3.1)
+  #   https://evolution.{DOMAIN}→ http://evolution:8080 (Story 2.2)
+  #   https://lowcoder.{DOMAIN} → http://lowcoder:3000  (Story 3.2)
+  #   https://directus.{DOMAIN} → http://directus:8055  (Story 4.1)
+  #   https://fileflows.{DOMAIN}→ http://fileflows:5000 (Story 4.2)
+  #   https://duplicati.{DOMAIN}→ http://duplicati:8200 (Story 5.2)
+  #
+  # SSL/TLS Certificates:
+  #   - Automatic HTTPS enabled for all configured domains
+  #   - Let's Encrypt certificates auto-provisioned on first request
+  #   - Auto-renewal 30 days before expiration
+  #   - Certificates stored in borgstack_caddy_data volume
+  #   - Requires: DNS A records pointing to server IP, ports 80/443 accessible
+  #
+  # Security:
+  #   - ONLY service exposing ports 80/443 to host (per Story 1.2 network architecture)
+  #   - All other services access external traffic through Caddy routing
+  #   - Security headers configured in Caddyfile (X-Frame-Options, CSP, CORS)
+  #   - Admin API on port 2019 (internal only, not exposed to host)
+  #
+  # Configuration Management:
+  #   - Caddyfile stored in version control (./config/caddy/Caddyfile)
+  #   - Auto-saved JSON config in borgstack_caddy_config volume
+  #   - Reload config: docker compose exec caddy caddy reload --config /etc/caddy/Caddyfile
+  #
+  # Health Monitoring:
+  #   Health check:    docker compose ps caddy
+  #   Admin API:       docker compose exec caddy wget -qO- http://localhost:2019/config/
+  #   Certificate info: docker compose exec caddy ls -lah /data/caddy/certificates/
+  # ==========================================================================
+  caddy:
+    image: caddy:2.10-alpine
+    container_name: borgstack_caddy
+    restart: unless-stopped
+    networks:
+      - borgstack_external
+    # ✅ ONLY service that exposes ports to host (single entry point architecture)
+    ports:
+      - "80:80"    # HTTP (automatically redirects to HTTPS)
+      - "443:443"  # HTTPS (SSL/TLS termination)
+    volumes:
+      # Caddyfile configuration (read-only for security)
+      - ./config/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      # Certificate storage (Let's Encrypt certificates and account data)
+      - borgstack_caddy_data:/data
+      # Auto-saved JSON config (Caddy's internal representation)
+      - borgstack_caddy_config:/config
+    environment:
+      # Base domain for all services (e.g., example.com.br)
+      # Subdomains will be: n8n.{DOMAIN}, chatwoot.{DOMAIN}, etc.
+      DOMAIN: ${DOMAIN:-localhost}
+      # Email for Let's Encrypt account notifications
+      EMAIL: ${EMAIL:-admin@localhost}
+      # CORS allowed origins for API services (Evolution API, Directus)
+      # Production: Set to specific origins (e.g., https://app.example.com.br)
+      # Development: Use "*" for testing (default)
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-*}
+    healthcheck:
+      # Verify Caddy process is running
+      test: ["CMD", "caddy", "version"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+#   (Additional services: n8n, chatwoot, evolution-api, lowcoder, directus, fileflows, seaweedfs, duplicati)
 
 networks:
   borgstack_internal:
@@ -220,6 +299,19 @@ volumes:
     # Backed up by Duplicati (Story 5.2)
     # Manual backup: docker compose exec redis redis-cli -a ${REDIS_PASSWORD} SAVE
 
+  borgstack_caddy_data:
+    # Caddy data directory
+    # Contains: SSL/TLS certificates from Let's Encrypt, ACME account data
+    # Certificate auto-renewal: 30 days before expiration (no manual intervention)
+    # Backed up by Duplicati (Story 5.2) - critical for certificate continuity
+    # View certificates: docker compose exec caddy ls -lah /data/caddy/certificates/
+
+  borgstack_caddy_config:
+    # Caddy auto-saved configuration directory
+    # Contains: Caddy's internal JSON representation of Caddyfile
+    # Auto-generated on startup and config reload
+    # Not critical for backups (regenerated from Caddyfile on restart)
+
 # Additional volumes (to be added in future stories):
 #   borgstack_mongodb_data:
 #   borgstack_n8n_data:
@@ -230,5 +322,3 @@ volumes:
 #   borgstack_fileflows_data:
 #   borgstack_seaweedfs_data:
 #   borgstack_duplicati_data:
-#   borgstack_caddy_data:
-#   borgstack_caddy_config:
