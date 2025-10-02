@@ -221,6 +221,64 @@ services:
       retries: 3
       start_period: 5s
 
+  # ==========================================================================
+  # MongoDB Database (Dedicated for Lowcoder)
+  # ==========================================================================
+  # NoSQL database exclusively for Lowcoder metadata and configuration storage
+  # Image: mongo:7.0
+  #
+  # Database Organization:
+  #   - lowcoder: Lowcoder low-code platform database
+  #   - Root admin: admin user (administrative tasks only)
+  #   - Service user: lowcoder_user (application access with scoped permissions)
+  #
+  # Connection String (for use in Story 3.2 - Lowcoder service deployment):
+  #   LOWCODER_MONGODB_URL=mongodb://lowcoder_user:${LOWCODER_DB_PASSWORD}@mongodb:27017/lowcoder?authSource=lowcoder
+  #
+  # Database Isolation Strategy:
+  #   - MongoDB dedicated exclusively to Lowcoder (no other services)
+  #   - Separation from PostgreSQL maintains clear service boundaries
+  #   - Lowcoder requires NoSQL for flexible application metadata storage
+  #   - Independent scaling and tuning for Lowcoder workload
+  #
+  # Security:
+  #   - NO port exposure to host (internal network access only)
+  #   - Authentication required (root admin + service-specific user)
+  #   - lowcoder_user has readWrite + dbAdmin roles on lowcoder database only
+  #   - Principle of least privilege enforced via RBAC
+  #
+  # Backup Strategy:
+  #   - Automated: Duplicati (Story 5.2) backs up borgstack_mongodb_data volume
+  #   - Manual backup: docker compose exec -T mongodb mongodump --username admin --password ${MONGODB_ROOT_PASSWORD} --authenticationDatabase admin --out /backup/$(date +%Y%m%d_%H%M%S)
+  #   - Manual restore: docker compose exec -T mongodb mongorestore --username admin --password ${MONGODB_ROOT_PASSWORD} --authenticationDatabase admin /backup/BACKUP_FOLDER_NAME
+  # ==========================================================================
+  mongodb:
+    image: mongo:7.0
+    container_name: mongodb
+    restart: unless-stopped
+    networks:
+      - borgstack_internal
+    # ⚠️  NO ports section in production - databases must not expose ports to host
+    # ℹ️  For local development, add port mapping in docker-compose.override.yml
+    environment:
+      # MongoDB root admin credentials (for administrative tasks only)
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_ROOT_PASSWORD}
+      # Lowcoder database user password (used in init-mongo.js initialization script)
+      LOWCODER_DB_PASSWORD: ${LOWCODER_DB_PASSWORD}
+    volumes:
+      # MongoDB data directory (persistent storage for all databases)
+      - borgstack_mongodb_data:/data/db
+      # Initialization script (creates lowcoder database and user on first startup)
+      - ./config/mongodb/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    healthcheck:
+      # Verify MongoDB is responding to commands
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
 #   (Additional services: n8n, chatwoot, evolution-api, lowcoder, directus, fileflows, seaweedfs, duplicati)
 
 networks:
@@ -312,8 +370,14 @@ volumes:
     # Auto-generated on startup and config reload
     # Not critical for backups (regenerated from Caddyfile on restart)
 
+  borgstack_mongodb_data:
+    # MongoDB data directory
+    # Contains: Lowcoder database collections and indexes
+    # Backed up by Duplicati (Story 5.2)
+    # Manual backup: docker compose exec -T mongodb mongodump --username admin --password ${MONGODB_ROOT_PASSWORD} --authenticationDatabase admin --out /backup/$(date +%Y%m%d_%H%M%S)
+    # Manual restore: docker compose exec -T mongodb mongorestore --username admin --password ${MONGODB_ROOT_PASSWORD} --authenticationDatabase admin /backup/BACKUP_FOLDER_NAME
+
 # Additional volumes (to be added in future stories):
-#   borgstack_mongodb_data:
 #   borgstack_n8n_data:
 #   borgstack_chatwoot_data:
 #   borgstack_evolution_data:
