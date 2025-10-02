@@ -602,7 +602,7 @@ jobs:
         run: |
           echo "Verifying init-mongo.js is mounted in container..."
 
-          if docker compose config | grep -A 30 "mongodb:" | grep -q "init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js"; then
+          if docker compose config | grep -A 50 "mongodb:" | grep -q "target: /docker-entrypoint-initdb.d/init-mongo.js"; then
             echo "✅ init-mongo.js mounted correctly"
           else
             echo "❌ init-mongo.js not mounted"
