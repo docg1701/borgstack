@@ -10,3 +10,4 @@
 - To FIX the issue: create a correction plan, re-evaluate it by identifying 3 alternative possible causes, adjust the plan, then execute the fix.
 - QA reviews must execute all CI workflow checks locally before approval. Show actual command output as proof.
 - NEVER write anything in story files that you didn't actually verify or execute. No claims without evidence shown to the user.
+- To find existing stories, simply list the contents of docs/stories directory. Everything there is a story file.

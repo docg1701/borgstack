@@ -30,18 +30,11 @@
   - API rate limiting configured per service
 
 - **Rate Limiting:**
-  - Caddy rate limiting configuration in Caddyfile:
-    ```
-    rate_limit {
-        zone dynamic {
-            key {remote_host}
-            events 100
-            window 1m
-        }
-    }
-    ```
-  - Additional service-level rate limits (n8n, Chatwoot) configured via environment variables
-  - Evolution API has built-in rate limiting for WhatsApp API compliance
+  - Rate limiting handled at application level by individual services:
+    - n8n: Configurable via environment variables (N8N_EXECUTIONS_TIMEOUT, N8N_EXECUTIONS_PROCESS)
+    - Chatwoot: Built-in rate limiting for API endpoints
+    - Evolution API: Built-in rate limiting for WhatsApp API compliance
+  - Note: Caddy 2.x does not include built-in rate limiting. If proxy-level rate limiting becomes required in the future, consider using a custom Caddy build with the `mholt/caddy-ratelimit` module via xcaddy
 
 - **CORS Policy:**
   - Caddy CORS configuration for API endpoints:
