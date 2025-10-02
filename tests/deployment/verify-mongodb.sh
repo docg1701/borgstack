@@ -182,8 +182,11 @@ fi
 log_test "Test 8: Starting MongoDB container and verifying it's running"
 
 # Clean up any existing MongoDB container and volume to ensure init script runs
+# MongoDB init scripts only run on first startup (when /data/db is empty)
 log_info "Cleaning up any existing MongoDB container and volume..."
-docker compose down -v mongodb 2>/dev/null || true
+docker compose rm -sf mongodb 2>/dev/null || true
+docker volume rm borgstack_borgstack_mongodb_data 2>/dev/null || true
+docker volume rm borgstack_mongodb_data 2>/dev/null || true
 
 log_info "Starting MongoDB container with fresh volume..."
 docker compose up -d mongodb
