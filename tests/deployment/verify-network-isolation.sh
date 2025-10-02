@@ -105,18 +105,30 @@ else
 fi
 
 # ════════════════════════════════════════════════════════════════════════════
-# TEST 5: Port Exposure Policy Verification
+# TEST 5: Port Exposure Policy Verification (Story 1.5 Enhanced)
 # ════════════════════════════════════════════════════════════════════════════
-print_test "Verifying no unauthorized port exposure in base configuration"
+print_test "Verifying ONLY Caddy exposes ports 80/443 (single entry point architecture)"
 
-# Note: Since no services are defined yet, there should be no ports section
-if docker compose config 2>/dev/null | grep -A 50 "services:" | grep -q "ports:"; then
-    print_fail "Found port mappings in base configuration (services don't exist yet)"
+# Get all services that expose ports (using awk to parse docker-compose.yml)
+SERVICES_WITH_PORTS=$(awk '/^  [a-z_-]+:/{service=$1} /^    ports:/{print service}' docker-compose.yml | sed 's/://g' | sort -u || true)
+
+if [ -z "$SERVICES_WITH_PORTS" ]; then
+    # No services expose ports yet (before Story 1.5)
+    print_pass "No port exposure in base configuration (services not yet implemented)"
+elif [ "$SERVICES_WITH_PORTS" = "caddy" ]; then
+    # Only Caddy exposes ports (Story 1.5+)
+    # Verify it's exposing exactly ports 80 and 443
+    if grep -A 10 "^  caddy:" docker-compose.yml | grep -q '"80:80"' && \
+       grep -A 10 "^  caddy:" docker-compose.yml | grep -q '"443:443"'; then
+        print_pass "ONLY Caddy exposes ports 80/443 (correct single entry point architecture)"
+    else
+        print_fail "Caddy does not expose required ports 80 and 443"
+    fi
 else
-    print_pass "No port exposure in base configuration (expected - services not yet implemented)"
+    # Multiple services expose ports - SECURITY VIOLATION
+    print_fail "Unauthorized port exposure detected - services other than Caddy expose ports: $SERVICES_WITH_PORTS"
+    print_info "Only Caddy should expose ports to host (80/443). All other services must be internal."
 fi
-
-print_info "Port exposure validation will be enhanced in Story 1.5 (Caddy) to verify only ports 80/443 are exposed"
 
 # ════════════════════════════════════════════════════════════════════════════
 # TEST 6: Network Naming Convention Compliance

@@ -328,3 +328,161 @@ jobs:
           echo "Cleaning up test environment..."
           docker compose down -v --remove-orphans || true
           rm -f .env
+
+  validate-caddy:
+    name: Validate Caddy Configuration
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Create .env file for testing
+        run: |
+          echo "Creating temporary .env file with test credentials..."
+          cat > .env << 'EOF'
+          # Test credentials for CI pipeline
+          POSTGRES_PASSWORD=test_postgres_password_12345678
+          N8N_DB_PASSWORD=test_n8n_password_12345678
+          CHATWOOT_DB_PASSWORD=test_chatwoot_password_12345678
+          DIRECTUS_DB_PASSWORD=test_directus_password_12345678
+          EVOLUTION_DB_PASSWORD=test_evolution_password_12345678
+          REDIS_PASSWORD=test_redis_password_12345678901234567890
+          DOMAIN=example.com.br
+          EMAIL=admin@example.com.br
+          EOF
+
+      - name: Verify Caddy configuration in docker-compose.yml
+        run: |
+          echo "Verifying Caddy service is configured..."
+
+          # Check Caddy image version is pinned correctly
+          if docker compose config | grep -q "image: caddy:2.10-alpine"; then
+            echo "✅ Caddy image correctly configured (caddy:2.10-alpine)"
+          else
+            echo "❌ Caddy image not configured correctly"
+            exit 1
+          fi
+
+          # Check Caddy is on borgstack_external network
+          if docker compose config | grep -A 30 "caddy:" | grep -q "borgstack_external"; then
+            echo "✅ Caddy connected to borgstack_external network"
+          else
+            echo "❌ Caddy not connected to borgstack_external network"
+            exit 1
+          fi
+
+          # Verify volume naming convention
+          if docker compose config | grep -q "borgstack_caddy_data"; then
+            echo "✅ borgstack_caddy_data volume follows naming convention"
+          else
+            echo "❌ borgstack_caddy_data volume not found"
+            exit 1
+          fi
+
+          if docker compose config | grep -q "borgstack_caddy_config"; then
+            echo "✅ borgstack_caddy_config volume follows naming convention"
+          else
+            echo "❌ borgstack_caddy_config volume not found"
+            exit 1
+          fi
+
+          # Verify Caddy exposes ports 80 and 443
+          # Note: docker compose config expands "80:80" to multi-line format with published: "80"
+          if docker compose config | grep -A 20 "caddy:" | grep "published:" | grep -q '"80"'; then
+            echo "✅ Port 80 exposed"
+          else
+            echo "❌ Port 80 not exposed"
+            exit 1
+          fi
+
+          if docker compose config | grep -A 20 "caddy:" | grep "published:" | grep -q '"443"'; then
+            echo "✅ Port 443 exposed"
+          else
+            echo "❌ Port 443 not exposed"
+            exit 1
+          fi
+
+          # Verify health check is configured
+          if docker compose config | grep -A 30 "caddy:" | grep -q "healthcheck:"; then
+            echo "✅ Health check configured for Caddy"
+          else
+            echo "❌ Health check not configured for Caddy"
+            exit 1
+          fi
+
+      - name: Validate Caddyfile syntax
+        run: |
+          echo "Validating Caddyfile syntax..."
+          docker compose run --rm caddy caddy validate --config /etc/caddy/Caddyfile
+
+      - name: Verify security headers configured
+        run: |
+          echo "Verifying security headers in Caddyfile..."
+
+          if grep -q "X-Frame-Options" config/caddy/Caddyfile; then
+            echo "✅ X-Frame-Options header configured"
+          else
+            echo "❌ X-Frame-Options header not found"
+            exit 1
+          fi
+
+          if grep -q "X-Content-Type-Options" config/caddy/Caddyfile; then
+            echo "✅ X-Content-Type-Options header configured"
+          else
+            echo "❌ X-Content-Type-Options header not found"
+            exit 1
+          fi
+
+      - name: Verify CORS configuration
+        run: |
+          echo "Verifying CORS configuration for API services..."
+
+          if grep -q "Access-Control-Allow-Origin" config/caddy/Caddyfile; then
+            echo "✅ CORS headers configured"
+          else
+            echo "❌ CORS headers not found"
+            exit 1
+          fi
+
+      - name: Verify all services have reverse proxy blocks
+        run: |
+          echo "Verifying all 7 services have reverse proxy blocks..."
+
+          SERVICES=("n8n" "chatwoot" "evolution" "lowcoder" "directus" "fileflows" "duplicati")
+          ALL_FOUND=true
+
+          for service in "${SERVICES[@]}"; do
+            if grep -q "${service}\.{\$DOMAIN}" config/caddy/Caddyfile; then
+              echo "✅ ${service} reverse proxy block configured"
+            else
+              echo "❌ ${service} reverse proxy block not found"
+              ALL_FOUND=false
+            fi
+          done
+
+          if [ "$ALL_FOUND" = false ]; then
+            exit 1
+          fi
+
+      - name: Start Caddy for testing
+        run: |
+          echo "Starting Caddy service..."
+          docker compose up -d caddy
+          sleep 15
+
+      - name: Run Caddy validation tests
+        run: |
+          echo "Running comprehensive Caddy validation tests..."
+          chmod +x tests/deployment/verify-caddy.sh
+          bash tests/deployment/verify-caddy.sh
+
+      - name: Cleanup Caddy test environment
+        if: always()
+        run: |
+          echo "Cleaning up test environment..."
+          docker compose down -v --remove-orphans || true
+          rm -f .env
