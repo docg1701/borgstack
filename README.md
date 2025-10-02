@@ -25,13 +25,21 @@
    cd borgstack
    ```
 
-2. **Run the automated bootstrap script:**
+2. **Run the automated bootstrap script (Recommended):**
    ```bash
    ./scripts/bootstrap.sh
    ```
-   *(Note: Bootstrap script will be available in a future release. For now, follow manual setup below.)*
 
-3. **Manual setup (current):**
+   The bootstrap script will:
+   - Validate system requirements (Ubuntu 24.04, RAM, CPU, disk)
+   - Install Docker Engine and Docker Compose v2
+   - Configure UFW firewall (ports 22, 80, 443)
+   - Generate `.env` file with strong passwords
+   - Deploy all services
+   - Validate health checks
+   - Display DNS/SSL configuration instructions
+
+3. **Manual setup (Alternative):**
    ```bash
    # Copy environment template
    cp .env.example .env
@@ -49,6 +57,88 @@
 4. **Access your services:**
    - Each service will be available at its configured domain
    - See `.env.example` for domain configuration
+
+---
+
+## 🎯 Bootstrap Script Details
+
+The automated bootstrap script (`scripts/bootstrap.sh`) handles the complete setup process for Ubuntu 24.04 LTS servers.
+
+### What It Does
+
+1. **System Validation:**
+   - Checks Ubuntu version (requires 24.04 LTS)
+   - Validates RAM (minimum 16GB, recommended 36GB)
+   - Validates disk space (minimum 200GB, recommended 500GB)
+   - Validates CPU cores (minimum 4, recommended 8)
+
+2. **Software Installation:**
+   - Installs Docker Engine (latest stable)
+   - Installs Docker Compose v2 plugin
+   - Installs system utilities (curl, wget, git, ufw, dig, htop, sysstat)
+   - Adds user to docker group for non-root access
+
+3. **Security Configuration:**
+   - Configures UFW firewall with default deny incoming policy
+   - Opens ports: 22 (SSH), 80 (HTTP), 443 (HTTPS)
+   - Generates strong random passwords (32 characters) for all services
+   - Sets .env file permissions to 600 (owner read/write only)
+
+4. **Service Deployment:**
+   - Pulls all Docker images
+   - Starts all services via `docker compose up -d`
+   - Waits for service initialization
+   - Validates health checks for core services
+
+5. **Post-Installation:**
+   - Displays DNS configuration instructions
+   - Explains Let's Encrypt SSL automatic generation
+   - Provides service access URLs
+   - Shows troubleshooting commands
+
+### Prerequisites
+
+- Fresh Ubuntu 24.04 LTS server
+- Non-root user with sudo privileges
+- Internet connection
+- Public IP address (for SSL certificates)
+
+### Usage
+
+```bash
+# Make executable (if needed)
+chmod +x scripts/bootstrap.sh
+
+# Run the script
+./scripts/bootstrap.sh
+
+# Follow interactive prompts for:
+# - Domain name (e.g., example.com.br)
+# - Email for SSL notifications (e.g., admin@example.com.br)
+```
+
+### After Bootstrap
+
+1. **Configure DNS:** Add A records for 7 subdomains pointing to your server IP
+2. **Verify DNS:** Wait 5-30 minutes for propagation, then test with `dig`
+3. **Access Services:** Visit `https://<service>.<domain>` (SSL auto-generated on first access)
+4. **Save Credentials:** Store generated passwords from `.env` in a password manager
+5. **Production Security:** Change `CORS_ALLOWED_ORIGINS` from `*` to specific origins
+
+### Troubleshooting
+
+- **View logs:** `cat /tmp/borgstack-bootstrap.log`
+- **Check services:** `docker compose ps`
+- **View service logs:** `docker compose logs [service_name]`
+- **Restart service:** `docker compose restart [service_name]`
+
+### Idempotency
+
+The script is safe to run multiple times:
+- Skips Docker installation if already present
+- Warns before overwriting existing `.env` file
+- Detects existing firewall rules
+- No destructive operations without confirmation
 
 ---
 
@@ -213,13 +303,21 @@ BorgStack is open source software licensed under the [MIT License](LICENSE).
    cd borgstack
    ```
 
-2. **Execute o script de bootstrap automatizado:**
+2. **Execute o script de bootstrap automatizado (Recomendado):**
    ```bash
    ./scripts/bootstrap.sh
    ```
-   *(Nota: O script bootstrap estará disponível em uma versão futura. Por enquanto, siga a configuração manual abaixo.)*
 
-3. **Configuração manual (atual):**
+   O script de bootstrap irá:
+   - Validar requisitos do sistema (Ubuntu 24.04, RAM, CPU, disco)
+   - Instalar Docker Engine e Docker Compose v2
+   - Configurar firewall UFW (portas 22, 80, 443)
+   - Gerar arquivo `.env` com senhas fortes
+   - Fazer deploy de todos os serviços
+   - Validar health checks
+   - Exibir instruções de configuração DNS/SSL
+
+3. **Configuração manual (Alternativa):**
    ```bash
    # Copie o template de variáveis de ambiente
    cp .env.example .env
@@ -237,6 +335,88 @@ BorgStack is open source software licensed under the [MIT License](LICENSE).
 4. **Acesse seus serviços:**
    - Cada serviço estará disponível em seu domínio configurado
    - Veja `.env.example` para configuração de domínios
+
+---
+
+## 🎯 Detalhes do Script Bootstrap
+
+O script de bootstrap automatizado (`scripts/bootstrap.sh`) cuida de todo o processo de configuração para servidores Ubuntu 24.04 LTS.
+
+### O Que Ele Faz
+
+1. **Validação do Sistema:**
+   - Verifica versão do Ubuntu (requer 24.04 LTS)
+   - Valida RAM (mínimo 16GB, recomendado 36GB)
+   - Valida espaço em disco (mínimo 200GB, recomendado 500GB)
+   - Valida núcleos de CPU (mínimo 4, recomendado 8)
+
+2. **Instalação de Software:**
+   - Instala Docker Engine (última versão estável)
+   - Instala plugin Docker Compose v2
+   - Instala utilitários do sistema (curl, wget, git, ufw, dig, htop, sysstat)
+   - Adiciona usuário ao grupo docker para acesso não-root
+
+3. **Configuração de Segurança:**
+   - Configura firewall UFW com política padrão de negar entrada
+   - Abre portas: 22 (SSH), 80 (HTTP), 443 (HTTPS)
+   - Gera senhas aleatórias fortes (32 caracteres) para todos os serviços
+   - Define permissões do arquivo .env para 600 (apenas leitura/escrita do proprietário)
+
+4. **Deploy de Serviços:**
+   - Baixa todas as imagens Docker
+   - Inicia todos os serviços via `docker compose up -d`
+   - Aguarda inicialização dos serviços
+   - Valida health checks dos serviços principais
+
+5. **Pós-Instalação:**
+   - Exibe instruções de configuração DNS
+   - Explica geração automática de SSL via Let's Encrypt
+   - Fornece URLs de acesso aos serviços
+   - Mostra comandos de troubleshooting
+
+### Pré-requisitos
+
+- Servidor Ubuntu 24.04 LTS novo
+- Usuário não-root com privilégios sudo
+- Conexão com internet
+- Endereço IP público (para certificados SSL)
+
+### Uso
+
+```bash
+# Torne executável (se necessário)
+chmod +x scripts/bootstrap.sh
+
+# Execute o script
+./scripts/bootstrap.sh
+
+# Siga os prompts interativos para:
+# - Nome do domínio (ex: exemplo.com.br)
+# - Email para notificações SSL (ex: admin@exemplo.com.br)
+```
+
+### Após o Bootstrap
+
+1. **Configurar DNS:** Adicione registros A para os 7 subdomínios apontando para o IP do seu servidor
+2. **Verificar DNS:** Aguarde 5-30 minutos para propagação, depois teste com `dig`
+3. **Acessar Serviços:** Visite `https://<serviço>.<domínio>` (SSL gerado automaticamente no primeiro acesso)
+4. **Salvar Credenciais:** Armazene senhas geradas do `.env` em um gerenciador de senhas
+5. **Segurança em Produção:** Altere `CORS_ALLOWED_ORIGINS` de `*` para origens específicas
+
+### Solução de Problemas
+
+- **Ver logs:** `cat /tmp/borgstack-bootstrap.log`
+- **Verificar serviços:** `docker compose ps`
+- **Ver logs de serviço:** `docker compose logs [nome_serviço]`
+- **Reiniciar serviço:** `docker compose restart [nome_serviço]`
+
+### Idempotência
+
+O script é seguro para executar múltiplas vezes:
+- Ignora instalação do Docker se já presente
+- Avisa antes de sobrescrever arquivo `.env` existente
+- Detecta regras de firewall existentes
+- Nenhuma operação destrutiva sem confirmação
 
 ---
 
