@@ -181,7 +181,11 @@ fi
 # ============================================================================
 log_test "Test 8: Starting MongoDB container and verifying it's running"
 
-log_info "Starting MongoDB container..."
+# Clean up any existing MongoDB container and volume to ensure init script runs
+log_info "Cleaning up any existing MongoDB container and volume..."
+docker compose down -v mongodb 2>/dev/null || true
+
+log_info "Starting MongoDB container with fresh volume..."
 docker compose up -d mongodb
 
 # Wait for container to start
