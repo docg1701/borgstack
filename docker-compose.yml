@@ -222,6 +222,82 @@ services:
       start_period: 5s
 
   # ==========================================================================
+  # n8n Workflow Automation Platform
+  # ==========================================================================
+  # Central workflow orchestration hub connecting all services
+  # Image: n8nio/n8n:1.112.6
+  #
+  # Architecture:
+  #   - Connects to PostgreSQL (n8n_db) for workflow storage
+  #   - Connects to Redis for Bull queue and session management
+  #   - Exposed via Caddy reverse proxy (n8n.{DOMAIN})
+  #   - Webhook endpoints: https://${N8N_HOST}/webhook/{path}
+  #
+  # Security:
+  #   - Basic authentication enabled (N8N_BASIC_AUTH_ACTIVE=true)
+  #   - Encryption key protects workflow credentials (N8N_ENCRYPTION_KEY)
+  #   - Database user isolation (n8n_user with access only to n8n_db)
+  #   - Network isolation (internal for DB/Redis, external for Caddy)
+  #
+  # Integration Patterns:
+  #   - HTTP Request nodes for service-to-service communication
+  #   - Webhook triggers for external event reception
+  #   - Database storage for workflow definitions and executions
+  #   - Redis queue for background job processing
+  # ==========================================================================
+  n8n:
+    image: n8nio/n8n:1.112.6
+    container_name: n8n
+    restart: unless-stopped
+    networks:
+      - borgstack_internal
+      - borgstack_external
+    environment:
+      # Database connection (PostgreSQL)
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: postgresql
+      DB_POSTGRESDB_PORT: 5432
+      DB_POSTGRESDB_DATABASE: n8n_db
+      DB_POSTGRESDB_USER: n8n_user
+      DB_POSTGRESDB_PASSWORD: ${N8N_DB_PASSWORD}
+
+      # Redis connection (Bull queue)
+      QUEUE_BULL_REDIS_HOST: redis
+      QUEUE_BULL_REDIS_PORT: 6379
+      QUEUE_BULL_REDIS_PASSWORD: ${REDIS_PASSWORD}
+      QUEUE_BULL_REDIS_DB: 0
+
+      # n8n configuration
+      N8N_HOST: n8n.${DOMAIN}
+      N8N_PROTOCOL: https
+      N8N_PORT: 5678
+      WEBHOOK_URL: https://n8n.${DOMAIN}/
+
+      # Encryption key for credential storage
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}
+
+      # Basic authentication
+      N8N_BASIC_AUTH_ACTIVE: true
+      N8N_BASIC_AUTH_USER: ${N8N_BASIC_AUTH_USER}
+      N8N_BASIC_AUTH_PASSWORD: ${N8N_BASIC_AUTH_PASSWORD}
+
+      # Timezone
+      GENERIC_TIMEZONE: America/Sao_Paulo
+    volumes:
+      - borgstack_n8n_data:/home/node/.n8n
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:5678/healthz || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # ==========================================================================
   # MongoDB Database (Dedicated for Lowcoder)
   # ==========================================================================
   # NoSQL database exclusively for Lowcoder metadata and configuration storage
@@ -377,8 +453,14 @@ volumes:
     # Manual backup: docker compose exec -T mongodb mongodump --username admin --password ${MONGODB_ROOT_PASSWORD} --authenticationDatabase admin --out /backup/$(date +%Y%m%d_%H%M%S)
     # Manual restore: docker compose exec -T mongodb mongorestore --username admin --password ${MONGODB_ROOT_PASSWORD} --authenticationDatabase admin /backup/BACKUP_FOLDER_NAME
 
+  borgstack_n8n_data:
+    # n8n workflow automation data directory
+    # Contains: Workflow definitions, credentials (encrypted), custom nodes, executions history
+    # Backed up by Duplicati (Story 5.2)
+    # CRITICAL: Contains encrypted credentials - backup N8N_ENCRYPTION_KEY separately
+    # Manual backup: docker compose exec -T n8n tar czf - /home/node/.n8n > n8n-backup-$(date +%Y%m%d).tar.gz
+
 # Additional volumes (to be added in future stories):
-#   borgstack_n8n_data:
 #   borgstack_chatwoot_data:
 #   borgstack_evolution_data:
 #   borgstack_lowcoder_data:

@@ -389,13 +389,14 @@ generate_env_file() {
     # Generate passwords
     local postgres_password=$(generate_password)
     local n8n_db_password=$(generate_password)
+    local n8n_basic_auth_password=$(generate_password)
+    local n8n_encryption_key=$(openssl rand -base64 32)
     local chatwoot_db_password=$(generate_password)
     local directus_db_password=$(generate_password)
     local evolution_db_password=$(generate_password)
     local mongo_root_password=$(generate_password)
     local lowcoder_db_password=$(generate_password)
     local redis_password=$(generate_password)
-    local n8n_encryption_key=$(generate_password)
     local chatwoot_secret_key_base=$(generate_password)$(generate_password)
     local directus_secret=$(generate_password)
     local evolution_jwt_secret=$(generate_password)
@@ -442,9 +443,16 @@ LOWCODER_DB_PASSWORD=${lowcoder_db_password}
 REDIS_PASSWORD=${redis_password}
 
 # ============================================================================
-# APPLICATION SECRETS
+# n8n CONFIGURATION
 # ============================================================================
+N8N_HOST=n8n.${domain}
+N8N_BASIC_AUTH_USER=admin
+N8N_BASIC_AUTH_PASSWORD=${n8n_basic_auth_password}
 N8N_ENCRYPTION_KEY=${n8n_encryption_key}
+
+# ============================================================================
+# OTHER APPLICATION SECRETS
+# ============================================================================
 CHATWOOT_SECRET_KEY_BASE=${chatwoot_secret_key_base}
 DIRECTUS_SECRET=${directus_secret}
 EVOLUTION_JWT_SECRET=${evolution_jwt_secret}
@@ -467,6 +475,10 @@ EOF
     echo "${CYAN}MongoDB Root:${RESET} admin / ${mongo_root_password}"
     echo "${CYAN}MongoDB Lowcoder:${RESET} lowcoder_user / ${lowcoder_db_password}"
     echo "${CYAN}Redis:${RESET} ${redis_password}"
+    echo ""
+    echo "${CYAN}n8n Web UI:${RESET} https://n8n.${domain}"
+    echo "${CYAN}n8n Basic Auth:${RESET} admin / ${n8n_basic_auth_password}"
+    echo "${CYAN}n8n Encryption Key:${RESET} ${n8n_encryption_key:0:20}... ${YELLOW}(Full key in .env - BACKUP SECURELY!)${RESET}"
     echo ""
     echo "${YELLOW}All credentials are stored in: ${env_file}${RESET}"
     echo "${YELLOW}File permissions: -rw------- (600)${RESET}"

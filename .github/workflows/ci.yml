@@ -626,3 +626,232 @@ jobs:
           echo "Cleaning up test environment..."
           docker compose down -v --remove-orphans || true
           rm -f .env
+
+  validate-n8n:
+    name: Validate n8n Configuration
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Create .env file for testing
+        run: |
+          echo "Creating temporary .env file with test credentials..."
+          cat > .env << 'EOF'
+          # Test credentials for CI pipeline
+          POSTGRES_PASSWORD=test_postgres_password_12345678
+          N8N_DB_PASSWORD=test_n8n_password_12345678
+          N8N_BASIC_AUTH_USER=admin
+          N8N_BASIC_AUTH_PASSWORD=test_n8n_auth_password_12345678
+          N8N_ENCRYPTION_KEY=test_n8n_encryption_key_12345678901234567890
+          REDIS_PASSWORD=test_redis_password_12345678901234567890
+          DOMAIN=example.com.br
+          EMAIL=admin@example.com.br
+          CORS_ALLOWED_ORIGINS=*
+          EOF
+
+      - name: Verify n8n configuration in docker-compose.yml
+        run: |
+          echo "Verifying n8n service is configured..."
+
+          # Check n8n image version is pinned correctly
+          if docker compose config | grep -q "image: n8nio/n8n:1.112.6"; then
+            echo "✅ n8n image correctly configured (n8nio/n8n:1.112.6)"
+          else
+            echo "❌ n8n image not configured correctly"
+            exit 1
+          fi
+
+          # Check n8n is on both networks
+          if docker compose config | grep -A 50 "n8n:" | grep -q "borgstack_internal"; then
+            echo "✅ n8n connected to borgstack_internal network"
+          else
+            echo "❌ n8n not connected to borgstack_internal network"
+            exit 1
+          fi
+
+          if docker compose config | grep -A 50 "n8n:" | grep -q "borgstack_external"; then
+            echo "✅ n8n connected to borgstack_external network"
+          else
+            echo "❌ n8n not connected to borgstack_external network"
+            exit 1
+          fi
+
+          # Verify volume naming convention
+          if docker compose config | grep -q "borgstack_n8n_data"; then
+            echo "✅ Volume follows borgstack_ naming convention"
+          else
+            echo "❌ Volume does not follow naming convention"
+            exit 1
+          fi
+
+          # Verify no port exposure in production config
+          if docker compose config | grep -A 50 "n8n:" | grep -E "^\s+ports:" > /dev/null 2>&1; then
+            echo "❌ n8n has port exposure in production config (security violation)"
+            exit 1
+          else
+            echo "✅ No port exposure to host (security requirement met)"
+          fi
+
+          # Verify health check is configured
+          if docker compose config | grep -A 60 "n8n:" | grep -q "healthcheck:"; then
+            echo "✅ Health check configured for n8n"
+          else
+            echo "❌ Health check not configured for n8n"
+            exit 1
+          fi
+
+      - name: Verify n8n environment variables
+        run: |
+          echo "Verifying n8n environment variables configuration..."
+
+          # Check database connection variables
+          if docker compose config | grep -A 60 "n8n:" | grep -q "DB_TYPE: postgresdb"; then
+            echo "✅ DB_TYPE set to postgresdb"
+          else
+            echo "❌ DB_TYPE not set correctly"
+            exit 1
+          fi
+
+          if docker compose config | grep -A 60 "n8n:" | grep -q "DB_POSTGRESDB_DATABASE: n8n_db"; then
+            echo "✅ DB_POSTGRESDB_DATABASE set to n8n_db"
+          else
+            echo "❌ DB_POSTGRESDB_DATABASE not set correctly"
+            exit 1
+          fi
+
+          # Check Redis connection variables
+          if docker compose config | grep -A 60 "n8n:" | grep -q "QUEUE_BULL_REDIS_HOST: redis"; then
+            echo "✅ QUEUE_BULL_REDIS_HOST set to redis"
+          else
+            echo "❌ QUEUE_BULL_REDIS_HOST not set correctly"
+            exit 1
+          fi
+
+          # Check n8n configuration variables
+          if docker compose config | grep -A 60 "n8n:" | grep -q "N8N_PROTOCOL: https"; then
+            echo "✅ N8N_PROTOCOL set to https"
+          else
+            echo "❌ N8N_PROTOCOL not set correctly"
+            exit 1
+          fi
+
+          if docker compose config | grep -A 60 "n8n:" | grep -q 'N8N_BASIC_AUTH_ACTIVE:.*true'; then
+            echo "✅ N8N_BASIC_AUTH_ACTIVE set to true"
+          else
+            echo "❌ N8N_BASIC_AUTH_ACTIVE not set correctly"
+            exit 1
+          fi
+
+      - name: Verify n8n depends_on configuration
+        run: |
+          echo "Verifying n8n dependencies configuration..."
+
+          # Check depends_on postgresql with service_healthy
+          if docker compose config | grep -A 80 "n8n:" | grep -A 3 "depends_on:" | grep -A 1 "postgresql:" | grep -q "condition: service_healthy"; then
+            echo "✅ n8n depends on PostgreSQL with service_healthy condition"
+          else
+            echo "❌ n8n PostgreSQL dependency not configured correctly"
+            exit 1
+          fi
+
+          # Check depends_on redis with service_healthy
+          if docker compose config | grep -A 80 "n8n:" | grep -A 5 "depends_on:" | grep -A 1 "redis:" | grep -q "condition: service_healthy"; then
+            echo "✅ n8n depends on Redis with service_healthy condition"
+          else
+            echo "❌ n8n Redis dependency not configured correctly"
+            exit 1
+          fi
+
+      - name: Verify .env.example has n8n variables
+        run: |
+          echo "Verifying .env.example has n8n configuration variables..."
+
+          if grep -q "N8N_HOST=" .env.example; then
+            echo "✅ N8N_HOST variable in .env.example"
+          else
+            echo "❌ N8N_HOST variable not found in .env.example"
+            exit 1
+          fi
+
+          if grep -q "N8N_BASIC_AUTH_USER=" .env.example; then
+            echo "✅ N8N_BASIC_AUTH_USER variable in .env.example"
+          else
+            echo "❌ N8N_BASIC_AUTH_USER variable not found in .env.example"
+            exit 1
+          fi
+
+          if grep -q "N8N_BASIC_AUTH_PASSWORD=" .env.example; then
+            echo "✅ N8N_BASIC_AUTH_PASSWORD variable in .env.example"
+          else
+            echo "❌ N8N_BASIC_AUTH_PASSWORD variable not found in .env.example"
+            exit 1
+          fi
+
+          if grep -q "N8N_ENCRYPTION_KEY=" .env.example; then
+            echo "✅ N8N_ENCRYPTION_KEY variable in .env.example"
+          else
+            echo "❌ N8N_ENCRYPTION_KEY variable not found in .env.example"
+            exit 1
+          fi
+
+          if grep -q "N8N_DB_PASSWORD=" .env.example; then
+            echo "✅ N8N_DB_PASSWORD variable in .env.example"
+          else
+            echo "❌ N8N_DB_PASSWORD variable not found in .env.example"
+            exit 1
+          fi
+
+      - name: Verify example workflows exist
+        run: |
+          echo "Verifying n8n example workflows exist..."
+
+          if [ -f "config/n8n/workflows/01-webhook-test.json" ]; then
+            echo "✅ 01-webhook-test.json exists"
+          else
+            echo "❌ 01-webhook-test.json not found"
+            exit 1
+          fi
+
+          if [ -f "config/n8n/workflows/02-schedule-test.json" ]; then
+            echo "✅ 02-schedule-test.json exists"
+          else
+            echo "❌ 02-schedule-test.json not found"
+            exit 1
+          fi
+
+          if [ -f "config/n8n/workflows/README.md" ]; then
+            echo "✅ workflows/README.md exists"
+          else
+            echo "❌ workflows/README.md not found"
+            exit 1
+          fi
+
+      - name: Verify n8n validation test script exists
+        run: |
+          echo "Verifying n8n validation test script exists..."
+
+          if [ -f "tests/deployment/verify-n8n.sh" ]; then
+            echo "✅ verify-n8n.sh exists"
+          else
+            echo "❌ verify-n8n.sh not found"
+            exit 1
+          fi
+
+          if [ -x "tests/deployment/verify-n8n.sh" ]; then
+            echo "✅ verify-n8n.sh is executable"
+          else
+            echo "❌ verify-n8n.sh is not executable"
+            exit 1
+          fi
+
+      - name: Cleanup n8n test environment
+        if: always()
+        run: |
+          echo "Cleaning up test environment..."
+          docker compose down -v --remove-orphans || true
+          rm -f .env

@@ -125,12 +125,76 @@ chmod +x scripts/bootstrap.sh
 4. **Save Credentials:** Store generated passwords from `.env` in a password manager
 5. **Production Security:** Change `CORS_ALLOWED_ORIGINS` from `*` to specific origins
 
+### Service Access
+
+#### n8n Workflow Automation
+
+- **URL:** `https://n8n.<your-domain>`
+- **Credentials:**
+  - Username: `admin` (from `N8N_BASIC_AUTH_USER` in `.env`)
+  - Password: (from `N8N_BASIC_AUTH_PASSWORD` in `.env`)
+- **Encryption Key:** Critical - backup `N8N_ENCRYPTION_KEY` securely (required for encrypted credentials)
+- **Webhook URL Format:** `https://n8n.<your-domain>/webhook/<workflow-path>`
+- **Getting Started:**
+  1. Log in to n8n web interface
+  2. Import example workflows from `config/n8n/workflows/`
+  3. Explore 400+ integrations in the n8n node library
+  4. Create your first automation workflow
+- **Example Workflows:** See `config/n8n/workflows/README.md` for import instructions
+
 ### Troubleshooting
 
 - **View logs:** `cat /tmp/borgstack-bootstrap.log`
 - **Check services:** `docker compose ps`
 - **View service logs:** `docker compose logs [service_name]`
 - **Restart service:** `docker compose restart [service_name]`
+
+#### n8n Connection Issues
+
+**Cannot access n8n web UI:**
+```bash
+# Check n8n container status
+docker compose ps n8n
+
+# Check n8n logs
+docker compose logs n8n
+
+# Verify DNS configuration
+dig n8n.<your-domain>
+
+# Check Caddy reverse proxy
+docker compose logs caddy
+```
+
+**Webhook not responding:**
+1. Ensure workflow is **Active** (toggle in n8n UI)
+2. Verify webhook URL: `https://n8n.<your-domain>/webhook/<path>`
+3. Check n8n logs: `docker compose logs n8n | grep webhook`
+4. Test internal endpoint: `docker compose exec n8n wget -qO- http://localhost:5678/webhook/test`
+
+**Database connection errors:**
+```bash
+# Check PostgreSQL health
+docker compose ps postgresql
+
+# Verify n8n database exists
+docker compose exec postgresql psql -U postgres -c "\l" | grep n8n_db
+
+# Check connection from n8n
+docker compose logs n8n | grep -i "database\|postgres"
+```
+
+**Redis/Queue errors:**
+```bash
+# Check Redis health
+docker compose ps redis
+
+# Test Redis connection
+docker compose exec redis redis-cli -a ${REDIS_PASSWORD} ping
+
+# Check n8n queue logs
+docker compose logs n8n | grep -i "redis\|queue"
+```
 
 ### Idempotency
 
