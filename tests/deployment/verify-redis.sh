@@ -109,8 +109,9 @@ test_docker_compose_config() {
     fi
 
     # Test 1.4: Verify volume is configured
-    if docker compose config | grep -A 30 "redis:" | grep -q "borgstack_redis_data" && \
-       docker compose config | grep -A 30 "redis:" | grep -q "target: /data"; then
+    REDIS_CONFIG=$(docker compose config | grep -A 30 "redis:")
+    if echo "$REDIS_CONFIG" | grep -q "borgstack_redis_data" && \
+       echo "$REDIS_CONFIG" | grep -q "target: /data"; then
         print_pass "Redis volume correctly configured"
     else
         print_fail "Redis volume configuration missing or incorrect"
@@ -408,8 +409,9 @@ test_volume_persistence() {
     fi
 
     # Test 9.2: Verify volume is mounted correctly
-    if docker compose config | grep -A 30 "redis:" | grep -q "source: borgstack_redis_data" && \
-       docker compose config | grep -A 30 "redis:" | grep -q "target: /data"; then
+    REDIS_MOUNT=$(docker compose config | grep -A 30 "redis:")
+    if echo "$REDIS_MOUNT" | grep -q "source: borgstack_redis_data" && \
+       echo "$REDIS_MOUNT" | grep -q "target: /data"; then
         print_pass "Volume correctly mounted at /data"
     else
         print_fail "Volume mount configuration incorrect"
