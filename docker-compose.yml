@@ -396,6 +396,83 @@ services:
       start_period: 60s
 
   # ==========================================================================
+  # Chatwoot - Customer Service Platform
+  # ==========================================================================
+  # Omnichannel customer communication platform with agent management
+  # Image: chatwoot/chatwoot:v4.6.0-ce
+  #
+  # Architecture:
+  #   - Connects to PostgreSQL (chatwoot_db) for data storage
+  #   - Connects to Redis for Sidekiq background jobs and session management
+  #   - Exposed via Caddy reverse proxy (chatwoot.{DOMAIN})
+  #   - Webhook integration with Evolution API via n8n for WhatsApp support
+  #
+  # Security:
+  #   - SECRET_KEY_BASE (128-char hex) protects Rails sessions
+  #   - Database user isolation (chatwoot_user with access only to chatwoot_db)
+  #   - Network isolation (internal for DB/Redis, external for Caddy)
+  #   - No port exposure to host (HTTPS access via Caddy only)
+  #
+  # Integration Patterns:
+  #   - WhatsApp: Evolution API → n8n → Chatwoot API (incoming messages)
+  #   - WhatsApp: Chatwoot webhook → n8n → Evolution API (outgoing replies)
+  #   - Admin UI: https://chatwoot.{DOMAIN}/app
+  #   - API Base URL: https://chatwoot.{DOMAIN}/api/v1
+  #
+  # API Authentication:
+  #   - API access token required (CHATWOOT_API_TOKEN)
+  #   - Token generated from Chatwoot admin UI after first login
+  #   - Token stored in .env for n8n integration workflows
+  #
+  # Storage Strategy:
+  #   - Local volumes for MVP (borgstack_chatwoot_storage, borgstack_chatwoot_public)
+  #   - SeaweedFS integration deferred to Epic 5 (Story 5.3)
+  # ==========================================================================
+  chatwoot:
+    image: chatwoot/chatwoot:v4.6.0-ce
+    container_name: chatwoot
+    restart: unless-stopped
+    networks:
+      - borgstack_internal
+      - borgstack_external
+    environment:
+      # PostgreSQL connection (single source of truth)
+      DATABASE_URL: postgresql://chatwoot_user:${CHATWOOT_DB_PASSWORD}@postgresql:5432/chatwoot_db
+
+      # Redis connection
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+
+      # Rails configuration
+      SECRET_KEY_BASE: ${CHATWOOT_SECRET_KEY_BASE}
+      RAILS_ENV: production
+      RAILS_LOG_TO_STDOUT: "true"
+      FORCE_SSL: "true"
+
+      # Chatwoot configuration
+      FRONTEND_URL: https://${CHATWOOT_HOST}
+      INSTALLATION_NAME: BorgStack Chatwoot
+    volumes:
+      - borgstack_chatwoot_storage:/app/storage
+      - borgstack_chatwoot_public:/app/public
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+      # Rationale for 90s start_period:
+      #   - Rails database migrations: ~30-45s (ActiveRecord schema creation)
+      #   - Webpacker asset compilation: ~20-30s (JavaScript/CSS bundles)
+      #   - Sidekiq worker initialization: ~10s (background job processor)
+      #   - Puma web server startup: ~5s (Rails application server)
+      # Total: ~65-90s (90s provides safety margin for slower systems)
+
+  # ==========================================================================
   # MongoDB Database (Dedicated for Lowcoder)
   # ==========================================================================
   # NoSQL database exclusively for Lowcoder metadata and configuration storage
@@ -567,8 +644,19 @@ volumes:
     # CRITICAL: Contains WhatsApp session credentials - loss requires re-authentication via QR code
     # Manual backup: docker compose exec -T evolution tar czf - /evolution/instances > evolution-backup-$(date +%Y%m%d).tar.gz
 
+  borgstack_chatwoot_storage:
+    # Chatwoot storage directory
+    # Contains: File uploads, attachments, agent avatars, customer profile images
+    # Backed up by Duplicati (Story 5.2)
+    # Manual backup: docker compose exec -T chatwoot tar czf - /app/storage > chatwoot-storage-backup-$(date +%Y%m%d).tar.gz
+
+  borgstack_chatwoot_public:
+    # Chatwoot public assets directory
+    # Contains: Rails compiled assets, webpacker bundles, JavaScript/CSS files
+    # Auto-regenerated on container restart (asset precompilation)
+    # Not critical for backups (can be regenerated from image)
+
 # Additional volumes (to be added in future stories):
-#   borgstack_chatwoot_data:
 #   borgstack_lowcoder_data:
 #   borgstack_directus_data:
 #   borgstack_fileflows_data:

@@ -397,7 +397,7 @@ generate_env_file() {
     local mongo_root_password=$(generate_password)
     local lowcoder_db_password=$(generate_password)
     local redis_password=$(generate_password)
-    local chatwoot_secret_key_base=$(generate_password)$(generate_password)
+    local chatwoot_secret_key_base=$(openssl rand -hex 64)
     local directus_secret=$(generate_password)
     local evolution_jwt_secret=$(generate_password)
     local evolution_api_key=$(openssl rand -base64 32)
@@ -452,9 +452,15 @@ N8N_BASIC_AUTH_PASSWORD=${n8n_basic_auth_password}
 N8N_ENCRYPTION_KEY=${n8n_encryption_key}
 
 # ============================================================================
+# CHATWOOT CONFIGURATION
+# ============================================================================
+CHATWOOT_HOST=chatwoot.${domain}
+CHATWOOT_SECRET_KEY_BASE=${chatwoot_secret_key_base}
+CHATWOOT_API_TOKEN=<obtain-from-admin-ui-after-first-login>
+
+# ============================================================================
 # OTHER APPLICATION SECRETS
 # ============================================================================
-CHATWOOT_SECRET_KEY_BASE=${chatwoot_secret_key_base}
 DIRECTUS_SECRET=${directus_secret}
 EVOLUTION_JWT_SECRET=${evolution_jwt_secret}
 
@@ -489,12 +495,22 @@ EOF
     echo "${CYAN}n8n Basic Auth:${RESET} admin / ${n8n_basic_auth_password}"
     echo "${CYAN}n8n Encryption Key:${RESET} ${n8n_encryption_key:0:20}... ${YELLOW}(Full key in .env - BACKUP SECURELY!)${RESET}"
     echo ""
+    echo "${CYAN}Chatwoot Admin UI:${RESET} https://chatwoot.${domain}/app"
+    echo "${CYAN}Chatwoot DB Password:${RESET} ${chatwoot_db_password}"
+    echo "${CYAN}Chatwoot Secret Key:${RESET} ${chatwoot_secret_key_base:0:20}... ${YELLOW}(128-char hex key in .env)${RESET}"
+    echo ""
     echo "${CYAN}Evolution API Admin UI:${RESET} https://evolution.${domain}/manager"
     echo "${CYAN}Evolution API Key:${RESET} ${evolution_api_key:0:20}... ${YELLOW}(Full key in .env - required for all API calls)${RESET}"
     echo "${CYAN}Evolution API Webhook:${RESET} https://n8n.${domain}/webhook/whatsapp-incoming"
     echo ""
     echo "${YELLOW}All credentials are stored in: ${env_file}${RESET}"
     echo "${YELLOW}File permissions: -rw------- (600)${RESET}"
+    echo ""
+    echo "${BOLD}${YELLOW}⚠️  IMPORTANT: CHATWOOT_API_TOKEN requires manual generation:${RESET}"
+    echo "${YELLOW}   1. Login to Chatwoot: https://chatwoot.${domain}/app${RESET}"
+    echo "${YELLOW}   2. Go to Settings → Account Settings → Access Tokens${RESET}"
+    echo "${YELLOW}   3. Create New Token and add to .env as CHATWOOT_API_TOKEN${RESET}"
+    echo "${YELLOW}   4. Restart chatwoot: docker compose restart chatwoot${RESET}"
     echo ""
 }
 

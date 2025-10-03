@@ -1070,3 +1070,187 @@ jobs:
           echo "Cleaning up test environment..."
           docker compose down -v --remove-orphans || true
           rm -f .env
+
+  validate-chatwoot:
+    name: Validate Chatwoot Configuration
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Create .env file for testing
+        run: |
+          echo "Creating temporary .env file with test credentials..."
+          cat > .env << 'EOF'
+          # Test credentials for CI pipeline
+          POSTGRES_PASSWORD=test_postgres_password_12345678
+          CHATWOOT_DB_PASSWORD=test_chatwoot_password_12345678
+          CHATWOOT_SECRET_KEY_BASE=test_chatwoot_secret_key_base_128_character_hex_string_0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          CHATWOOT_HOST=chatwoot.example.com.br
+          REDIS_PASSWORD=test_redis_password_12345678901234567890
+          DOMAIN=example.com.br
+          EMAIL=admin@example.com.br
+          CORS_ALLOWED_ORIGINS=*
+          EOF
+
+      - name: Verify Chatwoot configuration in docker-compose.yml
+        run: |
+          echo "Verifying Chatwoot service is configured..."
+
+          # Check Chatwoot image version is pinned correctly
+          if docker compose config | grep -q "image: chatwoot/chatwoot:v4.6.0-ce"; then
+            echo "✅ Chatwoot image correctly configured (chatwoot/chatwoot:v4.6.0-ce)"
+          else
+            echo "❌ Chatwoot image not configured correctly"
+            exit 1
+          fi
+
+          # Check Chatwoot is on both networks (internal for DB/Redis, external for Caddy)
+          if docker compose config | grep -A 70 "chatwoot:" | grep -q "borgstack_internal"; then
+            echo "✅ Chatwoot connected to borgstack_internal network"
+          else
+            echo "❌ Chatwoot not connected to borgstack_internal network"
+            exit 1
+          fi
+
+          if docker compose config | grep -A 70 "chatwoot:" | grep -q "borgstack_external"; then
+            echo "✅ Chatwoot connected to borgstack_external network"
+          else
+            echo "❌ Chatwoot not connected to borgstack_external network"
+            exit 1
+          fi
+
+          # Verify volume naming convention (both storage and public volumes)
+          if docker compose config | grep -q "borgstack_chatwoot_storage"; then
+            echo "✅ Volume borgstack_chatwoot_storage follows naming convention"
+          else
+            echo "❌ Volume borgstack_chatwoot_storage does not follow naming convention"
+            exit 1
+          fi
+
+          if docker compose config | grep -q "borgstack_chatwoot_public"; then
+            echo "✅ Volume borgstack_chatwoot_public follows naming convention"
+          else
+            echo "❌ Volume borgstack_chatwoot_public does not follow naming convention"
+            exit 1
+          fi
+
+          # Verify no port exposure in production config
+          if docker compose config | grep -A 70 "chatwoot:" | grep -E "^\s+ports:" > /dev/null 2>&1; then
+            echo "❌ Chatwoot has port exposure in production config (security violation)"
+            exit 1
+          else
+            echo "✅ No port exposure to host (security requirement met)"
+          fi
+
+          # Verify health check is configured
+          if docker compose config | grep -A 70 "chatwoot:" | grep -q "healthcheck:"; then
+            echo "✅ Health check configured for Chatwoot"
+          else
+            echo "❌ Health check not configured for Chatwoot"
+            exit 1
+          fi
+
+      - name: Verify Chatwoot environment variables
+        run: |
+          echo "Verifying Chatwoot environment variables configuration..."
+
+          # Check DATABASE_URL connection string
+          if docker compose config | grep -A 70 "chatwoot:" | grep -q "DATABASE_URL:.*postgresql://chatwoot_user:.*@postgresql:5432/chatwoot_db"; then
+            echo "✅ DATABASE_URL configured correctly"
+          else
+            echo "❌ DATABASE_URL not configured correctly"
+            exit 1
+          fi
+
+          # Check Redis connection
+          if docker compose config | grep -A 70 "chatwoot:" | grep -q "REDIS_URL:.*redis://"; then
+            echo "✅ REDIS_URL configured correctly"
+          else
+            echo "❌ REDIS_URL not configured correctly"
+            exit 1
+          fi
+
+          # Check SECRET_KEY_BASE is set
+          if docker compose config | grep -A 70 "chatwoot:" | grep -q "SECRET_KEY_BASE:"; then
+            echo "✅ SECRET_KEY_BASE configured"
+          else
+            echo "❌ SECRET_KEY_BASE not configured"
+            exit 1
+          fi
+
+          # Check FRONTEND_URL is set
+          if docker compose config | grep -A 70 "chatwoot:" | grep -q "FRONTEND_URL:"; then
+            echo "✅ FRONTEND_URL configured"
+          else
+            echo "❌ FRONTEND_URL not configured"
+            exit 1
+          fi
+
+          # Check RAILS_ENV is production
+          if docker compose config | grep -A 70 "chatwoot:" | grep -q "RAILS_ENV: production"; then
+            echo "✅ RAILS_ENV set to production"
+          else
+            echo "❌ RAILS_ENV not set to production"
+            exit 1
+          fi
+
+      - name: Verify Chatwoot depends_on configuration
+        run: |
+          echo "Verifying Chatwoot dependency configuration..."
+
+          # Check PostgreSQL dependency
+          if docker compose config | grep -A 80 "chatwoot:" | grep -A 5 "depends_on:" | grep -q "postgresql:"; then
+            echo "✅ Chatwoot depends on PostgreSQL"
+          else
+            echo "❌ Chatwoot missing PostgreSQL dependency"
+            exit 1
+          fi
+
+          # Check Redis dependency
+          if docker compose config | grep -A 80 "chatwoot:" | grep -A 10 "depends_on:" | grep -q "redis:"; then
+            echo "✅ Chatwoot depends on Redis"
+          else
+            echo "❌ Chatwoot missing Redis dependency"
+            exit 1
+          fi
+
+      - name: Verify Chatwoot validation test exists
+        run: |
+          echo "Verifying Chatwoot validation test script exists..."
+
+          if [ -f "tests/deployment/verify-chatwoot.sh" ]; then
+            echo "✅ tests/deployment/verify-chatwoot.sh exists"
+          else
+            echo "❌ tests/deployment/verify-chatwoot.sh not found"
+            exit 1
+          fi
+
+          if [ -x "tests/deployment/verify-chatwoot.sh" ]; then
+            echo "✅ verify-chatwoot.sh is executable"
+          else
+            echo "❌ verify-chatwoot.sh is not executable"
+            exit 1
+          fi
+
+      - name: Verify Chatwoot documentation exists
+        run: |
+          echo "Verifying Chatwoot documentation exists..."
+
+          if [ -f "config/chatwoot/README.md" ]; then
+            echo "✅ config/chatwoot/README.md exists"
+          else
+            echo "❌ config/chatwoot/README.md not found"
+            exit 1
+          fi
+
+      - name: Cleanup Chatwoot test environment
+        if: always()
+        run: |
+          echo "Cleaning up test environment..."
+          docker compose down -v --remove-orphans || true
+          rm -f .env
