@@ -1,0 +1,147 @@
+{
+  "name": "03 - WhatsApp Evolution Incoming",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp-incoming",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "b4d3e8f1-1234-5678-9abc-def012345678",
+      "name": "Evolution Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [250, 300],
+      "webhookId": "whatsapp-evolution"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract WhatsApp message data from Evolution API webhook payload\n// Evolution API sends messages in this format:\n// {\n//   \"event\": \"messages.upsert\",\n//   \"instance\": \"customer_support\",\n//   \"data\": {\n//     \"key\": { \"remoteJid\": \"5511987654321@s.whatsapp.net\", \"fromMe\": false, \"id\": \"3EB0...\" },\n//     \"message\": { \"conversation\": \"Message text here\" },\n//     \"messageTimestamp\": 1735632000,\n//     \"pushName\": \"Sender Name\"\n//   }\n// }\n\nconst event = $json.event;\nconst instanceName = $json.instance;\nconst messageData = $json.data;\n\n// Extract sender phone number (remoteJid format: \"5511987654321@s.whatsapp.net\")\nconst remoteJid = messageData?.key?.remoteJid || '';\nconst phoneNumber = remoteJid.split('@')[0]; // Extract just the number\n\n// Extract message text (handle both conversation and extendedTextMessage formats)\nlet messageText = '';\nif (messageData?.message?.conversation) {\n  messageText = messageData.message.conversation;\n} else if (messageData?.message?.extendedTextMessage?.text) {\n  messageText = messageData.message.extendedTextMessage.text;\n} else if (messageData?.message?.imageMessage?.caption) {\n  messageText = `[Image: ${messageData.message.imageMessage.caption}]`;\n} else if (messageData?.message?.videoMessage?.caption) {\n  messageText = `[Video: ${messageData.message.videoMessage.caption}]`;\n} else if (messageData?.message?.documentMessage?.caption) {\n  messageText = `[Document: ${messageData.message.documentMessage.caption}]`;\n} else {\n  messageText = '[Unsupported message type]';\n}\n\n// Build structured output\nreturn {\n  event: event,\n  instance: instanceName,\n  remoteJid: remoteJid,\n  phoneNumber: phoneNumber,\n  messageText: messageText,\n  messageId: messageData?.key?.id || '',\n  timestamp: messageData?.messageTimestamp || 0,\n  senderName: messageData?.pushName || 'Unknown',\n  fromMe: messageData?.key?.fromMe || false,\n  rawData: messageData\n};"
+      },
+      "id": "c5d4e9f2-2345-6789-abcd-ef0123456789",
+      "name": "Process Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "12345678-1234-5678-1234-567812345678",
+              "leftValue": "={{ $json.fromMe }}",
+              "rightValue": "false",
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "23456789-2345-6789-2345-678923456789",
+              "leftValue": "={{ $json.event }}",
+              "rightValue": "messages.upsert",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "d6e5f0g3-3456-7890-bcde-f01234567890",
+      "name": "Filter Incoming Messages",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "content": "## WhatsApp Message Received\n\n**From:** {{ $json.senderName }} ({{ $json.phoneNumber }})\n**Instance:** {{ $json.instance }}\n**Message:** {{ $json.messageText }}\n**Timestamp:** {{ new Date($json.timestamp * 1000).toLocaleString() }}\n\n---\n\n**Next Steps:**\n1. Connect this workflow to Chatwoot (Story 3.1)\n2. Add message routing logic based on keywords\n3. Implement auto-reply functionality\n4. Add CRM integration\n\n**Example Routing:**\n- \"support\" → Create Chatwoot conversation\n- \"status\" → Check order status in database\n- \"catalog\" → Send product catalog\n\n**Documentation:**\n- Evolution API Integration: See config/evolution/README.md\n- Chatwoot Integration: Coming in Story 3.1",
+        "height": 464.79296875,
+        "width": 565.890625
+      },
+      "id": "e7f6g1h4-4567-8901-cdef-012345678901",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [850, 180]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"success\": true, \"received\": $json.messageId, \"instance\": $json.instance } }}"
+      },
+      "id": "f8g7h2i5-5678-9012-def0-123456789012",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [850, 420]
+    }
+  ],
+  "connections": {
+    "Evolution Webhook": {
+      "main": [
+        [
+          {
+            "node": "Process Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Message": {
+      "main": [
+        [
+          {
+            "node": "Filter Incoming Messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Incoming Messages": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "createdAt": "2025-10-02T23:00:00.000Z",
+      "updatedAt": "2025-10-02T23:00:00.000Z",
+      "id": "1",
+      "name": "whatsapp"
+    },
+    {
+      "createdAt": "2025-10-02T23:00:00.000Z",
+      "updatedAt": "2025-10-02T23:00:00.000Z",
+      "id": "2",
+      "name": "evolution-api"
+    }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2025-10-02T23:00:00.000Z",
+  "versionId": "1"
+}

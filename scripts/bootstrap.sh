@@ -400,6 +400,7 @@ generate_env_file() {
     local chatwoot_secret_key_base=$(generate_password)$(generate_password)
     local directus_secret=$(generate_password)
     local evolution_jwt_secret=$(generate_password)
+    local evolution_api_key=$(openssl rand -base64 32)
 
     # Create .env file
     log_info "Writing .env file..."
@@ -456,6 +457,14 @@ N8N_ENCRYPTION_KEY=${n8n_encryption_key}
 CHATWOOT_SECRET_KEY_BASE=${chatwoot_secret_key_base}
 DIRECTUS_SECRET=${directus_secret}
 EVOLUTION_JWT_SECRET=${evolution_jwt_secret}
+
+# ============================================================================
+# EVOLUTION API CONFIGURATION
+# ============================================================================
+EVOLUTION_HOST=evolution.${domain}
+EVOLUTION_API_KEY=${evolution_api_key}
+EVOLUTION_WEBHOOK_URL=https://n8n.${domain}/webhook/whatsapp-incoming
+DATABASE_CONNECTION_CLIENT_NAME=evolution_api
 EOF
 
     # Set secure permissions
@@ -479,6 +488,10 @@ EOF
     echo "${CYAN}n8n Web UI:${RESET} https://n8n.${domain}"
     echo "${CYAN}n8n Basic Auth:${RESET} admin / ${n8n_basic_auth_password}"
     echo "${CYAN}n8n Encryption Key:${RESET} ${n8n_encryption_key:0:20}... ${YELLOW}(Full key in .env - BACKUP SECURELY!)${RESET}"
+    echo ""
+    echo "${CYAN}Evolution API Admin UI:${RESET} https://evolution.${domain}/manager"
+    echo "${CYAN}Evolution API Key:${RESET} ${evolution_api_key:0:20}... ${YELLOW}(Full key in .env - required for all API calls)${RESET}"
+    echo "${CYAN}Evolution API Webhook:${RESET} https://n8n.${domain}/webhook/whatsapp-incoming"
     echo ""
     echo "${YELLOW}All credentials are stored in: ${env_file}${RESET}"
     echo "${YELLOW}File permissions: -rw------- (600)${RESET}"

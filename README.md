@@ -142,6 +142,44 @@ chmod +x scripts/bootstrap.sh
   4. Create your first automation workflow
 - **Example Workflows:** See `config/n8n/workflows/README.md` for import instructions
 
+#### Evolution API - WhatsApp Business Gateway
+
+- **URL:** `https://evolution.<your-domain>/manager` (Admin UI)
+- **API Documentation:** `https://evolution.<your-domain>/docs`
+- **API Key:** (from `EVOLUTION_API_KEY` in `.env`) - Required for ALL API operations
+- **Webhook URL:** `https://n8n.<your-domain>/webhook/whatsapp-incoming` (configured automatically)
+- **Multi-Instance Support:** Create separate WhatsApp instances for different business accounts
+- **Getting Started:**
+  1. Access Evolution API Admin UI at `https://evolution.<your-domain>/manager`
+  2. Create WhatsApp instance (provide instance name, e.g., `customer_support`)
+  3. Scan QR code with WhatsApp (Settings → Linked Devices → Link a Device)
+  4. Verify connection status (instance state should be: `open`)
+  5. Import n8n webhook workflow: `config/n8n/workflows/03-whatsapp-evolution-incoming.json`
+  6. Test message sending/receiving
+- **Detailed Setup Guide:** See `config/evolution/README.md` for complete instructions
+- **n8n Integration:** Incoming WhatsApp messages → Evolution API → Webhook → n8n → Chatwoot/other services
+- **Message Sending:** Use Evolution API HTTP nodes in n8n workflows to send WhatsApp messages
+
+**API Usage Examples:**
+
+```bash
+# Create WhatsApp instance
+curl -X POST "https://evolution.<your-domain>/instance/create" \
+  -H "Content-Type: application/json" \
+  -H "apikey: <EVOLUTION_API_KEY>" \
+  -d '{"instanceName": "customer_support", "qrcode": true, "integration": "WHATSAPP-BAILEYS"}'
+
+# Send WhatsApp message
+curl -X POST "https://evolution.<your-domain>/message/sendText/customer_support" \
+  -H "Content-Type: application/json" \
+  -H "apikey: <EVOLUTION_API_KEY>" \
+  -d '{"number": "5511987654321", "text": "Hello from BorgStack!"}'
+
+# Check instance connection status
+curl "https://evolution.<your-domain>/instance/connectionState/customer_support" \
+  -H "apikey: <EVOLUTION_API_KEY>"
+```
+
 ### Troubleshooting
 
 - **View logs:** `cat /tmp/borgstack-bootstrap.log`
@@ -183,6 +221,41 @@ docker compose exec postgresql psql -U postgres -c "\l" | grep n8n_db
 # Check connection from n8n
 docker compose logs n8n | grep -i "database\|postgres"
 ```
+
+#### Evolution API Connection Issues
+
+**Cannot access Evolution API Admin UI:**
+```bash
+# Check Evolution API container status
+docker compose ps evolution
+
+# Check Evolution API logs
+docker compose logs evolution
+
+# Verify DNS configuration
+dig evolution.<your-domain>
+
+# Check Caddy reverse proxy
+docker compose logs caddy | grep evolution
+```
+
+**QR Code not displaying:**
+1. Check Evolution API health: `docker compose ps evolution` (should show: healthy)
+2. Verify database connection: `docker compose logs evolution | grep -i "database\|prisma"`
+3. Check API key configuration: `grep EVOLUTION_API_KEY .env`
+
+**WhatsApp connection fails after QR scan:**
+1. Disconnect all WhatsApp Web sessions on your phone
+2. Wait 5 minutes, then retry QR code scan
+3. Check Evolution API logs: `docker compose logs evolution --tail 100`
+4. Restart Evolution API: `docker compose restart evolution`
+
+**Webhooks not delivered to n8n:**
+1. Verify n8n webhook is active: `curl https://n8n.<your-domain>/webhook/whatsapp-incoming`
+2. Check Evolution API webhook config: See `config/evolution/README.md` → Troubleshooting
+3. Test webhook delivery: Send message to WhatsApp, check n8n executions
+
+**For detailed troubleshooting:** See `config/evolution/README.md` → Troubleshooting section
 
 **Redis/Queue errors:**
 ```bash

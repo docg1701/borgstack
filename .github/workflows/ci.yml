@@ -855,3 +855,207 @@ jobs:
           echo "Cleaning up test environment..."
           docker compose down -v --remove-orphans || true
           rm -f .env
+
+  validate-evolution:
+    name: Validate Evolution API Configuration
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Create .env file for testing
+        run: |
+          echo "Creating temporary .env file with test credentials..."
+          cat > .env << 'EOF'
+          # Test credentials for CI pipeline
+          POSTGRES_PASSWORD=test_postgres_password_12345678
+          EVOLUTION_DB_PASSWORD=test_evolution_password_12345678
+          EVOLUTION_API_KEY=test_evolution_api_key_12345678
+          EVOLUTION_WEBHOOK_URL=https://n8n.example.com.br/webhook/whatsapp-incoming
+          EVOLUTION_HOST=evolution.example.com.br
+          DATABASE_CONNECTION_CLIENT_NAME=evolution_api
+          N8N_DB_PASSWORD=test_n8n_password_12345678
+          REDIS_PASSWORD=test_redis_password_12345678901234567890
+          DOMAIN=example.com.br
+          EMAIL=admin@example.com.br
+          CORS_ALLOWED_ORIGINS=*
+          EOF
+
+      - name: Verify Evolution API configuration in docker-compose.yml
+        run: |
+          echo "Verifying Evolution API service is configured..."
+
+          # Check Evolution API image version is pinned correctly
+          if docker compose config | grep -q "image: atendai/evolution-api:v2.2.3"; then
+            echo "✅ Evolution API image correctly configured (atendai/evolution-api:v2.2.3)"
+          else
+            echo "❌ Evolution API image not configured correctly"
+            exit 1
+          fi
+
+          # Check Evolution API is on both networks
+          if docker compose config | grep -A 50 "evolution:" | grep -q "borgstack_internal"; then
+            echo "✅ Evolution API connected to borgstack_internal network"
+          else
+            echo "❌ Evolution API not connected to borgstack_internal network"
+            exit 1
+          fi
+
+          if docker compose config | grep -A 50 "evolution:" | grep -q "borgstack_external"; then
+            echo "✅ Evolution API connected to borgstack_external network"
+          else
+            echo "❌ Evolution API not connected to borgstack_external network"
+            exit 1
+          fi
+
+          # Verify volume naming convention
+          if docker compose config | grep -q "borgstack_evolution_instances"; then
+            echo "✅ Volume follows borgstack_ naming convention"
+          else
+            echo "❌ Volume does not follow naming convention"
+            exit 1
+          fi
+
+          # Verify no port exposure in production config
+          if docker compose config | grep -A 50 "evolution:" | grep -E "^\s+ports:" > /dev/null 2>&1; then
+            echo "❌ Evolution API has port exposure in production config (security violation)"
+            exit 1
+          else
+            echo "✅ No port exposure to host (security requirement met)"
+          fi
+
+          # Verify health check is configured
+          if docker compose config | grep -A 60 "evolution:" | grep -q "healthcheck:"; then
+            echo "✅ Health check configured for Evolution API"
+          else
+            echo "❌ Health check not configured for Evolution API"
+            exit 1
+          fi
+
+      - name: Verify Evolution API environment variables
+        run: |
+          echo "Verifying Evolution API environment variables configuration..."
+
+          # Check database connection variables
+          if docker compose config | grep -A 60 "evolution:" | grep -q "DATABASE_URL.*postgresql://evolution_user"; then
+            echo "✅ DATABASE_URL configured for evolution_user"
+          else
+            echo "❌ DATABASE_URL not configured correctly"
+            exit 1
+          fi
+
+          # Check Redis connection variables
+          if docker compose config | grep -A 60 "evolution:" | grep -q "REDIS_URI.*redis://"; then
+            echo "✅ REDIS_URI configured"
+          else
+            echo "❌ REDIS_URI not configured correctly"
+            exit 1
+          fi
+
+          # Check authentication variables
+          if docker compose config | grep -A 60 "evolution:" | grep -q "AUTHENTICATION_API_KEY"; then
+            echo "✅ AUTHENTICATION_API_KEY configured"
+          else
+            echo "❌ AUTHENTICATION_API_KEY not configured"
+            exit 1
+          fi
+
+          # Check webhook configuration
+          if docker compose config | grep -A 60 "evolution:" | grep -q "WEBHOOK_GLOBAL_URL"; then
+            echo "✅ WEBHOOK_GLOBAL_URL configured"
+          else
+            echo "❌ WEBHOOK_GLOBAL_URL not configured"
+            exit 1
+          fi
+
+      - name: Verify Evolution API depends_on configuration
+        run: |
+          echo "Verifying Evolution API service dependencies..."
+
+          # Check PostgreSQL dependency
+          if docker compose config | grep -A 80 "evolution:" | grep -A 10 "depends_on:" | grep -q "postgresql:"; then
+            echo "✅ Evolution API depends on postgresql"
+          else
+            echo "❌ Evolution API missing postgresql dependency"
+            exit 1
+          fi
+
+          # Check Redis dependency
+          if docker compose config | grep -A 80 "evolution:" | grep -A 10 "depends_on:" | grep -q "redis:"; then
+            echo "✅ Evolution API depends on redis"
+          else
+            echo "❌ Evolution API missing redis dependency"
+            exit 1
+          fi
+
+      - name: Verify Evolution API .env.example variables
+        run: |
+          echo "Verifying Evolution API variables in .env.example..."
+
+          if grep -q "EVOLUTION_HOST=" .env.example; then
+            echo "✅ EVOLUTION_HOST variable in .env.example"
+          else
+            echo "❌ EVOLUTION_HOST variable not found in .env.example"
+            exit 1
+          fi
+
+          if grep -q "EVOLUTION_API_KEY=" .env.example; then
+            echo "✅ EVOLUTION_API_KEY variable in .env.example"
+          else
+            echo "❌ EVOLUTION_API_KEY variable not found in .env.example"
+            exit 1
+          fi
+
+          if grep -q "EVOLUTION_DB_PASSWORD=" .env.example; then
+            echo "✅ EVOLUTION_DB_PASSWORD variable in .env.example"
+          else
+            echo "❌ EVOLUTION_DB_PASSWORD variable not found in .env.example"
+            exit 1
+          fi
+
+          if grep -q "EVOLUTION_WEBHOOK_URL=" .env.example; then
+            echo "✅ EVOLUTION_WEBHOOK_URL variable in .env.example"
+          else
+            echo "❌ EVOLUTION_WEBHOOK_URL variable not found in .env.example"
+            exit 1
+          fi
+
+      - name: Verify Evolution API validation test script exists
+        run: |
+          echo "Verifying Evolution API validation test script exists..."
+
+          if [ -f "tests/deployment/verify-evolution.sh" ]; then
+            echo "✅ verify-evolution.sh exists"
+          else
+            echo "❌ verify-evolution.sh not found"
+            exit 1
+          fi
+
+          if [ -x "tests/deployment/verify-evolution.sh" ]; then
+            echo "✅ verify-evolution.sh is executable"
+          else
+            echo "❌ verify-evolution.sh is not executable"
+            exit 1
+          fi
+
+      - name: Verify Evolution API documentation exists
+        run: |
+          echo "Verifying Evolution API documentation exists..."
+
+          if [ -f "config/evolution/README.md" ]; then
+            echo "✅ config/evolution/README.md exists"
+          else
+            echo "❌ config/evolution/README.md not found"
+            exit 1
+          fi
+
+      - name: Cleanup Evolution API test environment
+        if: always()
+        run: |
+          echo "Cleaning up test environment..."
+          docker compose down -v --remove-orphans || true
+          rm -f .env
