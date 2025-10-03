@@ -267,8 +267,7 @@ As a user experience specialist, I want step-by-step guides and tutorials in Por
 2. Component-specific guides for each tool
 3. Common workflow examples and templates
 4. Best practices and optimization tips
-5. Video tutorials for complex procedures
-6. Community contribution guidelines
+5. Community contribution guidelines
 
 ### Story 6.4 Final Deployment Verification
 As a deployment engineer, I want a final verification that the complete stack deploys successfully, so that I can confidently deliver on the core project promise.
