@@ -48,6 +48,107 @@ curl -X POST https://n8n.${DOMAIN}/webhook/test \
 - Maintenance tasks
 - Health checks
 
+### 03-whatsapp-evolution-incoming.json
+**Purpose:** Receives incoming WhatsApp messages from Evolution API via webhook
+
+**Features:**
+- Webhook trigger at `/webhook/whatsapp-incoming` endpoint
+- Processes Evolution API message payloads
+- Extracts sender phone number, message text, and metadata
+- Filters incoming messages (ignores messages sent by you - `fromMe: true`)
+- Returns success response to Evolution API
+
+**Workflow Nodes:**
+1. **Evolution Webhook** - Receives POST requests from Evolution API
+2. **Process Message** - Extracts WhatsApp message data (phone, text, sender name)
+3. **Filter Incoming Messages** - Only processes messages FROM contacts (not your sent messages)
+4. **Respond to Webhook** - Sends 200 OK response back to Evolution API
+
+**Message Format (Evolution API):**
+```json
+{
+  "event": "messages.upsert",
+  "instance": "customer_support",
+  "data": {
+    "key": {
+      "remoteJid": "5511987654321@s.whatsapp.net",
+      "fromMe": false,
+      "id": "3EB0C8F3E7E3A7D8C0F1"
+    },
+    "message": {
+      "conversation": "Olá, preciso de ajuda com meu pedido #12345"
+    },
+    "messageTimestamp": 1735632000,
+    "pushName": "João Silva"
+  }
+}
+```
+
+**Workflow Output:**
+```json
+{
+  "event": "messages.upsert",
+  "instance": "customer_support",
+  "remoteJid": "5511987654321@s.whatsapp.net",
+  "phoneNumber": "5511987654321",
+  "messageText": "Olá, preciso de ajuda com meu pedido #12345",
+  "messageId": "3EB0C8F3E7E3A7D8C0F1",
+  "timestamp": 1735632000,
+  "senderName": "João Silva",
+  "fromMe": false
+}
+```
+
+**Integration with Evolution API:**
+1. Evolution API sends incoming WhatsApp messages to this webhook
+2. Configure webhook in Evolution API: `EVOLUTION_WEBHOOK_URL=https://n8n.${DOMAIN}/webhook/whatsapp-incoming`
+3. Webhook is automatically configured during bootstrap (Story 1.6)
+4. Evolution API instance creation sets webhook URL (Story 2.2)
+
+**Next Steps (Extend This Workflow):**
+- Connect to Chatwoot (Story 3.1): Create conversations for incoming messages
+- Add keyword-based routing: "support" → Chatwoot, "status" → Database query
+- Implement auto-reply logic: Send automated responses via Evolution API
+- Add CRM integration: Store message history in Directus
+- Create ticket tracking: Log customer requests in database
+
+**Documentation:**
+- Evolution API setup: `config/evolution/README.md`
+- Evolution API webhook configuration: See Story 2.2 documentation
+- Message sending via Evolution API: See `config/evolution/README.md` → "Message Sending/Receiving Test"
+
+**Test Webhook:**
+```bash
+# Test webhook manually (simulate Evolution API message)
+curl -X POST https://n8n.${DOMAIN}/webhook/whatsapp-incoming \
+  -H "Content-Type: application/json" \
+  -d '{
+    "event": "messages.upsert",
+    "instance": "customer_support",
+    "data": {
+      "key": {
+        "remoteJid": "5511987654321@s.whatsapp.net",
+        "fromMe": false,
+        "id": "TEST123"
+      },
+      "message": {
+        "conversation": "Test message from n8n workflow verification"
+      },
+      "messageTimestamp": 1735632000,
+      "pushName": "Test User"
+    }
+  }'
+```
+
+**Expected Response:**
+```json
+{
+  "success": true,
+  "received": "TEST123",
+  "instance": "customer_support"
+}
+```
+
 ## How to Import Workflows
 
 ### Method 1: Via n8n Web UI (Recommended)

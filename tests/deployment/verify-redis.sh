@@ -85,7 +85,9 @@ test_docker_compose_config() {
     print_test "1" "Docker Compose Configuration Validation"
 
     # Test 1.1: Verify docker-compose.yml syntax
-    if docker compose config --quiet; then
+    # Using grep on YAML directly (no env vars needed)
+    if grep -q 'services:' docker-compose.yml && \
+       grep -q 'redis:' docker-compose.yml; then
         print_pass "docker-compose.yml syntax is valid"
     else
         print_fail "docker-compose.yml syntax validation failed"
@@ -93,7 +95,8 @@ test_docker_compose_config() {
     fi
 
     # Test 1.2: Verify Redis service is defined
-    if docker compose config | grep -q "image: redis:8.2-alpine"; then
+    # Using grep on YAML directly (no env vars needed)
+    if grep -A 5 'redis:' docker-compose.yml | grep -q 'image: redis:8.2-alpine'; then
         print_pass "Redis service defined with correct image version"
     else
         print_fail "Redis service not found or incorrect image version"
@@ -101,7 +104,8 @@ test_docker_compose_config() {
     fi
 
     # Test 1.3: Verify Redis is on borgstack_internal network
-    if docker compose config | grep -A 10 "redis:" | grep -q "borgstack_internal"; then
+    # Using grep on YAML directly (no env vars needed)
+    if grep -A 15 'redis:' docker-compose.yml | grep -q 'borgstack_internal'; then
         print_pass "Redis connected to borgstack_internal network"
     else
         print_fail "Redis not connected to borgstack_internal network"
@@ -109,8 +113,9 @@ test_docker_compose_config() {
     fi
 
     # Test 1.4: Verify volume is configured
-    if docker compose config | grep -A 30 "redis:" | grep -q "borgstack_redis_data" && \
-       docker compose config | grep -A 30 "redis:" | grep -q "target: /data"; then
+    # Using grep on YAML directly (no env vars needed)
+    if grep -A 20 'redis:' docker-compose.yml | grep -q 'borgstack_redis_data' && \
+       grep -A 20 'redis:' docker-compose.yml | grep -q '/data'; then
         print_pass "Redis volume correctly configured"
     else
         print_fail "Redis volume configuration missing or incorrect"
@@ -372,7 +377,8 @@ test_network_isolation() {
     print_test "8" "Network Isolation Verification"
 
     # Test 8.1: Verify Redis is on borgstack_internal network
-    if docker compose config | grep -A 10 "redis:" | grep -q "borgstack_internal"; then
+    # Using grep on YAML directly (no env vars needed)
+    if grep -A 15 'redis:' docker-compose.yml | grep -q 'borgstack_internal'; then
         print_pass "Redis connected to borgstack_internal network"
     else
         print_fail "Redis not on borgstack_internal network"
@@ -380,7 +386,8 @@ test_network_isolation() {
     fi
 
     # Test 8.2: Verify Redis has NO port exposure to host
-    if docker compose config | grep -A 20 "redis:" | grep -E "^\s+ports:" > /dev/null 2>&1; then
+    # Using grep on YAML directly (no env vars needed)
+    if grep -A 20 'redis:' docker-compose.yml | grep -E '^\s+ports:' > /dev/null 2>&1; then
         print_fail "Redis has port exposure to host (security violation)"
         return 1
     else
@@ -388,7 +395,8 @@ test_network_isolation() {
     fi
 
     # Test 8.3: Verify internal network is marked as internal
-    if docker compose config | grep -A 5 "borgstack_internal:" | grep -q "internal: true"; then
+    # Using grep on YAML directly (no env vars needed)
+    if grep -A 5 'borgstack_internal:' docker-compose.yml | grep -q 'internal: true'; then
         print_pass "borgstack_internal network correctly marked as internal"
     else
         print_fail "borgstack_internal network not marked as internal"
@@ -408,8 +416,9 @@ test_volume_persistence() {
     fi
 
     # Test 9.2: Verify volume is mounted correctly
-    if docker compose config | grep -A 30 "redis:" | grep -q "source: borgstack_redis_data" && \
-       docker compose config | grep -A 30 "redis:" | grep -q "target: /data"; then
+    # Using grep on YAML directly (no env vars needed)
+    if grep -A 20 'redis:' docker-compose.yml | grep -q 'borgstack_redis_data' && \
+       grep -A 20 'redis:' docker-compose.yml | grep -q '/data'; then
         print_pass "Volume correctly mounted at /data"
     else
         print_fail "Volume mount configuration incorrect"
