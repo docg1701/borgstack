@@ -271,6 +271,17 @@ jobs:
           DIRECTUS_DB_PASSWORD=test_directus_password_12345678
           EVOLUTION_DB_PASSWORD=test_evolution_password_12345678
           REDIS_PASSWORD=test_redis_password_12345678901234567890
+          MONGODB_ROOT_PASSWORD=test_mongodb_root_password_12345678
+          LOWCODER_DB_PASSWORD=test_lowcoder_password_12345678901234567890
+          DOMAIN=example.com.br
+          EMAIL=admin@example.com.br
+          CORS_ALLOWED_ORIGINS=*
+          N8N_BASIC_AUTH_USER=admin
+          N8N_BASIC_AUTH_PASSWORD=test_n8n_auth_password_12345678
+          N8N_ENCRYPTION_KEY=test_n8n_encryption_key_12345678901234567890
+          EVOLUTION_API_KEY=test_evolution_api_key_12345678901234567890
+          EVOLUTION_HOST=evolution.example.com.br
+          EVOLUTION_WEBHOOK_URL=https://n8n.example.com.br/webhook/evolution
           EOF
 
       - name: Verify Redis configuration in docker-compose.yml
