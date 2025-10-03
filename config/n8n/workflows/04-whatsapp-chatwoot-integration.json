@@ -1,0 +1,438 @@
+{
+  "name": "04 - WhatsApp Chatwoot Integration",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp-incoming",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-evolution-incoming",
+      "name": "Evolution Webhook (Incoming Messages)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [250, 300],
+      "webhookId": "whatsapp-incoming"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Extract WhatsApp message data from Evolution API webhook payload\n//\n// Evolution API Webhook Payload Structure:\n// {\n//   \"event\": \"messages.upsert\",\n//   \"instance\": \"instance-name\",\n//   \"data\": {\n//     \"key\": { \"remoteJid\": \"5511987654321@s.whatsapp.net\", ... },\n//     \"message\": { \"conversation\": \"Hello, I need help!\" },\n//     \"pushName\": \"João Silva\",\n//     \"messageTimestamp\": 1234567890\n//   }\n// }\n\nconst payload = $input.item.json;\n\n// Extract phone number (remoteJid format: 5511987654321@s.whatsapp.net)\nconst remoteJid = payload.data?.key?.remoteJid || '';\nconst phoneNumber = remoteJid.replace('@s.whatsapp.net', '').replace('@c.us', '');\n\n// Extract message content (Evolution API supports multiple message types)\nlet messageText = '';\nif (payload.data?.message?.conversation) {\n  // Simple text message\n  messageText = payload.data.message.conversation;\n} else if (payload.data?.message?.extendedTextMessage?.text) {\n  // Extended text message (with mentions, links, etc.)\n  messageText = payload.data.message.extendedTextMessage.text;\n} else if (payload.data?.message?.imageMessage?.caption) {\n  // Image with caption\n  messageText = `[Image] ${payload.data.message.imageMessage.caption}`;\n} else if (payload.data?.message?.videoMessage?.caption) {\n  // Video with caption\n  messageText = `[Video] ${payload.data.message.videoMessage.caption}`;\n} else if (payload.data?.message?.audioMessage) {\n  // Voice message\n  messageText = '[Voice Message]';\n} else if (payload.data?.message?.documentMessage) {\n  // Document attachment\n  const fileName = payload.data.message.documentMessage.fileName || 'document';\n  messageText = `[Document: ${fileName}]`;\n} else {\n  // Unknown message type\n  messageText = '[Unsupported message type]';\n}\n\n// Extract sender name\nconst senderName = payload.data?.pushName || phoneNumber;\n\n// Extract instance name\nconst instanceName = payload.instance || 'default';\n\n// Extract timestamp\nconst messageTimestamp = payload.data?.messageTimestamp || Math.floor(Date.now() / 1000);\n\n// Return structured data for Chatwoot integration\nreturn {\n  json: {\n    phoneNumber: phoneNumber,\n    phoneNumberFormatted: `+${phoneNumber}`, // Chatwoot expects E.164 format\n    sourceId: remoteJid, // Chatwoot uses this for conversation matching\n    senderName: senderName,\n    messageText: messageText,\n    instanceName: instanceName,\n    messageTimestamp: messageTimestamp,\n    rawPayload: payload // Keep original for debugging\n  }\n};"
+      },
+      "id": "extract-whatsapp-data",
+      "name": "Extract WhatsApp Data",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "url": "=https://{{ $env.CHATWOOT_HOST }}/api/v1/accounts/1/contacts/search",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{ $json.phoneNumberFormatted }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "find-contact",
+      "name": "Find Chatwoot Contact",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [650, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "chatwoot-api-token",
+          "name": "Chatwoot API Token"
+        }
+      },
+      "notes": "Search for existing contact by phone number"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "contact-exists",
+              "leftValue": "={{ $json.payload?.length > 0 }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-contact-exists",
+      "name": "Contact Exists?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "url": "=https://{{ $env.CHATWOOT_HOST }}/api/v1/accounts/1/contacts",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"name\": \"{{ $('Extract WhatsApp Data').item.json.senderName }}\",\n  \"phone_number\": \"{{ $('Extract WhatsApp Data').item.json.phoneNumberFormatted }}\",\n  \"identifier\": \"{{ $('Extract WhatsApp Data').item.json.sourceId }}\"\n}",
+        "options": {}
+      },
+      "id": "create-contact",
+      "name": "Create Chatwoot Contact",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1050, 200],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "chatwoot-api-token",
+          "name": "Chatwoot API Token"
+        }
+      },
+      "notes": "Create new contact if not exists"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "contact-id-assignment",
+              "name": "contactId",
+              "value": "={{ $json.payload[0].id }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "use-existing-contact",
+      "name": "Use Existing Contact",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.2,
+      "position": [1050, 400],
+      "notes": "Extract contact ID from search results"
+    },
+    {
+      "parameters": {
+        "url": "=https://{{ $env.CHATWOOT_HOST }}/api/v1/accounts/1/conversations/filter",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"payload\": [\n    {\n      \"attribute_key\": \"source_id\",\n      \"filter_operator\": \"equal_to\",\n      \"values\": [\"{{ $('Extract WhatsApp Data').item.json.sourceId }}\"]\n    },\n    {\n      \"attribute_key\": \"status\",\n      \"filter_operator\": \"equal_to\",\n      \"values\": [\"open\", \"pending\"]\n    }\n  ]\n}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "find-open-conversation",
+      "name": "Find Open Conversation",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1250, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "chatwoot-api-token",
+          "name": "Chatwoot API Token"
+        }
+      },
+      "notes": "Search for existing open conversation with this contact"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "conversation-exists",
+              "leftValue": "={{ $json.payload?.meta?.count > 0 }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-conversation-exists",
+      "name": "Open Conversation Exists?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1450, 300]
+    },
+    {
+      "parameters": {
+        "url": "=https://{{ $env.CHATWOOT_HOST }}/api/v1/accounts/1/conversations",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"source_id\": \"{{ $('Extract WhatsApp Data').item.json.sourceId }}\",\n  \"inbox_id\": 1,\n  \"contact_id\": {{ $('Create Chatwoot Contact').item.json.payload?.id || $('Use Existing Contact').item.json.contactId }},\n  \"status\": \"open\"\n}",
+        "options": {}
+      },
+      "id": "create-conversation",
+      "name": "Create Conversation",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1650, 200],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "chatwoot-api-token",
+          "name": "Chatwoot API Token"
+        }
+      },
+      "notes": "Create new conversation if no open conversation exists"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "conversation-id-assignment",
+              "name": "conversationId",
+              "value": "={{ $json.payload[0].id }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "use-existing-conversation",
+      "name": "Use Existing Conversation",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.2,
+      "position": [1650, 400],
+      "notes": "Extract conversation ID from search results"
+    },
+    {
+      "parameters": {
+        "url": "=https://{{ $env.CHATWOOT_HOST }}/api/v1/accounts/1/conversations/{{ $('Create Conversation').item.json.id || $('Use Existing Conversation').item.json.conversationId }}/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"content\": \"{{ $('Extract WhatsApp Data').item.json.messageText }}\",\n  \"message_type\": \"incoming\",\n  \"private\": false\n}",
+        "options": {}
+      },
+      "id": "post-message-to-chatwoot",
+      "name": "Post Message to Chatwoot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1850, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "chatwoot-api-token",
+          "name": "Chatwoot API Token"
+        }
+      },
+      "notes": "Add incoming WhatsApp message to Chatwoot conversation"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"message\": \"WhatsApp message delivered to Chatwoot\",\n  \"contact_id\": {{ $('Create Chatwoot Contact').item.json.payload?.id || $('Use Existing Contact').item.json.contactId }},\n  \"conversation_id\": {{ $('Create Conversation').item.json.id || $('Use Existing Conversation').item.json.conversationId }},\n  \"message_id\": {{ $json.id }}\n}",
+        "options": {}
+      },
+      "id": "webhook-response",
+      "name": "Webhook Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [2050, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": false,\n  \"error\": \"Failed to process WhatsApp message\",\n  \"details\": {{ $json }}\n}",
+        "options": {
+          "responseCode": 500
+        }
+      },
+      "id": "webhook-error-response",
+      "name": "Webhook Error Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [2050, 500]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Evolution Webhook (Incoming Messages)": {
+      "main": [
+        [
+          {
+            "node": "Extract WhatsApp Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract WhatsApp Data": {
+      "main": [
+        [
+          {
+            "node": "Find Chatwoot Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Chatwoot Contact": {
+      "main": [
+        [
+          {
+            "node": "Contact Exists?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Contact Exists?": {
+      "main": [
+        [
+          {
+            "node": "Use Existing Contact",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create Chatwoot Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Chatwoot Contact": {
+      "main": [
+        [
+          {
+            "node": "Find Open Conversation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Use Existing Contact": {
+      "main": [
+        [
+          {
+            "node": "Find Open Conversation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Open Conversation": {
+      "main": [
+        [
+          {
+            "node": "Open Conversation Exists?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Open Conversation Exists?": {
+      "main": [
+        [
+          {
+            "node": "Use Existing Conversation",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create Conversation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Conversation": {
+      "main": [
+        [
+          {
+            "node": "Post Message to Chatwoot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Use Existing Conversation": {
+      "main": [
+        [
+          {
+            "node": "Post Message to Chatwoot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post Message to Chatwoot": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1",
+  "meta": {
+    "instanceId": "borgstack-n8n"
+  },
+  "id": "04-whatsapp-chatwoot-integration",
+  "tags": []
+}

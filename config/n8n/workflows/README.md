@@ -149,6 +149,217 @@ curl -X POST https://n8n.${DOMAIN}/webhook/whatsapp-incoming \
 }
 ```
 
+### 04-whatsapp-chatwoot-integration.json
+**Purpose:** Complete WhatsApp → Chatwoot integration workflow for customer service automation
+
+**Features:**
+- Receives incoming WhatsApp messages from Evolution API webhook
+- Automatically finds or creates Chatwoot contacts (by phone number)
+- Finds existing open conversation or creates new one
+- Posts WhatsApp message content to Chatwoot conversation
+- Handles multiple message types (text, image, video, audio, documents)
+- Returns detailed success response to Evolution API
+
+**Workflow Nodes:**
+1. **Evolution Webhook** - Receives POST requests at `/webhook/whatsapp-incoming`
+2. **Extract WhatsApp Data** - Parses Evolution API payload (phone, message, sender name)
+3. **Find Chatwoot Contact** - Searches for existing contact by phone number (API: GET /contacts/search)
+4. **Contact Exists?** - Conditional branch: use existing or create new contact
+5. **Create Chatwoot Contact** - Creates new contact if not found (API: POST /contacts)
+6. **Use Existing Contact** - Extracts contact ID from search results
+7. **Find Open Conversation** - Searches for existing open conversation (API: POST /conversations/filter)
+8. **Open Conversation Exists?** - Conditional branch: use existing or create new conversation
+9. **Create Conversation** - Creates new conversation in Chatwoot inbox (API: POST /conversations)
+10. **Use Existing Conversation** - Extracts conversation ID from search results
+11. **Post Message to Chatwoot** - Adds incoming message to conversation (API: POST /conversations/{id}/messages)
+12. **Webhook Response** - Returns success response to Evolution API
+
+**Prerequisites:**
+- ✅ Evolution API deployed and configured (Story 2.2)
+- ✅ Chatwoot deployed with API token generated (Story 3.1)
+- ✅ CHATWOOT_API_TOKEN configured in .env file
+- ✅ WhatsApp instance connected to Evolution API
+- ✅ WhatsApp Inbox created in Chatwoot (Inbox ID: 1)
+
+**CRITICAL Setup Step - API Token:**
+
+The workflow requires a Chatwoot API token. This **MUST be manually generated** from the Chatwoot admin UI:
+
+1. Login to Chatwoot: `https://chatwoot.${DOMAIN}/app`
+2. Go to **Settings → Account Settings → Access Tokens**
+3. Click **"Add New Token"**
+4. Name: `n8n Integration`
+5. **Copy token immediately** (shown only once)
+6. Add to .env file: `CHATWOOT_API_TOKEN=<your-token>`
+7. Restart Chatwoot: `docker compose restart chatwoot`
+
+**Configure n8n Credential:**
+
+1. In n8n UI: Go to **Credentials → New Credential**
+2. Select **"HTTP Header Auth"** credential type
+3. **Name:** `Chatwoot API Token`
+4. **Header Name:** `api_access_token`
+5. **Header Value:** Paste your `CHATWOOT_API_TOKEN` value
+6. Click **"Create"**
+7. The workflow will automatically use this credential for all Chatwoot API calls
+
+**Supported Message Types:**
+
+The workflow handles all common WhatsApp message types:
+
+| Message Type | Chatwoot Display | Evolution API Field |
+|--------------|------------------|---------------------|
+| Simple Text | Plain text | `message.conversation` |
+| Extended Text | Plain text (with mentions/links) | `message.extendedTextMessage.text` |
+| Image with Caption | `[Image] Caption text` | `message.imageMessage.caption` |
+| Video with Caption | `[Video] Caption text` | `message.videoMessage.caption` |
+| Voice Message | `[Voice Message]` | `message.audioMessage` |
+| Document | `[Document: filename.pdf]` | `message.documentMessage.fileName` |
+| Unsupported | `[Unsupported message type]` | N/A |
+
+**Integration Flow:**
+
+```
+┌─────────────┐   Webhook   ┌──────────────┐   API Call   ┌─────────────┐
+│  WhatsApp   │─────────────>│ Evolution    │─────────────>│   n8n       │
+│  Customer   │              │     API      │              │  Workflow   │
+│             │   Message    │              │   Payload    │             │
+└─────────────┘              └──────────────┘              └──────┬──────┘
+                                                                  │
+                                                                  │ API Calls
+                                                                  │
+                                                                  v
+                                                           ┌─────────────┐
+                                                           │  Chatwoot   │
+                                                           │     API     │
+                                                           │             │
+                                                           │ • Contact   │
+                                                           │ • Convo     │
+                                                           │ • Message   │
+                                                           └─────────────┘
+```
+
+**Workflow Logic:**
+
+1. **Contact Management:**
+   - Search for contact by phone number
+   - If found: Use existing contact ID
+   - If not found: Create new contact with name and phone
+
+2. **Conversation Management:**
+   - Search for open conversation with source_id (WhatsApp remoteJid)
+   - If found: Use existing conversation ID (continue conversation)
+   - If not found: Create new conversation (fresh support request)
+
+3. **Message Handling:**
+   - Post message to conversation as `message_type: incoming`
+   - Message appears in Chatwoot agent dashboard instantly
+   - Agent can reply via Chatwoot UI (see outgoing workflow below)
+
+**Chatwoot API Endpoints Used:**
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/v1/accounts/1/contacts/search?q={phone}` | GET | Find existing contact by phone number |
+| `/api/v1/accounts/1/contacts` | POST | Create new contact |
+| `/api/v1/accounts/1/conversations/filter` | POST | Search for open conversations |
+| `/api/v1/accounts/1/conversations` | POST | Create new conversation |
+| `/api/v1/accounts/1/conversations/{id}/messages` | POST | Add message to conversation |
+
+**Environment Variables Used:**
+
+| Variable | Usage | Example |
+|----------|-------|---------|
+| `CHATWOOT_HOST` | Chatwoot API base URL | `chatwoot.example.com.br` |
+| `CHATWOOT_API_TOKEN` | API authentication token | Stored in n8n credential |
+
+**Testing the Workflow:**
+
+1. **Activate workflow in n8n UI:**
+   - Import workflow → Toggle "Inactive" to "Active"
+
+2. **Send test WhatsApp message:**
+   - Send message from your phone to Evolution API connected number
+   - Message should appear in Chatwoot within 2-5 seconds
+
+3. **Verify in Chatwoot:**
+   - Login to Chatwoot: `https://chatwoot.${DOMAIN}/app`
+   - Go to **Conversations**
+   - New conversation should appear with WhatsApp message
+
+4. **Check n8n execution logs:**
+   - n8n UI → **Executions** tab
+   - Click latest execution to see node-by-node results
+   - Verify no errors in API calls
+
+**Troubleshooting:**
+
+| Problem | Solution |
+|---------|----------|
+| Webhook not triggered | Verify Evolution API `EVOLUTION_WEBHOOK_URL` points to n8n |
+| Contact not created | Check `CHATWOOT_API_TOKEN` is valid (test with curl) |
+| Conversation not created | Verify Inbox ID is correct (check Chatwoot Settings → Inboxes) |
+| Message not posted | Check conversation ID is valid and conversation is open |
+| 401 Unauthorized | Regenerate `CHATWOOT_API_TOKEN` and update n8n credential |
+
+**Next Steps:**
+
+After setting up incoming messages, configure **outgoing messages** (agent replies):
+
+1. **Chatwoot → WhatsApp** (Agent replies to customer):
+   - Create Chatwoot webhook: Settings → Integrations → Webhooks
+   - Webhook URL: `https://n8n.${DOMAIN}/webhook/chatwoot-outgoing`
+   - Events: `message_created`
+   - Create n8n workflow to POST replies to Evolution API
+
+2. **Extend functionality:**
+   - Add keyword-based auto-replies (e.g., "hello" → "Welcome! How can I help?")
+   - Implement business hours auto-responder
+   - Add conversation tagging based on message content
+   - Store message history in Directus for analytics
+
+**Documentation References:**
+
+- Evolution API setup: `config/evolution/README.md`
+- Chatwoot setup: `config/chatwoot/README.md`
+- Chatwoot API: https://www.chatwoot.com/developers/api/
+
+**Test Command (Manual Webhook Call):**
+
+```bash
+# Simulate Evolution API message (for testing)
+curl -X POST https://n8n.${DOMAIN}/webhook/whatsapp-incoming \
+  -H "Content-Type: application/json" \
+  -d '{
+    "event": "messages.upsert",
+    "instance": "customer_support",
+    "data": {
+      "key": {
+        "remoteJid": "5511987654321@s.whatsapp.net",
+        "fromMe": false,
+        "id": "TEST456"
+      },
+      "message": {
+        "conversation": "Olá, preciso de suporte urgente!"
+      },
+      "messageTimestamp": 1735632000,
+      "pushName": "Maria Santos"
+    }
+  }'
+```
+
+**Expected Response:**
+
+```json
+{
+  "success": true,
+  "message": "WhatsApp message delivered to Chatwoot",
+  "contact_id": 42,
+  "conversation_id": 123,
+  "message_id": 789
+}
+```
+
 ## How to Import Workflows
 
 ### Method 1: Via n8n Web UI (Recommended)

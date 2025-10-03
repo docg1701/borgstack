@@ -180,6 +180,73 @@ curl "https://evolution.<your-domain>/instance/connectionState/customer_support"
   -H "apikey: <EVOLUTION_API_KEY>"
 ```
 
+#### Chatwoot - Customer Service Platform
+
+- **URL:** `https://chatwoot.<your-domain>/app` (Admin Dashboard)
+- **First Login:** Create admin account on first visit (email becomes your username)
+- **API Documentation:** `https://chatwoot.<your-domain>/api/v1`
+- **API Token:** **MUST be manually generated** from admin UI after first login
+- **WhatsApp Integration:** Evolution API → n8n → Chatwoot API (automated customer service)
+- **Getting Started:**
+  1. Access Chatwoot: `https://chatwoot.<your-domain>/app`
+  2. Create admin account (email + password) on first visit
+  3. **Generate API Token (REQUIRED for n8n integration):**
+     - Go to Settings → Account Settings → Access Tokens
+     - Click "Add New Token" → Name: `n8n Integration`
+     - Copy token immediately (shown only once)
+     - Add to `.env` file: `CHATWOOT_API_TOKEN=<your-token>`
+     - Restart Chatwoot: `docker compose restart chatwoot`
+  4. Create WhatsApp Inbox: Settings → Inboxes → Add Inbox → API Channel
+  5. Import n8n workflow: `config/n8n/workflows/04-whatsapp-chatwoot-integration.json`
+  6. Configure n8n credential: Credentials → New → HTTP Header Auth (see below)
+  7. Test WhatsApp → Chatwoot integration
+- **Detailed Setup Guide:** See `config/chatwoot/README.md` for complete instructions
+- **n8n Integration Flow:** WhatsApp → Evolution API → n8n → Chatwoot (incoming) | Chatwoot → n8n → Evolution API (outgoing)
+
+**n8n Credential Setup for Chatwoot API:**
+
+```plaintext
+1. In n8n UI: Credentials → New Credential
+2. Type: HTTP Header Auth
+3. Name: Chatwoot API Token
+4. Header Name: api_access_token
+5. Header Value: <paste CHATWOOT_API_TOKEN from .env>
+6. Save
+```
+
+**Agent Management:**
+
+```plaintext
+- Add Agents: Settings → Agents → Add Agent
+- Agent Roles: Administrator (full access) | Agent (assigned conversations)
+- Conversation Assignment: Manual or auto-assignment (round-robin)
+- Working Hours: Settings → Account Settings → Business Hours
+```
+
+**API Usage Examples:**
+
+```bash
+# Get account details
+curl "https://chatwoot.<your-domain>/api/v1/accounts" \
+  -H "api_access_token: <CHATWOOT_API_TOKEN>"
+
+# Search for contact by phone
+curl "https://chatwoot.<your-domain>/api/v1/accounts/1/contacts/search?q=%2B5511987654321" \
+  -H "api_access_token: <CHATWOOT_API_TOKEN>"
+
+# Create conversation
+curl -X POST "https://chatwoot.<your-domain>/api/v1/accounts/1/conversations" \
+  -H "Content-Type: application/json" \
+  -H "api_access_token: <CHATWOOT_API_TOKEN>" \
+  -d '{"source_id": "5511987654321@s.whatsapp.net", "inbox_id": 1, "contact_id": 42, "status": "open"}'
+
+# Post message to conversation
+curl -X POST "https://chatwoot.<your-domain>/api/v1/accounts/1/conversations/123/messages" \
+  -H "Content-Type: application/json" \
+  -H "api_access_token: <CHATWOOT_API_TOKEN>" \
+  -d '{"content": "Hello! How can I help you?", "message_type": "incoming"}'
+```
+
 ### Troubleshooting
 
 - **View logs:** `cat /tmp/borgstack-bootstrap.log`
@@ -256,6 +323,51 @@ docker compose logs caddy | grep evolution
 3. Test webhook delivery: Send message to WhatsApp, check n8n executions
 
 **For detailed troubleshooting:** See `config/evolution/README.md` → Troubleshooting section
+
+#### Chatwoot Connection Issues
+
+**Cannot access Chatwoot web UI:**
+```bash
+# Check Chatwoot container status
+docker compose ps chatwoot
+
+# Check Chatwoot logs
+docker compose logs chatwoot
+
+# Verify DNS configuration
+dig chatwoot.<your-domain>
+
+# Check Caddy reverse proxy
+docker compose logs caddy | grep chatwoot
+```
+
+**Chatwoot container fails to start:**
+1. Check Rails migrations: `docker compose logs chatwoot | grep -i migration`
+2. Verify SECRET_KEY_BASE is 128 characters: `grep CHATWOOT_SECRET_KEY_BASE .env | wc -c` (should be ~150)
+3. Check PostgreSQL connection: `docker compose logs chatwoot | grep -i "database\|postgres"`
+4. Check Redis connection: `docker compose logs chatwoot | grep -i "redis\|sidekiq"`
+5. Restart with clean state: `docker compose restart chatwoot`
+
+**API token authentication fails (401 Unauthorized):**
+1. Verify token is set in .env: `grep CHATWOOT_API_TOKEN .env`
+2. Test API manually: `curl https://chatwoot.<your-domain>/api/v1/accounts -H "api_access_token: ${CHATWOOT_API_TOKEN}"`
+3. Regenerate token: Chatwoot UI → Settings → Account Settings → Access Tokens → Create New Token
+4. Update .env and restart: `docker compose restart chatwoot`
+
+**WhatsApp messages not appearing in Chatwoot:**
+1. Verify n8n workflow is active: n8n UI → Workflows → 04 - WhatsApp Chatwoot Integration (should be "Active")
+2. Check n8n execution logs: n8n UI → Executions (look for errors in Chatwoot API calls)
+3. Verify Chatwoot API token: `grep CHATWOOT_API_TOKEN .env` (should NOT be `<obtain-from-admin-ui...>`)
+4. Test Chatwoot API manually: See API Usage Examples above
+5. Check webhook delivery: Evolution API → n8n → Chatwoot (verify each step)
+
+**Agent replies not sent to WhatsApp:**
+1. Verify Chatwoot webhook configured: Settings → Integrations → Webhooks (should have webhook to n8n)
+2. Check n8n outgoing workflow exists and is active
+3. Verify Evolution API instance is connected: `curl https://evolution.<your-domain>/instance/connectionState/<instance> -H "apikey: ${EVOLUTION_API_KEY}"`
+4. Check n8n execution logs for outgoing workflow errors
+
+**For detailed troubleshooting:** See `config/chatwoot/README.md` → Troubleshooting Guide
 
 **Redis/Queue errors:**
 ```bash
