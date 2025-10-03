@@ -457,6 +457,7 @@ services:
 
 networks:
   borgstack_internal:
+    name: borgstack_internal
     driver: bridge
     internal: true
     # ════════════════════════════════════════════════════════════════════════════
@@ -491,6 +492,7 @@ networks:
     #   ℹ️  Dev port mappings allowed in docker-compose.override.yml for debugging
 
   borgstack_external:
+    name: borgstack_external
     driver: bridge
     # ════════════════════════════════════════════════════════════════════════════
     # EXTERNAL NETWORK - Reverse Proxy Access
