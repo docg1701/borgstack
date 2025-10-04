@@ -1,0 +1,137 @@
+{
+  "name": "05 - Lowcoder Webhook Integration",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lowcoder-trigger",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "lowcoder-webhook-node",
+      "name": "Lowcoder Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [250, 300],
+      "webhookId": "lowcoder-webhook",
+      "notes": "Receives data from Lowcoder applications (button clicks, form submissions, etc.)"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.action }}",
+              "operation": "exists"
+            }
+          ]
+        }
+      },
+      "id": "validate-payload-node",
+      "name": "Validate Payload",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [450, 300],
+      "notes": "Validates that the payload contains required 'action' field"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Process Lowcoder webhook data\nconst action = $input.item.json.action;\nconst data = $input.item.json.data || {};\nconst timestamp = new Date().toISOString();\n\n// Example: Log the action for debugging\nconsole.log(`Lowcoder action received: ${action}`);\n\n// Transform data based on action type\nlet result = {\n  success: true,\n  action: action,\n  processedAt: timestamp,\n  originalData: data\n};\n\n// Example action handlers\nswitch(action) {\n  case 'create_record':\n    result.message = 'Record creation initiated';\n    result.recordId = `REC-${Date.now()}`;\n    break;\n  \n  case 'send_notification':\n    result.message = 'Notification queued for delivery';\n    result.notificationId = `NOTIF-${Date.now()}`;\n    break;\n  \n  case 'trigger_workflow':\n    result.message = 'Workflow execution started';\n    result.workflowId = data.workflowId || 'default';\n    break;\n  \n  default:\n    result.message = `Action '${action}' processed successfully`;\n}\n\nreturn result;"
+      },
+      "id": "process-action-node",
+      "name": "Process Action",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 200],
+      "notes": "Processes different action types from Lowcoder (create_record, send_notification, trigger_workflow, etc.)"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}"
+      },
+      "id": "success-response-node",
+      "name": "Success Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [850, 200],
+      "notes": "Returns success response to Lowcoder application"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"success\": false, \"error\": \"Missing 'action' field in request body\", \"timestamp\": $now } }}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "error-response-node",
+      "name": "Error Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [650, 400],
+      "notes": "Returns error response if payload validation fails"
+    }
+  ],
+  "connections": {
+    "Lowcoder Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Validate Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Payload": {
+      "main": [
+        [
+          {
+            "node": "Process Action",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Action": {
+      "main": [
+        [
+          {
+            "node": "Success Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "lowcoder-integration-1.0",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "borgstack-n8n"
+  },
+  "tags": [
+    {
+      "name": "lowcoder",
+      "id": "lowcoder-tag"
+    },
+    {
+      "name": "integration",
+      "id": "integration-tag"
+    }
+  ]
+}

@@ -530,7 +530,89 @@ services:
       retries: 5
       start_period: 30s
 
-#   (Additional services: n8n, chatwoot, evolution-api, lowcoder, directus, fileflows, seaweedfs, duplicati)
+  # ==========================================================================
+  # Lowcoder Application Platform
+  # ==========================================================================
+  # Low-code platform for building custom internal business applications
+  # Image: lowcoderorg/lowcoder-ce:2.7.4 (Lowcoder Community Edition)
+  #
+  # Purpose:
+  #   - Build custom applications with drag-and-drop UI builder
+  #   - Connect to PostgreSQL, REST APIs, and other data sources
+  #   - Create admin dashboards, CRUD apps, forms, and custom workflows
+  #   - Integration hub for n8n workflows and other BorgStack services
+  #
+  # Architecture:
+  #   - Dual service: Java Spring Boot (API) + Node.js (Node service)
+  #   - Port 3000: Web UI and API endpoint
+  #   - Port 6060: Node.js service (internal)
+  #
+  # Database Dependencies:
+  #   - MongoDB: Application metadata (apps, queries, users, datasources)
+  #   - Redis: Session management and caching
+  #
+  # Integration Patterns:
+  #   - Webhook triggers to n8n workflows
+  #   - API queries to n8n endpoints
+  #   - PostgreSQL datasource connections (n8n_db, chatwoot_db, etc.)
+  #   - Custom app deployment and user management
+  #
+  # Access:
+  #   - Web UI: https://lowcoder.{DOMAIN} (via Caddy reverse proxy)
+  #   - First-time login creates admin account using LOWCODER_ADMIN_EMAIL/PASSWORD
+  #
+  # Security:
+  #   - NO port exposure to host (access via Caddy only)
+  #   - Encryption keys for datasource credentials (LOWCODER_ENCRYPTION_PASSWORD/SALT)
+  #   - Dedicated MongoDB database (lowcoder) with isolated user (lowcoder_user)
+  #   - HTTPS enforced via Caddy with automatic Let's Encrypt SSL
+  #
+  # Backup Strategy:
+  #   - MongoDB lowcoder database: Via Duplicati automated backups
+  #   - Application stacks volume: borgstack_lowcoder_stacks backed up by Duplicati
+  # ==========================================================================
+  lowcoder:
+    image: lowcoderorg/lowcoder-ce:2.7.4
+    container_name: lowcoder
+    restart: unless-stopped
+    networks:
+      - borgstack_internal  # Access to MongoDB, Redis
+      - borgstack_external  # Access from Caddy reverse proxy
+    # ⚠️  NO ports section in production - web UI accessed via Caddy reverse proxy
+    # ℹ️  For local development, add port mapping in docker-compose.override.yml
+    volumes:
+      # Lowcoder application stacks (custom components, app definitions, assets)
+      - borgstack_lowcoder_stacks:/lowcoder-stacks
+    environment:
+      # MongoDB connection for application metadata
+      - LOWCODER_MONGODB_URL=mongodb://lowcoder_user:${LOWCODER_DB_PASSWORD}@mongodb:27017/lowcoder?authSource=lowcoder
+      # Redis connection for session management and caching
+      - LOWCODER_REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
+      # Internal service URLs
+      - LOWCODER_API_SERVICE_URL=http://lowcoder:3000
+      - LOWCODER_NODE_SERVICE_URL=http://lowcoder:6060
+      # Admin account (first-time setup)
+      - LOWCODER_ADMIN_EMAIL=${LOWCODER_ADMIN_EMAIL}
+      - LOWCODER_ADMIN_PASSWORD=${LOWCODER_ADMIN_PASSWORD}
+      # Encryption keys (32-char alphanumeric for datasource credentials)
+      - LOWCODER_ENCRYPTION_PASSWORD=${LOWCODER_ENCRYPTION_PASSWORD}
+      - LOWCODER_ENCRYPTION_SALT=${LOWCODER_ENCRYPTION_SALT}
+      # Public URL for webhooks and OAuth callbacks
+      - LOWCODER_PUBLIC_URL=https://lowcoder.${DOMAIN}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      # Verify Lowcoder API is responding
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s  # Spring Boot + Node.js initialization time
+
+#   (Additional services: n8n, directus, fileflows, seaweedfs, duplicati)
 
 networks:
   borgstack_internal:
@@ -656,8 +738,14 @@ volumes:
     # Auto-regenerated on container restart (asset precompilation)
     # Not critical for backups (can be regenerated from image)
 
+  borgstack_lowcoder_stacks:
+    # Lowcoder application stacks directory
+    # Contains: Custom application definitions, custom components, query configurations, assets
+    # Backed up by Duplicati (Story 5.2)
+    # CRITICAL: Contains all custom applications and datasource connections
+    # Manual backup: docker compose exec -T lowcoder tar czf - /lowcoder-stacks > lowcoder-backup-$(date +%Y%m%d).tar.gz
+
 # Additional volumes (to be added in future stories):
-#   borgstack_lowcoder_data:
 #   borgstack_directus_data:
 #   borgstack_fileflows_data:
 #   borgstack_seaweedfs_data:

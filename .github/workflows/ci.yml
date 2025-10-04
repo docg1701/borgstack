@@ -1254,3 +1254,227 @@ jobs:
           echo "Cleaning up test environment..."
           docker compose down -v --remove-orphans || true
           rm -f .env
+
+  validate-lowcoder:
+    name: Validate Lowcoder Configuration
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Create .env file for testing
+        run: |
+          echo "Creating temporary .env file with test credentials..."
+          cat > .env << 'EOF'
+          # Test credentials for CI pipeline
+          MONGODB_ROOT_PASSWORD=test_mongodb_root_password_12345678
+          LOWCODER_DB_PASSWORD=test_lowcoder_password_12345678901234567890
+          REDIS_PASSWORD=test_redis_password_12345678901234567890
+          LOWCODER_ADMIN_EMAIL=admin@example.com.br
+          LOWCODER_ADMIN_PASSWORD=test_lowcoder_admin_password_12345678
+          LOWCODER_ENCRYPTION_PASSWORD=test_lowcoder_encryption_pass_123456
+          LOWCODER_ENCRYPTION_SALT=test_lowcoder_encryption_salt_123456
+          DOMAIN=example.com.br
+          EMAIL=admin@example.com.br
+          CORS_ALLOWED_ORIGINS=*
+          EOF
+
+      - name: Verify Lowcoder configuration in docker-compose.yml
+        run: |
+          echo "Verifying Lowcoder service is configured..."
+
+          # Check Lowcoder image version is pinned correctly
+          if docker compose config | grep -q "image: lowcoderorg/lowcoder-ce:2.7.4"; then
+            echo "✅ Lowcoder image correctly configured (lowcoderorg/lowcoder-ce:2.7.4)"
+          else
+            echo "❌ Lowcoder image not configured correctly"
+            exit 1
+          fi
+
+          # Check Lowcoder is on both networks (internal for MongoDB/Redis, external for Caddy)
+          if docker compose config | grep -A 50 "lowcoder:" | grep -q "borgstack_internal"; then
+            echo "✅ Lowcoder connected to borgstack_internal network"
+          else
+            echo "❌ Lowcoder not connected to borgstack_internal network"
+            exit 1
+          fi
+
+          if docker compose config | grep -A 50 "lowcoder:" | grep -q "borgstack_external"; then
+            echo "✅ Lowcoder connected to borgstack_external network"
+          else
+            echo "❌ Lowcoder not connected to borgstack_external network"
+            exit 1
+          fi
+
+          # Verify volume naming convention
+          if docker compose config | grep -q "borgstack_lowcoder_stacks"; then
+            echo "✅ Volume borgstack_lowcoder_stacks follows naming convention"
+          else
+            echo "❌ Volume borgstack_lowcoder_stacks missing"
+            exit 1
+          fi
+
+          # Verify no port exposure in production config
+          if docker compose config | grep -A 50 "lowcoder:" | grep -E "^\s+ports:" > /dev/null 2>&1; then
+            echo "❌ Lowcoder has port exposure in production config (security violation)"
+            exit 1
+          else
+            echo "✅ No port exposure to host (security requirement met)"
+          fi
+
+          # Verify health check is configured
+          if docker compose config | grep -A 50 "lowcoder:" | grep -q "healthcheck:"; then
+            echo "✅ Health check configured for Lowcoder"
+          else
+            echo "❌ Health check not configured for Lowcoder"
+            exit 1
+          fi
+
+      - name: Verify Lowcoder environment variables
+        run: |
+          echo "Verifying Lowcoder environment variables configuration..."
+
+          # Check MongoDB connection string
+          if docker compose config | grep -A 50 "lowcoder:" | grep "LOWCODER_MONGODB_URL" | grep -q "mongodb://lowcoder_user:.*@mongodb:27017/lowcoder?authSource=lowcoder"; then
+            echo "✅ LOWCODER_MONGODB_URL configured correctly"
+          else
+            echo "❌ LOWCODER_MONGODB_URL not configured correctly"
+            exit 1
+          fi
+
+          # Check Redis connection string
+          if docker compose config | grep -A 50 "lowcoder:" | grep "LOWCODER_REDIS_URL" | grep -q "redis://"; then
+            echo "✅ LOWCODER_REDIS_URL configured correctly"
+          else
+            echo "❌ LOWCODER_REDIS_URL not configured correctly"
+            exit 1
+          fi
+
+          # Check admin credentials
+          if docker compose config | grep -A 50 "lowcoder:" | grep -q "LOWCODER_ADMIN_EMAIL:"; then
+            echo "✅ LOWCODER_ADMIN_EMAIL configured"
+          else
+            echo "❌ LOWCODER_ADMIN_EMAIL not configured"
+            exit 1
+          fi
+
+          if docker compose config | grep -A 50 "lowcoder:" | grep -q "LOWCODER_ADMIN_PASSWORD:"; then
+            echo "✅ LOWCODER_ADMIN_PASSWORD configured"
+          else
+            echo "❌ LOWCODER_ADMIN_PASSWORD not configured"
+            exit 1
+          fi
+
+          # Check encryption keys
+          if docker compose config | grep -A 50 "lowcoder:" | grep -q "LOWCODER_ENCRYPTION_PASSWORD:"; then
+            echo "✅ LOWCODER_ENCRYPTION_PASSWORD configured"
+          else
+            echo "❌ LOWCODER_ENCRYPTION_PASSWORD not configured"
+            exit 1
+          fi
+
+          if docker compose config | grep -A 50 "lowcoder:" | grep -q "LOWCODER_ENCRYPTION_SALT:"; then
+            echo "✅ LOWCODER_ENCRYPTION_SALT configured"
+          else
+            echo "❌ LOWCODER_ENCRYPTION_SALT not configured"
+            exit 1
+          fi
+
+      - name: Verify Lowcoder depends_on configuration
+        run: |
+          echo "Verifying Lowcoder dependency configuration..."
+
+          # Check MongoDB dependency
+          if docker compose config | grep -A 80 "lowcoder:" | grep -A 5 "depends_on:" | grep -q "mongodb:"; then
+            echo "✅ Lowcoder depends on MongoDB"
+          else
+            echo "❌ Lowcoder missing MongoDB dependency"
+            exit 1
+          fi
+
+          # Check Redis dependency
+          if docker compose config | grep -A 80 "lowcoder:" | grep -A 10 "depends_on:" | grep -q "redis:"; then
+            echo "✅ Lowcoder depends on Redis"
+          else
+            echo "❌ Lowcoder missing Redis dependency"
+            exit 1
+          fi
+
+      - name: Verify Lowcoder validation test exists
+        run: |
+          echo "Verifying Lowcoder validation test script exists..."
+
+          if [ -f "tests/deployment/verify-lowcoder.sh" ]; then
+            echo "✅ tests/deployment/verify-lowcoder.sh exists"
+          else
+            echo "❌ tests/deployment/verify-lowcoder.sh not found"
+            exit 1
+          fi
+
+          if [ -x "tests/deployment/verify-lowcoder.sh" ]; then
+            echo "✅ verify-lowcoder.sh is executable"
+          else
+            echo "❌ verify-lowcoder.sh is not executable"
+            exit 1
+          fi
+
+      - name: Verify Lowcoder documentation exists
+        run: |
+          echo "Verifying Lowcoder documentation exists..."
+
+          if [ -f "config/lowcoder/README.md" ]; then
+            echo "✅ config/lowcoder/README.md exists"
+          else
+            echo "❌ config/lowcoder/README.md not found"
+            exit 1
+          fi
+
+      - name: Verify Lowcoder .env.example variables
+        run: |
+          echo "Verifying Lowcoder variables in .env.example..."
+
+          if grep -q "LOWCODER_HOST=" .env.example; then
+            echo "✅ LOWCODER_HOST variable in .env.example"
+          else
+            echo "❌ LOWCODER_HOST variable not found in .env.example"
+            exit 1
+          fi
+
+          if grep -q "LOWCODER_ADMIN_EMAIL=" .env.example; then
+            echo "✅ LOWCODER_ADMIN_EMAIL variable in .env.example"
+          else
+            echo "❌ LOWCODER_ADMIN_EMAIL variable not found in .env.example"
+            exit 1
+          fi
+
+          if grep -q "LOWCODER_ADMIN_PASSWORD=" .env.example; then
+            echo "✅ LOWCODER_ADMIN_PASSWORD variable in .env.example"
+          else
+            echo "❌ LOWCODER_ADMIN_PASSWORD variable not found in .env.example"
+            exit 1
+          fi
+
+          if grep -q "LOWCODER_ENCRYPTION_PASSWORD=" .env.example; then
+            echo "✅ LOWCODER_ENCRYPTION_PASSWORD variable in .env.example"
+          else
+            echo "❌ LOWCODER_ENCRYPTION_PASSWORD variable not found in .env.example"
+            exit 1
+          fi
+
+          if grep -q "LOWCODER_ENCRYPTION_SALT=" .env.example; then
+            echo "✅ LOWCODER_ENCRYPTION_SALT variable in .env.example"
+          else
+            echo "❌ LOWCODER_ENCRYPTION_SALT variable not found in .env.example"
+            exit 1
+          fi
+
+      - name: Cleanup Lowcoder test environment
+        if: always()
+        run: |
+          echo "Cleaning up test environment..."
+          docker compose down -v --remove-orphans || true
+          rm -f .env

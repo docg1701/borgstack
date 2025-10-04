@@ -401,6 +401,9 @@ generate_env_file() {
     local directus_secret=$(generate_password)
     local evolution_jwt_secret=$(generate_password)
     local evolution_api_key=$(openssl rand -base64 32)
+    local lowcoder_admin_password=$(generate_password)
+    local lowcoder_encryption_password=$(generate_password)
+    local lowcoder_encryption_salt=$(generate_password)
 
     # Create .env file
     log_info "Writing .env file..."
@@ -471,6 +474,15 @@ EVOLUTION_HOST=evolution.${domain}
 EVOLUTION_API_KEY=${evolution_api_key}
 EVOLUTION_WEBHOOK_URL=https://n8n.${domain}/webhook/whatsapp-incoming
 DATABASE_CONNECTION_CLIENT_NAME=evolution_api
+
+# ============================================================================
+# LOWCODER CONFIGURATION
+# ============================================================================
+LOWCODER_HOST=lowcoder.${domain}
+LOWCODER_ADMIN_EMAIL=admin@${domain}
+LOWCODER_ADMIN_PASSWORD=${lowcoder_admin_password}
+LOWCODER_ENCRYPTION_PASSWORD=${lowcoder_encryption_password}
+LOWCODER_ENCRYPTION_SALT=${lowcoder_encryption_salt}
 EOF
 
     # Set secure permissions
@@ -502,6 +514,12 @@ EOF
     echo "${CYAN}Evolution API Admin UI:${RESET} https://evolution.${domain}/manager"
     echo "${CYAN}Evolution API Key:${RESET} ${evolution_api_key:0:20}... ${YELLOW}(Full key in .env - required for all API calls)${RESET}"
     echo "${CYAN}Evolution API Webhook:${RESET} https://n8n.${domain}/webhook/whatsapp-incoming"
+    echo ""
+    echo "${CYAN}Lowcoder Admin UI:${RESET} https://lowcoder.${domain}"
+    echo "${CYAN}Lowcoder Admin Email:${RESET} admin@${domain}"
+    echo "${CYAN}Lowcoder Admin Password:${RESET} ${lowcoder_admin_password}"
+    echo "${CYAN}Lowcoder Encryption Key:${RESET} ${lowcoder_encryption_password:0:20}... ${YELLOW}(32-char key in .env - BACKUP SECURELY!)${RESET}"
+    echo "${CYAN}Lowcoder Encryption Salt:${RESET} ${lowcoder_encryption_salt:0:20}... ${YELLOW}(32-char salt in .env - BACKUP SECURELY!)${RESET}"
     echo ""
     echo "${YELLOW}All credentials are stored in: ${env_file}${RESET}"
     echo "${YELLOW}File permissions: -rw------- (600)${RESET}"

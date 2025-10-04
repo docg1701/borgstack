@@ -360,6 +360,159 @@ curl -X POST https://n8n.${DOMAIN}/webhook/whatsapp-incoming \
 }
 ```
 
+### 05-lowcoder-webhook-integration.json
+**Purpose:** Receives webhook calls from Lowcoder applications and processes different action types
+
+**Features:**
+- Webhook trigger at `/webhook/lowcoder-trigger` endpoint
+- Validates payload structure (requires `action` field)
+- Processes multiple action types (create_record, send_notification, trigger_workflow)
+- Returns structured JSON response to Lowcoder application
+- Error handling for invalid payloads (400 Bad Request)
+
+**Workflow Nodes:**
+1. **Lowcoder Webhook Trigger** - Receives POST requests from Lowcoder apps
+2. **Validate Payload** - Checks for required `action` field
+3. **Process Action** - Handles different action types with custom logic
+4. **Success Response** - Returns processed result to Lowcoder
+5. **Error Response** - Returns error for invalid requests
+
+**Supported Actions:**
+
+| Action | Description | Response |
+|--------|-------------|----------|
+| `create_record` | Initiates record creation | Returns generated record ID |
+| `send_notification` | Queues notification for delivery | Returns notification ID |
+| `trigger_workflow` | Starts workflow execution | Returns workflow ID |
+| Custom | Any custom action type | Returns success message |
+
+**Request Format (from Lowcoder):**
+
+```json
+{
+  "action": "create_record",
+  "data": {
+    "name": "John Doe",
+    "email": "john@example.com",
+    "department": "Sales"
+  }
+}
+```
+
+**Response Format:**
+
+```json
+{
+  "success": true,
+  "action": "create_record",
+  "processedAt": "2025-10-03T22:30:00.000Z",
+  "message": "Record creation initiated",
+  "recordId": "REC-1735938600000",
+  "originalData": {
+    "name": "John Doe",
+    "email": "john@example.com",
+    "department": "Sales"
+  }
+}
+```
+
+**Error Response (Missing Action):**
+
+```json
+{
+  "success": false,
+  "error": "Missing 'action' field in request body",
+  "timestamp": "2025-10-03T22:30:00.000Z"
+}
+```
+
+**Integration with Lowcoder:**
+
+1. **Create REST API Data Source in Lowcoder:**
+   - Name: `n8n_webhooks`
+   - Base URL: `https://n8n.${DOMAIN}/webhook`
+   - No authentication required (internal network)
+
+2. **Create Query in Lowcoder Application:**
+   ```javascript
+   // Query configuration
+   Method: POST
+   URL: /lowcoder-trigger
+   Body: {
+     "action": "create_record",
+     "data": {
+       "name": {{ textInput1.value }},
+       "email": {{ textInput2.value }},
+       "department": {{ dropdown1.value }}
+     }
+   }
+   ```
+
+3. **Trigger Query from Button Click:**
+   - Add Button component to Lowcoder app
+   - Button onClick event: Run query `webhook_trigger`
+   - Display response in Table or Text component
+
+**Use Cases:**
+
+1. **Form Submission Handler:**
+   - Lowcoder form collects user data
+   - Button triggers n8n workflow via webhook
+   - n8n validates data and stores in database
+
+2. **Workflow Orchestration:**
+   - Lowcoder dashboard button starts complex workflow
+   - n8n executes multi-step automation
+   - Returns execution status to Lowcoder
+
+3. **Notification System:**
+   - Lowcoder app triggers notification send
+   - n8n handles delivery via email/SMS/WhatsApp
+   - Returns tracking ID to Lowcoder app
+
+**Customization:**
+
+Edit `05-lowcoder-webhook-integration.json` to:
+- Add new action types in `Process Action` node
+- Integrate with databases (PostgreSQL, MongoDB)
+- Send emails, SMS, or WhatsApp messages
+- Call external APIs (Evolution API, Chatwoot, etc.)
+- Store workflow execution logs in Directus
+
+**Test Command:**
+
+```bash
+# Test from command line
+curl -X POST https://n8n.${DOMAIN}/webhook/lowcoder-trigger \
+  -H "Content-Type: application/json" \
+  -d '{
+    "action": "create_record",
+    "data": {
+      "name": "Test User",
+      "email": "test@example.com"
+    }
+  }'
+```
+
+**Test Invalid Payload:**
+
+```bash
+# Missing 'action' field - should return 400 error
+curl -X POST https://n8n.${DOMAIN}/webhook/lowcoder-trigger \
+  -H "Content-Type: application/json" \
+  -d '{
+    "data": {
+      "name": "Test User"
+    }
+  }'
+```
+
+**Documentation References:**
+
+- Lowcoder setup: `config/lowcoder/README.md`
+- Lowcoder API integration guide: Lowcoder → Data Sources → REST API
+- n8n webhook documentation: https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.webhook/
+
 ## How to Import Workflows
 
 ### Method 1: Via n8n Web UI (Recommended)
