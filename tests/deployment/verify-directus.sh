@@ -49,7 +49,7 @@ echo ""
 echo "Starting Directus and dependencies..."
 docker compose up -d postgresql redis directus
 echo "Waiting for containers to be healthy..."
-sleep 15
+sleep 60
 echo ""
 
 # Test 1: Verify Directus container is running

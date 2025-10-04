@@ -43,7 +43,7 @@ echo ""
 echo "Starting n8n and dependencies..."
 docker compose up -d postgresql redis n8n
 echo "Waiting for containers to be healthy..."
-sleep 10
+sleep 45
 echo ""
 
 # ============================================================================
