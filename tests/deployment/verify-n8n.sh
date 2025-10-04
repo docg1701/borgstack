@@ -38,17 +38,55 @@ echo "════════════════════════�
 echo ""
 
 # ============================================================================
+# Setup: Start n8n and dependencies
+# ============================================================================
+echo "Starting n8n and dependencies..."
+docker compose up -d postgresql redis n8n
+
+# Wait for containers to be healthy
+echo "Waiting for containers to be healthy (up to 90 seconds)..."
+WAIT_TIME=0
+MAX_WAIT=90
+while [ $WAIT_TIME -lt $MAX_WAIT ]; do
+    if docker compose ps postgresql redis n8n | grep -q "healthy.*healthy.*healthy"; then
+        echo "All containers are healthy after ${WAIT_TIME}s"
+        break
+    fi
+    sleep 5
+    WAIT_TIME=$((WAIT_TIME + 5))
+    if [ $((WAIT_TIME % 15)) -eq 0 ]; then
+        echo "Still waiting... (${WAIT_TIME}s elapsed)"
+    fi
+done
+
+if [ $WAIT_TIME -ge $MAX_WAIT ]; then
+    echo "WARNING: Containers did not become healthy after ${MAX_WAIT}s, proceeding anyway..."
+    docker compose ps postgresql redis n8n
+    echo ""
+    echo "=== n8n Container Logs (last 50 lines) ==="
+    docker compose logs n8n --tail=50
+    echo "==========================================="
+fi
+echo ""
+
+# ============================================================================
 # Test 1: Verify n8n Container is Running
 # ============================================================================
 echo "Test 1: Verifying n8n container is running..."
 
 if docker compose ps n8n | grep -q "Up"; then
     echo -e "${GREEN}✓${NC} n8n container is running"
-    ((TESTS_PASSED++))
+    TESTS_PASSED=$((TESTS_PASSED + 1))
 else
     echo -e "${RED}✗${NC} n8n container is not running"
+    echo ""
+    echo "=== n8n Container Status ==="
     docker compose ps n8n
-    ((TESTS_FAILED++))
+    echo ""
+    echo "=== n8n Container Logs (last 100 lines) ==="
+    docker compose logs n8n --tail=100
+    echo "=========================================="
+    TESTS_FAILED=$((TESTS_FAILED + 1))
 fi
 echo ""
 
@@ -64,7 +102,7 @@ HEALTH_CHECK_ELAPSED=0
 while [ $HEALTH_CHECK_ELAPSED -lt $HEALTH_CHECK_TIMEOUT ]; do
     if docker compose ps n8n | grep -q "healthy"; then
         echo -e "${GREEN}✓${NC} n8n health check passed"
-        ((TESTS_PASSED++))
+        TESTS_PASSED=$((TESTS_PASSED + 1))
         break
     fi
 
@@ -78,9 +116,18 @@ done
 
 if [ $HEALTH_CHECK_ELAPSED -ge $HEALTH_CHECK_TIMEOUT ]; then
     echo -e "${RED}✗${NC} n8n health check failed (timeout after ${HEALTH_CHECK_TIMEOUT}s)"
+    echo ""
+    echo "=== n8n Container Status ==="
     docker compose ps n8n
-    docker compose logs --tail=50 n8n
-    ((TESTS_FAILED++))
+    echo ""
+    echo "=== n8n Container Logs (last 100 lines) ==="
+    docker compose logs n8n --tail=100
+    echo ""
+    echo "=== n8n Health Endpoint Response ==="
+    docker compose exec -T n8n wget -q -O- http://localhost:5678/healthz/readiness 2>&1 || echo "(no response)"
+    echo ""
+    echo "=========================================="
+    TESTS_FAILED=$((TESTS_FAILED + 1))
 fi
 echo ""
 
@@ -94,11 +141,11 @@ if docker compose exec -T n8n wget -q -O- http://localhost:5678/healthz 2>/dev/n
     # Extract database status if available (n8n health endpoint may vary by version)
     DB_STATUS=$(docker compose exec -T n8n wget -q -O- http://localhost:5678/healthz 2>/dev/null | grep -o '"database"[^}]*' || echo "connected")
     echo -e "${GREEN}✓${NC} n8n database connection is working (${DB_STATUS})"
-    ((TESTS_PASSED++))
+    TESTS_PASSED=$((TESTS_PASSED + 1))
 else
     echo -e "${RED}✗${NC} n8n database connection failed"
     docker compose logs --tail=30 n8n | grep -i "database\|postgres\|error" || true
-    ((TESTS_FAILED++))
+    TESTS_FAILED=$((TESTS_FAILED + 1))
 fi
 echo ""
 
@@ -112,10 +159,10 @@ echo "Test 4: Verifying n8n Redis connection..."
 if docker compose logs n8n 2>&1 | grep -qi "redis.*error\|redis.*failed\|queue.*error"; then
     echo -e "${RED}✗${NC} n8n Redis connection has errors"
     docker compose logs --tail=30 n8n | grep -i "redis\|queue" || true
-    ((TESTS_FAILED++))
+    TESTS_FAILED=$((TESTS_FAILED + 1))
 else
     echo -e "${GREEN}✓${NC} n8n Redis connection is working (no errors in logs)"
-    ((TESTS_PASSED++))
+    TESTS_PASSED=$((TESTS_PASSED + 1))
 fi
 echo ""
 
@@ -133,17 +180,17 @@ fi
 if [[ -z "${N8N_HOST:-}" || "${N8N_HOST}" == "n8n.\${DOMAIN}" || "${N8N_HOST}" == "n8n.example.com.br" ]]; then
     echo -e "${YELLOW}⚠${NC} Skipping HTTPS test - .env not configured with production domain"
     echo "   (This is expected in CI/test environments)"
-    ((TESTS_PASSED++))
+    TESTS_PASSED=$((TESTS_PASSED + 1))
 else
     # Test HTTPS access via Caddy reverse proxy
     if curl -f -k -s -u "${N8N_BASIC_AUTH_USER:-admin}:${N8N_BASIC_AUTH_PASSWORD:-}" "https://${N8N_HOST}/" 2>/dev/null | grep -q "n8n"; then
         echo -e "${GREEN}✓${NC} n8n web UI accessible via HTTPS (https://${N8N_HOST})"
-        ((TESTS_PASSED++))
+        TESTS_PASSED=$((TESTS_PASSED + 1))
     else
         echo -e "${RED}✗${NC} n8n web UI not accessible via HTTPS"
         echo "   URL: https://${N8N_HOST}"
         echo "   Check DNS, SSL certificates, and Caddy configuration"
-        ((TESTS_FAILED++))
+        TESTS_FAILED=$((TESTS_FAILED + 1))
     fi
 fi
 echo ""
@@ -158,14 +205,14 @@ WEBHOOK_RESPONSE=$(docker compose exec -T n8n wget -q -O- --server-response http
 
 if echo "$WEBHOOK_RESPONSE" | grep -qE "HTTP.*404|Not Found|Workflow.*not found"; then
     echo -e "${GREEN}✓${NC} Webhook endpoint is responding (404 for non-existent webhook is expected)"
-    ((TESTS_PASSED++))
+    TESTS_PASSED=$((TESTS_PASSED + 1))
 elif echo "$WEBHOOK_RESPONSE" | grep -qE "HTTP.*200|success"; then
     echo -e "${GREEN}✓${NC} Webhook endpoint is responding (test workflow exists)"
-    ((TESTS_PASSED++))
+    TESTS_PASSED=$((TESTS_PASSED + 1))
 else
     echo -e "${RED}✗${NC} Webhook endpoint not responding correctly"
     echo "   Response: ${WEBHOOK_RESPONSE}"
-    ((TESTS_FAILED++))
+    TESTS_FAILED=$((TESTS_FAILED + 1))
 fi
 echo ""
 
@@ -178,15 +225,15 @@ if docker volume ls | grep -q "borgstack_n8n_data"; then
     # Verify volume is actually mounted in container
     if docker compose exec -T n8n test -d /home/node/.n8n; then
         echo -e "${GREEN}✓${NC} Volume borgstack_n8n_data exists and is mounted"
-        ((TESTS_PASSED++))
+        TESTS_PASSED=$((TESTS_PASSED + 1))
     else
         echo -e "${RED}✗${NC} Volume exists but not mounted correctly"
-        ((TESTS_FAILED++))
+        TESTS_FAILED=$((TESTS_FAILED + 1))
     fi
 else
     echo -e "${RED}✗${NC} Volume borgstack_n8n_data not found"
     docker volume ls | grep borgstack || true
-    ((TESTS_FAILED++))
+    TESTS_FAILED=$((TESTS_FAILED + 1))
 fi
 echo ""
 
@@ -198,11 +245,11 @@ echo "Test 8: Verifying n8n basic authentication is active..."
 # Check if N8N_BASIC_AUTH_ACTIVE is set to true in container environment
 if docker compose exec -T n8n printenv N8N_BASIC_AUTH_ACTIVE | grep -q "true"; then
     echo -e "${GREEN}✓${NC} n8n basic authentication is enabled (N8N_BASIC_AUTH_ACTIVE=true)"
-    ((TESTS_PASSED++))
+    TESTS_PASSED=$((TESTS_PASSED + 1))
 else
     echo -e "${RED}✗${NC} n8n basic authentication is not enabled"
     docker compose exec -T n8n printenv | grep N8N_BASIC_AUTH || true
-    ((TESTS_FAILED++))
+    TESTS_FAILED=$((TESTS_FAILED + 1))
 fi
 echo ""
 

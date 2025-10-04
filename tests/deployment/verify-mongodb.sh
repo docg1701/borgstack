@@ -249,20 +249,22 @@ else
 fi
 
 # ============================================================================
-# Test 11: Lowcoder Database Exists (AC: 3)
+# Test 11: Lowcoder Database Creation (AC: 3)
 # ============================================================================
-log_test "Test 11: Verifying 'lowcoder' database exists"
+log_test "Test 11: Verifying 'lowcoder' database can be created/accessed"
 
-if [ -n "${MONGODB_ROOT_PASSWORD:-}" ]; then
-    if docker compose exec -T mongodb mongosh --username admin --password "${MONGODB_ROOT_PASSWORD}" --authenticationDatabase admin --eval "db.adminCommand('listDatabases')" | grep -q "lowcoder"; then
-        log_success "'lowcoder' database exists"
+if [ -n "${MONGODB_ROOT_PASSWORD:-}" ] && [ -n "${LOWCODER_DB_PASSWORD:-}" ]; then
+    # Create the lowcoder database by inserting a document as lowcoder_user
+    # This mimics what happens when Lowcoder first connects
+    if docker compose exec -T mongodb mongosh --username lowcoder_user --password "${LOWCODER_DB_PASSWORD}" --authenticationDatabase lowcoder lowcoder --eval "db.init.insertOne({ initialized: true, timestamp: new Date() })" | grep -q "acknowledged: true"; then
+        log_success "'lowcoder' database created and accessible"
     else
-        log_error "'lowcoder' database not found"
+        log_error "'lowcoder' database creation failed"
         log_info "Available databases:"
         docker compose exec -T mongodb mongosh --username admin --password "${MONGODB_ROOT_PASSWORD}" --authenticationDatabase admin --eval "db.adminCommand('listDatabases')"
     fi
 else
-    log_error "Cannot verify database without MONGODB_ROOT_PASSWORD"
+    log_error "Cannot verify database without MONGODB_ROOT_PASSWORD and LOWCODER_DB_PASSWORD"
 fi
 
 # ============================================================================
@@ -324,11 +326,17 @@ fi
 # ============================================================================
 log_test "Test 15: Verifying MongoDB does not expose ports to host (security check)"
 
-# Check that MongoDB container has no published ports
-if docker compose ps mongodb --format json | jq -r '.[0].Publishers' | grep -v "null" | grep -q "27017"; then
-    log_error "MongoDB is exposing port 27017 to host (security violation)"
+# Check that MongoDB container has no published ports using docker inspect
+CONTAINER_ID=$(docker compose ps -q mongodb)
+if [ -n "$CONTAINER_ID" ]; then
+    PORT_BINDINGS=$(docker inspect "$CONTAINER_ID" --format='{{json .NetworkSettings.Ports}}')
+    if echo "$PORT_BINDINGS" | grep -q "HostPort"; then
+        log_error "MongoDB is exposing port 27017 to host (security violation)"
+    else
+        log_success "MongoDB is not exposing ports to host (secure configuration)"
+    fi
 else
-    log_success "MongoDB is not exposing ports to host (secure configuration)"
+    log_error "MongoDB container not found"
 fi
 
 # ============================================================================
