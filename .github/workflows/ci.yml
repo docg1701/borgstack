@@ -1573,7 +1573,7 @@ jobs:
           fi
 
           # Check Redis connection
-          if docker compose config | grep -A 60 "directus:" | grep -q "REDIS:"; then
+          if docker compose config | grep -A 60 "directus:" | grep -q "REDIS_HOST:"; then
             echo "✅ REDIS configured for caching"
           else
             echo "❌ REDIS not configured"

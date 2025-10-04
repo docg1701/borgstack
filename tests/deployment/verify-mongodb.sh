@@ -249,20 +249,22 @@ else
 fi
 
 # ============================================================================
-# Test 11: Lowcoder Database Exists (AC: 3)
+# Test 11: Lowcoder Database Creation (AC: 3)
 # ============================================================================
-log_test "Test 11: Verifying 'lowcoder' database exists"
+log_test "Test 11: Verifying 'lowcoder' database can be created/accessed"
 
-if [ -n "${MONGODB_ROOT_PASSWORD:-}" ]; then
-    if docker compose exec -T mongodb mongosh --username admin --password "${MONGODB_ROOT_PASSWORD}" --authenticationDatabase admin --eval "db.adminCommand('listDatabases')" | grep -q "lowcoder"; then
-        log_success "'lowcoder' database exists"
+if [ -n "${MONGODB_ROOT_PASSWORD:-}" ] && [ -n "${LOWCODER_DB_PASSWORD:-}" ]; then
+    # Create the lowcoder database by inserting a document as lowcoder_user
+    # This mimics what happens when Lowcoder first connects
+    if docker compose exec -T mongodb mongosh --username lowcoder_user --password "${LOWCODER_DB_PASSWORD}" --authenticationDatabase lowcoder lowcoder --eval "db.init.insertOne({ initialized: true, timestamp: new Date() })" | grep -q "acknowledged: true"; then
+        log_success "'lowcoder' database created and accessible"
     else
-        log_error "'lowcoder' database not found"
+        log_error "'lowcoder' database creation failed"
         log_info "Available databases:"
         docker compose exec -T mongodb mongosh --username admin --password "${MONGODB_ROOT_PASSWORD}" --authenticationDatabase admin --eval "db.adminCommand('listDatabases')"
     fi
 else
-    log_error "Cannot verify database without MONGODB_ROOT_PASSWORD"
+    log_error "Cannot verify database without MONGODB_ROOT_PASSWORD and LOWCODER_DB_PASSWORD"
 fi
 
 # ============================================================================
