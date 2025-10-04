@@ -859,6 +859,7 @@ jobs:
           fi
 
       - name: Run n8n validation tests
+        timeout-minutes: 15
         run: |
           echo "Running comprehensive n8n validation tests..."
           chmod +x tests/deployment/verify-n8n.sh
@@ -1701,6 +1702,7 @@ jobs:
           fi
 
       - name: Run Directus validation tests
+        timeout-minutes: 15
         run: |
           echo "Running comprehensive Directus validation tests..."
           chmod +x tests/deployment/verify-directus.sh
