@@ -23,12 +23,12 @@ log_test() {
 
 log_pass() {
     echo -e "${GREEN}[PASS]${NC} $*"
-    ((TESTS_PASSED++))
+    TESTS_PASSED=$((TESTS_PASSED + 1))
 }
 
 log_fail() {
     echo -e "${RED}[FAIL]${NC} $*"
-    ((TESTS_FAILED++))
+    TESTS_FAILED=$((TESTS_FAILED + 1))
 }
 
 # Load environment variables
@@ -43,6 +43,13 @@ fi
 echo "=========================================="
 echo "Directus Deployment Verification Tests"
 echo "=========================================="
+echo ""
+
+# Setup: Start Directus and dependencies
+echo "Starting Directus and dependencies..."
+docker compose up -d postgresql redis directus
+echo "Waiting for containers to be healthy..."
+sleep 15
 echo ""
 
 # Test 1: Verify Directus container is running
