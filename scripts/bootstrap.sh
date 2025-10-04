@@ -404,6 +404,7 @@ generate_env_file() {
     local lowcoder_admin_password=$(generate_password)
     local lowcoder_encryption_password=$(generate_password)
     local lowcoder_encryption_salt=$(generate_password)
+    local lowcoder_readonly_db_password=$(generate_password)
 
     # Create .env file
     log_info "Writing .env file..."
@@ -483,6 +484,7 @@ LOWCODER_ADMIN_EMAIL=admin@${domain}
 LOWCODER_ADMIN_PASSWORD=${lowcoder_admin_password}
 LOWCODER_ENCRYPTION_PASSWORD=${lowcoder_encryption_password}
 LOWCODER_ENCRYPTION_SALT=${lowcoder_encryption_salt}
+LOWCODER_READONLY_DB_PASSWORD=${lowcoder_readonly_db_password}
 EOF
 
     # Set secure permissions

@@ -139,38 +139,154 @@ Lowcoder supports multiple data sources: PostgreSQL, REST APIs, GraphQL, MongoDB
 
 ### Connecting to PostgreSQL (BorgStack Databases)
 
-**Example: Connect to Chatwoot Database**
+**⚠️ SECURITY: Use Read-Only User for Lowcoder Applications**
 
-1. **Navigate to "Data Sources"** (left sidebar)
+For security best practices, Lowcoder applications should use a **read-only database user** (`lowcoder_readonly_user`) instead of service owner accounts. This implements the principle of least privilege by granting SELECT-only permissions.
+
+#### Step 1: Create Read-Only Database User
+
+Before configuring datasources in Lowcoder, create the read-only user by executing the SQL script:
+
+```bash
+# Copy SQL script to PostgreSQL container
+docker compose cp config/postgresql/create-lowcoder-readonly-users.sql postgresql:/tmp/
+
+# Execute script with password from .env
+docker compose exec postgresql psql -U postgres \
+  -v LOWCODER_READONLY_DB_PASSWORD="$(grep LOWCODER_READONLY_DB_PASSWORD .env | cut -d= -f2)" \
+  -f /tmp/create-lowcoder-readonly-users.sql
+```
+
+**Verify User Creation**:
+
+```bash
+# List database users (should show lowcoder_readonly_user)
+docker compose exec postgresql psql -U postgres -c "\du"
+
+# Verify read-only permissions on n8n_db
+docker compose exec postgresql psql -U postgres -d n8n_db \
+  -c "SELECT grantee, privilege_type FROM information_schema.role_table_grants WHERE grantee = 'lowcoder_readonly_user';"
+```
+
+#### Step 2: Configure PostgreSQL Datasource in Lowcoder UI
+
+**Example: Connect to Chatwoot Database (Read-Only)**
+
+1. **Navigate to "Data Sources"** (left sidebar in Lowcoder UI)
 2. **Click "+ New Data Source"**
 3. **Select "PostgreSQL"**
 4. **Configure connection**:
-   - **Name**: `chatwoot_db` (descriptive name)
-   - **Host**: `postgresql` (Docker DNS name)
+   - **Name**: `chatwoot_db_readonly` (descriptive name indicating read-only access)
+   - **Host**: `postgresql` (Docker service name on borgstack_internal network)
    - **Port**: `5432`
    - **Database**: `chatwoot_db`
-   - **Username**: `chatwoot_user`
-   - **Password**: Retrieve from `.env` file (`CHATWOOT_DB_PASSWORD`)
-   - **SSL Mode**: `disable` (internal network)
+   - **Username**: `lowcoder_readonly_user`
+   - **Password**: Retrieve from `.env` file (`LOWCODER_READONLY_DB_PASSWORD`)
+   - **SSL Mode**: `disable` (internal network, SSL not required)
 
-5. **Test Connection**: Click "Test Connection" button
+5. **Test Connection**: Click "Test Connection" button (should show "Connection successful")
 6. **Save**: Click "Save" to store data source
 
-**Available PostgreSQL Databases**:
+**Connection String Format** (for reference):
+```
+postgresql://lowcoder_readonly_user:${LOWCODER_READONLY_DB_PASSWORD}@postgresql:5432/chatwoot_db
+```
 
-| Database | User | Purpose |
-|----------|------|---------|
-| `n8n_db` | `n8n_user` | n8n workflow data |
-| `chatwoot_db` | `chatwoot_user` | Customer service conversations |
-| `evolution_db` | `evolution_user` | WhatsApp message history |
-| `directus_db` | `directus_user` | CMS content data |
+#### Available PostgreSQL Databases for Lowcoder Applications
 
-**Retrieve Passwords**:
+| Database | Read-Only User | Purpose | Example Use Cases |
+|----------|---------------|---------|------------------|
+| `n8n_db` | `lowcoder_readonly_user` | n8n workflow data | Workflow execution dashboard, automation analytics |
+| `chatwoot_db` | `lowcoder_readonly_user` | Customer service conversations | Agent performance metrics, conversation history viewer |
+| `evolution_db` | `lowcoder_readonly_user` | WhatsApp message history | Message analytics, WhatsApp campaign reporting |
+| `directus_db` | `lowcoder_readonly_user` | CMS content data | Content analytics, collection statistics |
+
+**Retrieve Read-Only Password**:
 
 ```bash
-# View database passwords
-grep "_DB_PASSWORD" .env
+# View read-only database password
+grep LOWCODER_READONLY_DB_PASSWORD .env
 ```
+
+#### Security Considerations for PostgreSQL Datasources
+
+**✅ DO:**
+- **Use `lowcoder_readonly_user`** for query-only applications (dashboards, reports, analytics)
+- **Use parameterized queries** in Lowcoder query builder to prevent SQL injection
+- **Validate user inputs** before using in SQL queries
+- **Grant minimal permissions** - read-only user has SELECT only, no INSERT/UPDATE/DELETE
+- **Store credentials securely** - Lowcoder encrypts datasource passwords using `LOWCODER_ENCRYPTION_PASSWORD`
+
+**❌ DON'T:**
+- **Never use service owner accounts** (`n8n_user`, `chatwoot_user`, etc.) in Lowcoder datasources
+- **Never hardcode passwords** in application queries or components
+- **Avoid string concatenation** for SQL queries (use parameterized queries instead)
+- **Don't expose sensitive data** in public applications without access control
+
+#### Example Datasource Configurations
+
+**1. n8n Workflow Analytics Datasource**
+
+- **Name**: `n8n_db_readonly`
+- **Host**: `postgresql`
+- **Port**: `5432`
+- **Database**: `n8n_db`
+- **Username**: `lowcoder_readonly_user`
+- **Password**: `${LOWCODER_READONLY_DB_PASSWORD}` (from .env)
+
+**Example Query**: `SELECT * FROM execution_entity WHERE finished = true ORDER BY "startedAt" DESC LIMIT 100`
+
+**2. Chatwoot Customer Service Datasource**
+
+- **Name**: `chatwoot_db_readonly`
+- **Host**: `postgresql`
+- **Port**: `5432`
+- **Database**: `chatwoot_db`
+- **Username**: `lowcoder_readonly_user`
+- **Password**: `${LOWCODER_READONLY_DB_PASSWORD}` (from .env)
+
+**Example Query**: `SELECT * FROM conversations WHERE status = 'open' ORDER BY created_at DESC`
+
+**3. Evolution API WhatsApp History Datasource**
+
+- **Name**: `evolution_db_readonly`
+- **Host**: `postgresql`
+- **Port**: `5432`
+- **Database**: `evolution_db`
+- **Username**: `lowcoder_readonly_user`
+- **Password**: `${LOWCODER_READONLY_DB_PASSWORD}` (from .env)
+
+**Example Query**: `SELECT * FROM "Message" WHERE "key_fromMe" = false ORDER BY "messageTimestamp" DESC LIMIT 50`
+
+**4. Directus CMS Content Datasource**
+
+- **Name**: `directus_db_readonly`
+- **Host**: `postgresql`
+- **Port**: `5432`
+- **Database**: `directus_db`
+- **Username**: `lowcoder_readonly_user`
+- **Password**: `${LOWCODER_READONLY_DB_PASSWORD}` (from .env)
+
+**Example Query**: `SELECT * FROM directus_collections ORDER BY collection ASC`
+
+#### Alternative: Using Service Owner Accounts (NOT RECOMMENDED)
+
+For applications that require write access (INSERT/UPDATE/DELETE), you can use service owner accounts, but this is **NOT RECOMMENDED** for security reasons.
+
+**If you must use service owner accounts:**
+
+1. **Create dedicated application user** with minimal required permissions (e.g., `lowcoder_writer_user`)
+2. **Grant specific permissions** only (e.g., INSERT on specific tables, not all tables)
+3. **Audit all write operations** and log changes
+4. **Implement application-level access control** in Lowcoder
+
+**Example: Service Owner Account (NOT RECOMMENDED)**
+
+- **Username**: `chatwoot_user` (service owner account)
+- **Password**: `${CHATWOOT_DB_PASSWORD}` (from .env)
+- **Permissions**: Full read/write access to chatwoot_db
+
+⚠️ **WARNING**: Using service owner accounts in Lowcoder applications violates the principle of least privilege and increases security risk.
 
 ### Connecting to REST API (Evolution API Example)
 
@@ -244,6 +360,251 @@ Lowcoder can trigger n8n workflows via webhook calls.
 4. **Public Access**:
    - Toggle "Public Access" to share with all users
    - Generate shareable link for external access (requires authentication)
+
+---
+
+## Security Best Practices
+
+### Security Checklist for Application Developers
+
+Use this checklist when building Lowcoder applications to ensure security best practices:
+
+**Data Source Security:**
+- [ ] Use `lowcoder_readonly_user` for read-only applications (dashboards, reports)
+- [ ] Never use service owner accounts (`n8n_user`, `chatwoot_user`, etc.) unless absolutely required
+- [ ] Store all datasource passwords in Lowcoder (encrypted with `LOWCODER_ENCRYPTION_PASSWORD`)
+- [ ] Never hardcode credentials in application code or queries
+- [ ] Verify datasource connections use internal network (`postgresql:5432`, not external IPs)
+
+**Query Security:**
+- [ ] Use parameterized queries (NOT string concatenation) to prevent SQL injection
+- [ ] Validate all user inputs before using in queries
+- [ ] Limit query results (use `LIMIT` clause) to prevent performance issues
+- [ ] Avoid `SELECT *` - explicitly list required columns
+- [ ] Test queries with malicious input (e.g., `'; DROP TABLE users; --`)
+
+**Application Access Control:**
+- [ ] Set appropriate application permissions (Owner, Editor, Viewer)
+- [ ] Disable "Public Access" unless required for external users
+- [ ] Use role-based access control (RBAC) for sensitive applications
+- [ ] Review user list regularly and remove inactive users
+- [ ] Require authentication for all applications (no anonymous access)
+
+**Data Protection:**
+- [ ] Mask sensitive data (passwords, credit cards, PII) in UI components
+- [ ] Filter out sensitive columns in queries (don't expose to frontend)
+- [ ] Implement data retention policies (auto-delete old records)
+- [ ] Use HTTPS for all API calls (n8n webhooks, Evolution API, etc.)
+- [ ] Encrypt sensitive data at rest (use PostgreSQL pgcrypto extension)
+
+**Audit and Monitoring:**
+- [ ] Enable Lowcoder audit logs (Settings → Audit Logs)
+- [ ] Log all data modifications (INSERT/UPDATE/DELETE queries)
+- [ ] Monitor failed login attempts
+- [ ] Review application access logs monthly
+- [ ] Set up alerts for suspicious activities (abnormal query patterns)
+
+**Deployment Security:**
+- [ ] Change admin password after first login
+- [ ] Rotate `LOWCODER_ENCRYPTION_PASSWORD` and `LOWCODER_ENCRYPTION_SALT` annually
+- [ ] Backup datasource credentials securely (password manager)
+- [ ] Test applications in staging environment before production deployment
+- [ ] Document security assumptions and threat models
+
+### Principle of Least Privilege
+
+**Database Access:**
+
+Always grant **minimum required permissions** to Lowcoder datasources:
+
+1. **Read-Only Applications** (dashboards, reports, analytics):
+   - ✅ Use `lowcoder_readonly_user` (SELECT only)
+   - ❌ Don't use service owner accounts with full access
+
+2. **Write Applications** (forms, data entry):
+   - ✅ Create dedicated user with INSERT/UPDATE permissions on specific tables only
+   - ❌ Don't grant DELETE or TRUNCATE permissions unless required
+
+3. **Admin Applications** (user management, system config):
+   - ✅ Create separate admin user with full permissions
+   - ✅ Restrict access to admin users only (not all Lowcoder users)
+   - ❌ Don't use PostgreSQL superuser (`postgres`) in Lowcoder
+
+**Example: Creating Write-Enabled User (Minimal Permissions)**
+
+```sql
+-- Create user for form submissions (INSERT only)
+CREATE USER lowcoder_form_writer WITH ENCRYPTED PASSWORD 'secure_password_here';
+
+-- Grant connection to specific database
+GRANT CONNECT ON DATABASE chatwoot_db TO lowcoder_form_writer;
+
+-- Grant INSERT permission on specific table only
+\c chatwoot_db
+GRANT USAGE ON SCHEMA public TO lowcoder_form_writer;
+GRANT INSERT ON contacts TO lowcoder_form_writer;
+
+-- Verify permissions (should show INSERT only)
+SELECT grantee, privilege_type FROM information_schema.role_table_grants
+WHERE grantee = 'lowcoder_form_writer';
+```
+
+### Secure Credential Storage
+
+**Lowcoder Credential Encryption:**
+
+All datasource credentials in Lowcoder are encrypted using `LOWCODER_ENCRYPTION_PASSWORD` and `LOWCODER_ENCRYPTION_SALT` environment variables.
+
+**Best Practices:**
+
+1. **Strong Encryption Keys:**
+   ```bash
+   # Generate strong encryption keys (32 characters)
+   openssl rand -base64 32 | tr -d "=+/" | cut -c1-32
+   ```
+
+2. **Backup Encryption Keys:**
+   - Store `LOWCODER_ENCRYPTION_PASSWORD` in password manager
+   - Store `LOWCODER_ENCRYPTION_SALT` in password manager
+   - Without these keys, all datasource credentials become inaccessible
+
+3. **Key Rotation (Annual):**
+   ```bash
+   # 1. Export all datasource configurations (manual backup)
+   # 2. Generate new encryption keys
+   # 3. Update .env with new keys
+   # 4. Restart Lowcoder: docker compose restart lowcoder
+   # 5. Re-enter all datasource passwords in Lowcoder UI
+   ```
+
+4. **Never Commit Credentials:**
+   - ✅ `.env` file is in `.gitignore`
+   - ❌ Never commit datasource passwords to git
+   - ❌ Never share encryption keys via email/chat
+
+### SQL Injection Prevention
+
+**Vulnerable Code (DON'T DO THIS):**
+
+```sql
+-- ❌ DANGEROUS: String concatenation allows SQL injection
+SELECT * FROM users WHERE email = '{{ textInput1.value }}'
+```
+
+**Attack Example:**
+- User input: `admin@example.com' OR '1'='1`
+- Executed query: `SELECT * FROM users WHERE email = 'admin@example.com' OR '1'='1'`
+- Result: Returns ALL users (security breach)
+
+**Secure Code (USE THIS):**
+
+```sql
+-- ✅ SAFE: Parameterized query (Lowcoder handles escaping)
+SELECT * FROM users WHERE email = {{ textInput1.value }}
+```
+
+**Query Builder Best Practices:**
+
+1. **Use Lowcoder Variables:** `{{ componentName.value }}` (automatically escaped)
+2. **Validate Inputs:** Use component validation (email format, regex patterns)
+3. **Whitelist Values:** Use dropdown/select components instead of free text
+4. **Escape Special Characters:** If string concatenation is unavoidable, use PostgreSQL `quote_literal()` function
+
+**Input Validation Example:**
+
+```javascript
+// In Lowcoder component validation
+// Email input validation
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+return emailRegex.test(emailInput.value) || "Invalid email format";
+
+// Numeric input validation
+const userId = parseInt(userIdInput.value);
+return !isNaN(userId) && userId > 0 || "Invalid user ID";
+```
+
+### User Permission Management
+
+**Lowcoder User Roles:**
+
+| Role | Permissions | Use Case |
+|------|-------------|----------|
+| **Admin** | Full access: Create/edit/delete apps, manage users, system settings | System administrators, IT team |
+| **Developer** | Create/edit own apps, view all apps | Application developers, power users |
+| **Viewer** | View published apps only, no editing | End users, business users |
+
+**Application-Level Permissions:**
+
+1. **Private Application** (default):
+   - Only creator and explicitly granted users can access
+   - Recommended for sensitive data applications
+
+2. **Shared Application**:
+   - Share with specific users or groups
+   - Owner: Full control (can delete app)
+   - Editor: Can modify application code
+   - Viewer: Read-only access to published version
+
+3. **Public Application**:
+   - All authenticated Lowcoder users can access
+   - ⚠️ WARNING: Don't use for sensitive data
+
+**Best Practices:**
+
+- Review user permissions quarterly
+- Remove users who left the organization immediately
+- Use principle of least privilege (grant minimum required role)
+- Document application owners and maintainers
+
+### Audit Logging and Monitoring
+
+**Enable Audit Logs:**
+
+1. **Login as Admin**
+2. **Navigate to Settings → Audit Logs**
+3. **Enable Audit Logging**
+4. **Configure log retention** (default: 90 days)
+
+**What Gets Logged:**
+
+- User login/logout events
+- Application creation/modification/deletion
+- Datasource configuration changes
+- Query executions (optional, enable for sensitive apps)
+- Permission changes
+- Failed authentication attempts
+
+**Monitoring Best Practices:**
+
+1. **Regular Log Reviews:**
+   ```bash
+   # Export audit logs monthly
+   # Review for suspicious activities:
+   # - Failed login attempts (potential brute force)
+   # - Unusual query patterns (potential data exfiltration)
+   # - Permission escalations (unauthorized access)
+   ```
+
+2. **Set Up Alerts:**
+   - Failed login > 5 times in 1 hour → Alert admin
+   - Datasource configuration change → Email notification
+   - Application deletion → Approval required
+
+3. **Database Query Logging:**
+   ```bash
+   # Enable PostgreSQL query logging for forensics
+   docker compose exec postgresql psql -U postgres -c \
+     "ALTER SYSTEM SET log_statement = 'all';"
+   docker compose restart postgresql
+
+   # View query logs
+   docker compose logs postgresql | grep "LOG:  statement"
+   ```
+
+4. **Integration with n8n for Monitoring:**
+   - Create n8n workflow: Monitor Lowcoder audit logs
+   - Send alerts to Slack/Teams when suspicious activity detected
+   - Example: Daily summary of application access patterns
 
 ---
 
@@ -515,6 +876,33 @@ docker compose exec postgresql psql -U chatwoot_user -d chatwoot_db -c "SELECT 1
 - Both containers must be on `borgstack_internal` network
 - Use hostname `postgresql` (Docker DNS)
 - Verify user password from `.env` file
+
+**Read-Only User Connection Troubleshooting**:
+
+```bash
+# Verify lowcoder_readonly_user exists
+docker compose exec postgresql psql -U postgres -c "\du" | grep lowcoder_readonly
+
+# Test read-only user connection to n8n_db
+docker compose exec postgresql psql -U lowcoder_readonly_user -d n8n_db \
+  -c "SELECT 1" 2>&1
+
+# Check permissions on specific database
+docker compose exec postgresql psql -U postgres -d chatwoot_db \
+  -c "SELECT grantee, privilege_type FROM information_schema.role_table_grants WHERE grantee = 'lowcoder_readonly_user' LIMIT 10;"
+
+# If user doesn't exist, re-run creation script
+docker compose cp config/postgresql/create-lowcoder-readonly-users.sql postgresql:/tmp/
+docker compose exec postgresql psql -U postgres \
+  -v LOWCODER_READONLY_DB_PASSWORD="$(grep LOWCODER_READONLY_DB_PASSWORD .env | cut -d= -f2)" \
+  -f /tmp/create-lowcoder-readonly-users.sql
+```
+
+**Common Read-Only User Issues**:
+- User not created: Run `config/postgresql/create-lowcoder-readonly-users.sql` script
+- Wrong password: Verify `LOWCODER_READONLY_DB_PASSWORD` in `.env` matches PostgreSQL user password
+- No permissions on database: Re-run SQL script to grant permissions
+- Tables created after user creation: Run `GRANT SELECT ON ALL TABLES IN SCHEMA public TO lowcoder_readonly_user;` on affected database
 
 **REST API Connection Troubleshooting**:
 
