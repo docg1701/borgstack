@@ -42,8 +42,27 @@ echo ""
 # ============================================================================
 echo "Starting n8n and dependencies..."
 docker compose up -d postgresql redis n8n
-echo "Waiting for containers to be healthy..."
-sleep 45
+
+# Wait for containers to be healthy
+echo "Waiting for containers to be healthy (up to 90 seconds)..."
+WAIT_TIME=0
+MAX_WAIT=90
+while [ $WAIT_TIME -lt $MAX_WAIT ]; do
+    if docker compose ps postgresql redis n8n | grep -q "healthy.*healthy.*healthy"; then
+        echo "All containers are healthy after ${WAIT_TIME}s"
+        break
+    fi
+    sleep 5
+    WAIT_TIME=$((WAIT_TIME + 5))
+    if [ $((WAIT_TIME % 15)) -eq 0 ]; then
+        echo "Still waiting... (${WAIT_TIME}s elapsed)"
+    fi
+done
+
+if [ $WAIT_TIME -ge $MAX_WAIT ]; then
+    echo "WARNING: Containers did not become healthy after ${MAX_WAIT}s, proceeding anyway..."
+    docker compose ps postgresql redis n8n
+fi
 echo ""
 
 # ============================================================================
