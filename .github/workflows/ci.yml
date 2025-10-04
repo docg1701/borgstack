@@ -622,14 +622,9 @@ jobs:
 
       - name: Run MongoDB validation tests
         run: |
-          echo "⚠️  Skipping full MongoDB validation tests in CI"
-          echo "Full test suite (15 tests) requires MongoDB container runtime"
-          echo "Configuration tests (1-7) already validated ✅"
-          echo ""
-          echo "To run full validation locally:"
-          echo "  ./tests/deployment/verify-mongodb.sh"
-          echo ""
-          echo "MongoDB configuration validated successfully ✅"
+          echo "Running comprehensive MongoDB validation tests..."
+          chmod +x tests/deployment/verify-mongodb.sh
+          bash tests/deployment/verify-mongodb.sh
 
       - name: Cleanup MongoDB test environment
         if: always()
@@ -859,6 +854,12 @@ jobs:
             echo "❌ verify-n8n.sh is not executable"
             exit 1
           fi
+
+      - name: Run n8n validation tests
+        run: |
+          echo "Running comprehensive n8n validation tests..."
+          chmod +x tests/deployment/verify-n8n.sh
+          bash tests/deployment/verify-n8n.sh
 
       - name: Cleanup n8n test environment
         if: always()
@@ -1478,3 +1479,349 @@ jobs:
           echo "Cleaning up test environment..."
           docker compose down -v --remove-orphans || true
           rm -f .env
+
+  validate-directus:
+    name: Validate Directus Configuration
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Create .env file for testing
+        run: |
+          echo "Creating temporary .env file with test credentials..."
+          cat > .env << 'EOF'
+          # Test credentials for CI pipeline
+          POSTGRES_PASSWORD=test_postgres_password_12345678
+          DIRECTUS_DB_PASSWORD=test_directus_password_12345678
+          REDIS_PASSWORD=test_redis_password_12345678901234567890
+          DIRECTUS_KEY=test_directus_key_12345678901234567890123456789012
+          DIRECTUS_SECRET=test_directus_secret_12345678901234567890123456
+          DIRECTUS_ADMIN_EMAIL=admin@example.com.br
+          DIRECTUS_ADMIN_PASSWORD=test_directus_admin_password_12345678
+          DIRECTUS_HOST=directus.example.com.br
+          DOMAIN=example.com.br
+          EMAIL=admin@example.com.br
+          CORS_ALLOWED_ORIGINS=*
+          EOF
+
+      - name: Verify Directus configuration in docker-compose.yml
+        run: |
+          echo "Verifying Directus service is configured..."
+
+          # Check Directus image version is pinned correctly
+          if docker compose config | grep -q "image: directus/directus:11"; then
+            echo "✅ Directus image correctly configured (directus/directus:11)"
+          else
+            echo "❌ Directus image not configured correctly"
+            exit 1
+          fi
+
+          # Check Directus is on both networks (internal for DB/Redis, external for Caddy)
+          if docker compose config | grep -A 50 "directus:" | grep -q "borgstack_internal"; then
+            echo "✅ Directus connected to borgstack_internal network"
+          else
+            echo "❌ Directus not connected to borgstack_internal network"
+            exit 1
+          fi
+
+          if docker compose config | grep -A 50 "directus:" | grep -q "borgstack_external"; then
+            echo "✅ Directus connected to borgstack_external network"
+          else
+            echo "❌ Directus not connected to borgstack_external network"
+            exit 1
+          fi
+
+          # Verify volume naming convention
+          if docker compose config | grep -q "borgstack_directus_uploads"; then
+            echo "✅ Volume borgstack_directus_uploads follows naming convention"
+          else
+            echo "❌ Volume borgstack_directus_uploads not found"
+            exit 1
+          fi
+
+          if docker compose config | grep -q "borgstack_directus_extensions"; then
+            echo "✅ Volume borgstack_directus_extensions follows naming convention"
+          else
+            echo "❌ Volume borgstack_directus_extensions not found"
+            exit 1
+          fi
+
+          # Verify no port exposure in production config
+          if docker compose config | grep -A 50 "directus:" | grep -E "^\s+ports:" > /dev/null 2>&1; then
+            echo "❌ Directus has port exposure in production config (security violation)"
+            exit 1
+          else
+            echo "✅ No port exposure to host (security requirement met)"
+          fi
+
+          # Verify health check is configured
+          if docker compose config | grep -A 60 "directus:" | grep -q "healthcheck:"; then
+            echo "✅ Health check configured for Directus"
+          else
+            echo "❌ Health check not configured for Directus"
+            exit 1
+          fi
+
+      - name: Verify Directus environment variables
+        run: |
+          echo "Verifying Directus environment variables configuration..."
+
+          # Check DATABASE_URL connection string
+          if docker compose config | grep -A 60 "directus:" | grep -q "DB_CLIENT: pg"; then
+            echo "✅ DB_CLIENT set to pg (PostgreSQL)"
+          else
+            echo "❌ DB_CLIENT not configured correctly"
+            exit 1
+          fi
+
+          # Check Redis connection
+          if docker compose config | grep -A 60 "directus:" | grep -q "REDIS:"; then
+            echo "✅ REDIS configured for caching"
+          else
+            echo "❌ REDIS not configured"
+            exit 1
+          fi
+
+          # Check KEY and SECRET are set
+          if docker compose config | grep -A 60 "directus:" | grep -q "KEY:"; then
+            echo "✅ KEY configured"
+          else
+            echo "❌ KEY not configured"
+            exit 1
+          fi
+
+          if docker compose config | grep -A 60 "directus:" | grep -q "SECRET:"; then
+            echo "✅ SECRET configured"
+          else
+            echo "❌ SECRET not configured"
+            exit 1
+          fi
+
+          # Check admin credentials
+          if docker compose config | grep -A 60 "directus:" | grep -q "ADMIN_EMAIL:"; then
+            echo "✅ ADMIN_EMAIL configured"
+          else
+            echo "❌ ADMIN_EMAIL not configured"
+            exit 1
+          fi
+
+          if docker compose config | grep -A 60 "directus:" | grep -q "ADMIN_PASSWORD:"; then
+            echo "✅ ADMIN_PASSWORD configured"
+          else
+            echo "❌ ADMIN_PASSWORD not configured"
+            exit 1
+          fi
+
+      - name: Verify Directus depends_on configuration
+        run: |
+          echo "Verifying Directus dependency configuration..."
+
+          # Check PostgreSQL dependency
+          if docker compose config | grep -A 80 "directus:" | grep -A 5 "depends_on:" | grep -q "postgresql:"; then
+            echo "✅ Directus depends on PostgreSQL"
+          else
+            echo "❌ Directus missing PostgreSQL dependency"
+            exit 1
+          fi
+
+          # Check Redis dependency
+          if docker compose config | grep -A 80 "directus:" | grep -A 10 "depends_on:" | grep -q "redis:"; then
+            echo "✅ Directus depends on Redis"
+          else
+            echo "❌ Directus missing Redis dependency"
+            exit 1
+          fi
+
+      - name: Verify Directus .env.example variables
+        run: |
+          echo "Verifying Directus variables in .env.example..."
+
+          if grep -q "DIRECTUS_HOST=" .env.example; then
+            echo "✅ DIRECTUS_HOST variable in .env.example"
+          else
+            echo "❌ DIRECTUS_HOST variable not found in .env.example"
+            exit 1
+          fi
+
+          if grep -q "DIRECTUS_KEY=" .env.example; then
+            echo "✅ DIRECTUS_KEY variable in .env.example"
+          else
+            echo "❌ DIRECTUS_KEY variable not found in .env.example"
+            exit 1
+          fi
+
+          if grep -q "DIRECTUS_SECRET=" .env.example; then
+            echo "✅ DIRECTUS_SECRET variable in .env.example"
+          else
+            echo "❌ DIRECTUS_SECRET variable not found in .env.example"
+            exit 1
+          fi
+
+          if grep -q "DIRECTUS_ADMIN_EMAIL=" .env.example; then
+            echo "✅ DIRECTUS_ADMIN_EMAIL variable in .env.example"
+          else
+            echo "❌ DIRECTUS_ADMIN_EMAIL variable not found in .env.example"
+            exit 1
+          fi
+
+          if grep -q "DIRECTUS_ADMIN_PASSWORD=" .env.example; then
+            echo "✅ DIRECTUS_ADMIN_PASSWORD variable in .env.example"
+          else
+            echo "❌ DIRECTUS_ADMIN_PASSWORD variable not found in .env.example"
+            exit 1
+          fi
+
+          if grep -q "DIRECTUS_DB_PASSWORD=" .env.example; then
+            echo "✅ DIRECTUS_DB_PASSWORD variable in .env.example"
+          else
+            echo "❌ DIRECTUS_DB_PASSWORD variable not found in .env.example"
+            exit 1
+          fi
+
+      - name: Verify Directus validation test script exists
+        run: |
+          echo "Verifying Directus validation test script exists..."
+
+          if [ -f "tests/deployment/verify-directus.sh" ]; then
+            echo "✅ verify-directus.sh exists"
+          else
+            echo "❌ verify-directus.sh not found"
+            exit 1
+          fi
+
+          if [ -x "tests/deployment/verify-directus.sh" ]; then
+            echo "✅ verify-directus.sh is executable"
+          else
+            echo "❌ verify-directus.sh is not executable"
+            exit 1
+          fi
+
+      - name: Run Directus validation tests
+        run: |
+          echo "Running comprehensive Directus validation tests..."
+          chmod +x tests/deployment/verify-directus.sh
+          bash tests/deployment/verify-directus.sh
+
+      - name: Cleanup Directus test environment
+        if: always()
+        run: |
+          echo "Cleaning up test environment..."
+          docker compose down -v --remove-orphans || true
+          rm -f .env
+
+  # ============================================================================
+  # FUTURE SERVICES - Placeholders for Epic 4 & 5 Stories
+  # ============================================================================
+  # The following services will be implemented in future stories.
+  # Uncomment and configure when implementing:
+  # - Story 4.2: FileFlows Media Processing
+  # - Story 5.1: SeaweedFS Object Storage
+  # - Story 5.2: Duplicati Backup System
+  # ============================================================================
+
+  # validate-fileflows:
+  #   name: Validate FileFlows Configuration
+  #   runs-on: ubuntu-24.04
+  #
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+  #
+  #     - name: Set up Docker Buildx
+  #       uses: docker/setup-buildx-action@v3
+  #
+  #     - name: Create .env file for testing
+  #       run: |
+  #         echo "Creating temporary .env file with test credentials..."
+  #         # TODO: Add FileFlows-specific environment variables
+  #
+  #     - name: Verify FileFlows configuration in docker-compose.yml
+  #       run: |
+  #         echo "Verifying FileFlows service is configured..."
+  #         # TODO: Add FileFlows configuration checks
+  #
+  #     - name: Run FileFlows validation tests
+  #       run: |
+  #         echo "Running comprehensive FileFlows validation tests..."
+  #         chmod +x tests/deployment/verify-fileflows.sh
+  #         bash tests/deployment/verify-fileflows.sh
+  #
+  #     - name: Cleanup FileFlows test environment
+  #       if: always()
+  #       run: |
+  #         echo "Cleaning up test environment..."
+  #         docker compose down -v --remove-orphans || true
+  #         rm -f .env
+
+  # validate-seaweedfs:
+  #   name: Validate SeaweedFS Configuration
+  #   runs-on: ubuntu-24.04
+  #
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+  #
+  #     - name: Set up Docker Buildx
+  #       uses: docker/setup-buildx-action@v3
+  #
+  #     - name: Create .env file for testing
+  #       run: |
+  #         echo "Creating temporary .env file with test credentials..."
+  #         # TODO: Add SeaweedFS-specific environment variables
+  #
+  #     - name: Verify SeaweedFS configuration in docker-compose.yml
+  #       run: |
+  #         echo "Verifying SeaweedFS service is configured..."
+  #         # TODO: Add SeaweedFS configuration checks (S3 API, volumes, etc.)
+  #
+  #     - name: Run SeaweedFS validation tests
+  #       run: |
+  #         echo "Running comprehensive SeaweedFS validation tests..."
+  #         chmod +x tests/deployment/verify-seaweedfs.sh
+  #         bash tests/deployment/verify-seaweedfs.sh
+  #
+  #     - name: Cleanup SeaweedFS test environment
+  #       if: always()
+  #       run: |
+  #         echo "Cleaning up test environment..."
+  #         docker compose down -v --remove-orphans || true
+  #         rm -f .env
+
+  # validate-duplicati:
+  #   name: Validate Duplicati Configuration
+  #   runs-on: ubuntu-24.04
+  #
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+  #
+  #     - name: Set up Docker Buildx
+  #       uses: docker/setup-buildx-action@v3
+  #
+  #     - name: Create .env file for testing
+  #       run: |
+  #         echo "Creating temporary .env file with test credentials..."
+  #         # TODO: Add Duplicati-specific environment variables
+  #
+  #     - name: Verify Duplicati configuration in docker-compose.yml
+  #       run: |
+  #         echo "Verifying Duplicati service is configured..."
+  #         # TODO: Add Duplicati configuration checks (backup sources, destinations)
+  #
+  #     - name: Run Duplicati validation tests
+  #       run: |
+  #         echo "Running comprehensive Duplicati validation tests..."
+  #         chmod +x tests/deployment/verify-duplicati.sh
+  #         bash tests/deployment/verify-duplicati.sh
+  #
+  #     - name: Cleanup Duplicati test environment
+  #       if: always()
+  #       run: |
+  #         echo "Cleaning up test environment..."
+  #         docker compose down -v --remove-orphans || true
+  #         rm -f .env

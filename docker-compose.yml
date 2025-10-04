@@ -612,7 +612,128 @@ services:
       retries: 5
       start_period: 60s  # Spring Boot + Node.js initialization time
 
-#   (Additional services: n8n, directus, fileflows, seaweedfs, duplicati)
+  # ==========================================================================
+  # Directus - Headless CMS and Data Management
+  # ==========================================================================
+  # Headless CMS providing REST and GraphQL APIs for content delivery
+  # Image: directus/directus:11
+  #
+  # Purpose:
+  #   - Content management with flexible data modeling
+  #   - REST API and GraphQL API for content delivery
+  #   - Media asset management with local storage (S3 migration in Story 5.1)
+  #   - User and role management for content access control
+  #
+  # Architecture:
+  #   - Backend: Node.js + Express + Knex.js (database abstraction)
+  #   - Database Migrations: Knex.js migrations (automatic on startup)
+  #   - File Storage: Local volume (borgstack_directus_uploads) - migrating to SeaweedFS S3 in Story 5.1
+  #   - Port 8055: Web UI (Admin Panel) + REST API + GraphQL API
+  #
+  # Database Dependencies:
+  #   - PostgreSQL: Content storage (directus_db)
+  #   - Redis: Caching layer for API responses and session management
+  #
+  # Integration Patterns:
+  #   - n8n: Workflow automation triggers for content events
+  #   - Lowcoder: Content datasource for custom applications
+  #   - REST API: https://directus.{DOMAIN}/items/{collection}
+  #   - GraphQL API: https://directus.{DOMAIN}/graphql
+  #
+  # Access:
+  #   - Web UI: https://directus.{DOMAIN}/admin (via Caddy reverse proxy)
+  #   - First-time login creates admin account using DIRECTUS_ADMIN_EMAIL/PASSWORD
+  #
+  # Security:
+  #   - NO port exposure to host (access via Caddy only)
+  #   - DIRECTUS_KEY: Instance identifier (UUID format)
+  #   - DIRECTUS_SECRET: Auth token signing secret (32+ characters)
+  #   - Database user isolation (directus_user with access only to directus_db)
+  #   - HTTPS enforced via Caddy with automatic Let's Encrypt SSL
+  #
+  # Storage Strategy:
+  #   - Story 4.1: Local file storage using borgstack_directus_uploads volume
+  #   - Story 5.1: Migration to SeaweedFS S3-compatible storage
+  #   - MIGRATION: Switch to SeaweedFS S3 storage in Story 5.1
+  #
+  # Backup Strategy:
+  #   - PostgreSQL directus_db: Via Duplicati automated backups
+  #   - File uploads volume: borgstack_directus_uploads backed up by Duplicati
+  # ==========================================================================
+  directus:
+    image: directus/directus:11
+    container_name: directus
+    restart: unless-stopped
+    networks:
+      - borgstack_internal  # Access to PostgreSQL, Redis
+      - borgstack_external  # Access from Caddy reverse proxy
+    # ⚠️  NO ports section in production - web UI accessed via Caddy reverse proxy
+    # ℹ️  For local development, add port mapping in docker-compose.override.yml
+    volumes:
+      # File uploads directory (local storage - migrating to S3 in Story 5.1)
+      - borgstack_directus_uploads:/directus/uploads
+    environment:
+      # ======================================================================
+      # Database Configuration (PostgreSQL)
+      # ======================================================================
+      DB_CLIENT: pg
+      DB_HOST: postgresql
+      DB_PORT: 5432
+      DB_DATABASE: directus_db
+      DB_USER: directus_user
+      DB_PASSWORD: ${DIRECTUS_DB_PASSWORD}
+
+      # ======================================================================
+      # Redis Cache Configuration
+      # ======================================================================
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      CACHE_ENABLED: "true"
+      CACHE_STORE: redis
+      CACHE_TTL: "300"  # 5 minutes default cache TTL
+
+      # ======================================================================
+      # Directus Core Configuration
+      # ======================================================================
+      # Instance identifier (UUID format) - must be unique per deployment
+      KEY: ${DIRECTUS_KEY}
+      # Auth token signing secret (32+ characters) - protects authentication tokens
+      SECRET: ${DIRECTUS_SECRET}
+      # Admin user credentials (first-time setup)
+      ADMIN_EMAIL: ${DIRECTUS_ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${DIRECTUS_ADMIN_PASSWORD}
+      # Public URL for asset URLs and OAuth callbacks
+      PUBLIC_URL: https://${DIRECTUS_HOST}
+      # WebSocket support for real-time updates
+      WEBSOCKETS_ENABLED: "true"
+
+      # ======================================================================
+      # File Storage Configuration
+      # ======================================================================
+      # MIGRATION: Switch to SeaweedFS S3 storage in Story 5.1
+      # Current: Local volume storage
+      # Future: S3-compatible storage (see config/directus/s3-storage.env.example)
+      STORAGE_LOCATIONS: local
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8055/server/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+      # Rationale for 60s start_period:
+      #   - Database migrations: ~20-30s (Knex.js schema creation and updates)
+      #   - Extension initialization: ~10s (pgvector and other extensions)
+      #   - Redis connection: ~5s (cache initialization)
+      #   - Express server startup: ~10s (Node.js application server)
+      # Total: ~45-55s (60s provides safety margin)
+
+#   (Additional services: fileflows, seaweedfs, duplicati)
 
 networks:
   borgstack_internal:
@@ -745,8 +866,14 @@ volumes:
     # CRITICAL: Contains all custom applications and datasource connections
     # Manual backup: docker compose exec -T lowcoder tar czf - /lowcoder-stacks > lowcoder-backup-$(date +%Y%m%d).tar.gz
 
+  borgstack_directus_uploads:
+    # Directus file uploads directory
+    # Contains: Uploaded media files, assets, and documents
+    # Backed up by Duplicati (Story 5.2)
+    # MIGRATION: Will be replaced with SeaweedFS S3 storage in Story 5.1
+    # Manual backup: docker compose exec -T directus tar czf - /directus/uploads > directus-uploads-backup-$(date +%Y%m%d).tar.gz
+
 # Additional volumes (to be added in future stories):
-#   borgstack_directus_data:
 #   borgstack_fileflows_data:
 #   borgstack_seaweedfs_data:
 #   borgstack_duplicati_data:

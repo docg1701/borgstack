@@ -398,7 +398,9 @@ generate_env_file() {
     local lowcoder_db_password=$(generate_password)
     local redis_password=$(generate_password)
     local chatwoot_secret_key_base=$(openssl rand -hex 64)
-    local directus_secret=$(generate_password)
+    local directus_key=$(openssl rand -hex 16)
+    local directus_secret=$(openssl rand -base64 32)
+    local directus_admin_password=$(openssl rand -base64 24 | tr -d "=+/" | cut -c1-24)
     local evolution_jwt_secret=$(generate_password)
     local evolution_api_key=$(openssl rand -base64 32)
     local lowcoder_admin_password=$(generate_password)
@@ -463,9 +465,17 @@ CHATWOOT_SECRET_KEY_BASE=${chatwoot_secret_key_base}
 CHATWOOT_API_TOKEN=<obtain-from-admin-ui-after-first-login>
 
 # ============================================================================
+# DIRECTUS CONFIGURATION
+# ============================================================================
+DIRECTUS_HOST=directus.${domain}
+DIRECTUS_KEY=${directus_key}
+DIRECTUS_SECRET=${directus_secret}
+DIRECTUS_ADMIN_EMAIL=admin@${domain}
+DIRECTUS_ADMIN_PASSWORD=${directus_admin_password}
+
+# ============================================================================
 # OTHER APPLICATION SECRETS
 # ============================================================================
-DIRECTUS_SECRET=${directus_secret}
 EVOLUTION_JWT_SECRET=${evolution_jwt_secret}
 
 # ============================================================================
@@ -522,6 +532,12 @@ EOF
     echo "${CYAN}Lowcoder Admin Password:${RESET} ${lowcoder_admin_password}"
     echo "${CYAN}Lowcoder Encryption Key:${RESET} ${lowcoder_encryption_password:0:20}... ${YELLOW}(32-char key in .env - BACKUP SECURELY!)${RESET}"
     echo "${CYAN}Lowcoder Encryption Salt:${RESET} ${lowcoder_encryption_salt:0:20}... ${YELLOW}(32-char salt in .env - BACKUP SECURELY!)${RESET}"
+    echo ""
+    echo "${CYAN}Directus Admin UI:${RESET} https://directus.${domain}/admin"
+    echo "${CYAN}Directus Admin Email:${RESET} admin@${domain}"
+    echo "${CYAN}Directus Admin Password:${RESET} ${directus_admin_password}"
+    echo "${CYAN}Directus Instance Key:${RESET} ${directus_key} ${YELLOW}(UUID in .env)${RESET}"
+    echo "${CYAN}Directus Secret:${RESET} ${directus_secret:0:20}... ${YELLOW}(Full key in .env - BACKUP SECURELY!)${RESET}"
     echo ""
     echo "${YELLOW}All credentials are stored in: ${env_file}${RESET}"
     echo "${YELLOW}File permissions: -rw------- (600)${RESET}"
