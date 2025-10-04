@@ -313,6 +313,115 @@ else
     echo "${YELLOW}  Hint: Add depends_on: redis: condition: service_healthy${RESET}"
 fi
 
+# ----------------------------------------------------------------------------
+# Test 13: Verify LOWCODER_READONLY_DB_PASSWORD in .env.example (Story 3.3)
+# ----------------------------------------------------------------------------
+echo ""
+echo "${BOLD}Test 13: Verify LOWCODER_READONLY_DB_PASSWORD in .env.example${RESET}"
+
+if grep -q "LOWCODER_READONLY_DB_PASSWORD" .env.example; then
+    test_pass "LOWCODER_READONLY_DB_PASSWORD variable present in .env.example"
+else
+    test_fail "LOWCODER_READONLY_DB_PASSWORD missing from .env.example"
+    echo "${YELLOW}  Hint: Add LOWCODER_READONLY_DB_PASSWORD to .env.example${RESET}"
+fi
+
+# ----------------------------------------------------------------------------
+# Test 14: Verify Read-Only User SQL Script Exists (Story 3.3)
+# ----------------------------------------------------------------------------
+echo ""
+echo "${BOLD}Test 14: Verify config/postgresql/create-lowcoder-readonly-users.sql exists${RESET}"
+
+if [[ -f "config/postgresql/create-lowcoder-readonly-users.sql" ]]; then
+    test_pass "SQL script config/postgresql/create-lowcoder-readonly-users.sql exists"
+else
+    test_fail "SQL script config/postgresql/create-lowcoder-readonly-users.sql missing"
+    echo "${YELLOW}  Hint: Create SQL script for read-only user creation${RESET}"
+fi
+
+# ----------------------------------------------------------------------------
+# Test 15: Verify Lowcoder README Has Datasource Documentation (Story 3.3)
+# ----------------------------------------------------------------------------
+echo ""
+echo "${BOLD}Test 15: Verify config/lowcoder/README.md has datasource documentation${RESET}"
+
+if [[ -f "config/lowcoder/README.md" ]]; then
+    if grep -q "Data Source Connection Setup" config/lowcoder/README.md; then
+        test_pass "Lowcoder README has datasource configuration documentation"
+    else
+        test_fail "Lowcoder README missing datasource configuration documentation"
+        echo "${YELLOW}  Hint: Add 'Data Source Connection Setup' section${RESET}"
+    fi
+else
+    test_fail "config/lowcoder/README.md missing"
+fi
+
+# ----------------------------------------------------------------------------
+# Test 16: Verify Security Best Practices Documentation (Story 3.3)
+# ----------------------------------------------------------------------------
+echo ""
+echo "${BOLD}Test 16: Verify security best practices documented${RESET}"
+
+if [[ -f "config/lowcoder/README.md" ]]; then
+    if grep -q "Security Best Practices" config/lowcoder/README.md; then
+        test_pass "Security best practices section exists in README"
+    else
+        test_fail "Security best practices section missing from README"
+        echo "${YELLOW}  Hint: Add 'Security Best Practices' section${RESET}"
+    fi
+fi
+
+# ----------------------------------------------------------------------------
+# Test 17: Verify Templates Directory Exists (Story 3.3)
+# ----------------------------------------------------------------------------
+echo ""
+echo "${BOLD}Test 17: Verify config/lowcoder/templates/ directory exists${RESET}"
+
+if [[ -d "config/lowcoder/templates" ]]; then
+    test_pass "Templates directory config/lowcoder/templates/ exists"
+
+    # Verify templates README
+    if [[ -f "config/lowcoder/templates/README.md" ]]; then
+        test_pass "Templates README (config/lowcoder/templates/README.md) exists"
+    else
+        test_fail "Templates README missing"
+        echo "${YELLOW}  Hint: Create config/lowcoder/templates/README.md${RESET}"
+    fi
+else
+    test_fail "Templates directory config/lowcoder/templates/ missing"
+    echo "${YELLOW}  Hint: Create templates directory${RESET}"
+fi
+
+# ----------------------------------------------------------------------------
+# Test 18: Verify Portuguese User Guide Exists (Story 3.3)
+# ----------------------------------------------------------------------------
+echo ""
+echo "${BOLD}Test 18: Verify docs/03-services/lowcoder.md exists${RESET}"
+
+if [[ -f "docs/03-services/lowcoder.md" ]]; then
+    test_pass "Portuguese user guide docs/03-services/lowcoder.md exists"
+else
+    test_warning "Portuguese user guide docs/03-services/lowcoder.md not yet created"
+    echo "${YELLOW}  Note: Create Portuguese documentation for end users${RESET}"
+fi
+
+# ----------------------------------------------------------------------------
+# Test 19: Verify n8n Integration Patterns Documented (Story 3.3)
+# ----------------------------------------------------------------------------
+echo ""
+echo "${BOLD}Test 19: Verify Lowcoder integration patterns in n8n workflows README${RESET}"
+
+if [[ -f "config/n8n/workflows/README.md" ]]; then
+    if grep -q "Lowcoder Integration Patterns" config/n8n/workflows/README.md; then
+        test_pass "Lowcoder integration patterns documented in n8n README"
+    else
+        test_fail "Lowcoder integration patterns missing from n8n README"
+        echo "${YELLOW}  Hint: Add 'Lowcoder Integration Patterns' section${RESET}"
+    fi
+else
+    test_fail "config/n8n/workflows/README.md missing"
+fi
+
 # ============================================================================
 # TEST SUMMARY
 # ============================================================================

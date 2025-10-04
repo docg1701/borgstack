@@ -300,18 +300,34 @@ curl -X POST "https://chatwoot.<your-domain>/api/v1/accounts/1/conversations/123
 
 **Connecting to PostgreSQL in Lowcoder:**
 
+⚠️ **Security Best Practice:** Use the read-only database user (`lowcoder_readonly_user`) for query-only applications (dashboards, reports). This implements the principle of least privilege.
+
 ```plaintext
-1. In Lowcoder UI: Data Sources → Add Data Source → PostgreSQL
-2. Configuration:
-   - Name: chatwoot_db (or custom name)
+1. Create read-only database user (one-time setup):
+   docker compose cp config/postgresql/create-lowcoder-readonly-users.sql postgresql:/tmp/
+   docker compose exec postgresql psql -U postgres \
+     -v LOWCODER_READONLY_DB_PASSWORD="$(grep LOWCODER_READONLY_DB_PASSWORD .env | cut -d= -f2)" \
+     -f /tmp/create-lowcoder-readonly-users.sql
+
+2. In Lowcoder UI: Data Sources → Add Data Source → PostgreSQL
+3. Configuration (Read-Only Access - RECOMMENDED):
+   - Name: chatwoot_db_readonly (descriptive name)
    - Host: postgresql
    - Port: 5432
-   - Database: chatwoot_db (or n8n_db, evolution_db)
-   - Username: chatwoot_user (or n8n_user, evolution_user)
-   - Password: From .env file (CHATWOOT_DB_PASSWORD)
+   - Database: chatwoot_db (or n8n_db, evolution_db, directus_db)
+   - Username: lowcoder_readonly_user (read-only user with SELECT permissions only)
+   - Password: From .env file (LOWCODER_READONLY_DB_PASSWORD)
    - SSL Mode: disable (internal network)
-3. Test Connection → Save
+4. Test Connection → Save
+
+Alternative (Write Access - Use with Caution):
+   - Username: chatwoot_user (service owner account - full read/write access)
+   - Password: From .env file (CHATWOOT_DB_PASSWORD)
+   - Note: Only use service owner accounts if write operations are required
 ```
+
+**For detailed datasource configuration, security best practices, and application templates:**
+See `config/lowcoder/README.md` for comprehensive documentation.
 
 **Triggering n8n Workflows from Lowcoder:**
 

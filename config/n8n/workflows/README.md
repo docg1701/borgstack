@@ -627,9 +627,453 @@ After importing example workflows:
 4. **Set Up Credentials**: Add API keys and authentication for external services
 5. **Monitor Executions**: Use the Executions panel to debug and optimize workflows
 
+## Lowcoder Integration Patterns
+
+### Pattern 1: Lowcoder → n8n Webhook Trigger
+
+**Use Case**: Trigger n8n workflows from Lowcoder applications (button clicks, form submissions)
+
+**Setup in Lowcoder:**
+
+1. **Create REST API Datasource:**
+   - Name: `n8n_webhooks`
+   - Base URL: `https://n8n.${DOMAIN}/webhook`
+   - Authentication: None (internal network)
+
+2. **Create Query:**
+   ```javascript
+   // Query Name: trigger_workflow
+   Method: POST
+   URL: /lowcoder-trigger
+   Body: {
+     "action": "{{ actionSelect.value }}",
+     "data": {
+       "customer_id": {{ customerTable.selectedRow.id }},
+       "message": {{ messageInput.value }}
+     }
+   }
+   ```
+
+3. **Add Button to Trigger:**
+   - Button text: "Execute Workflow"
+   - onClick event: Run query `trigger_workflow`
+   - Success callback: Display `{{ trigger_workflow.data }}`
+
+**n8n Workflow Example:**
+
+See `05-lowcoder-webhook-integration.json` for webhook receiver template.
+
+---
+
+### Pattern 2: Lowcoder → Evolution API (Send WhatsApp)
+
+**Use Case**: Send WhatsApp messages from Lowcoder applications via Evolution API
+
+**Option A: Direct REST API Call to Evolution API**
+
+1. **Create REST API Datasource in Lowcoder:**
+   - Name: `evolution_api`
+   - Base URL: `https://evolution.${DOMAIN}`
+   - Headers:
+     - `apikey`: `${EVOLUTION_API_KEY}` (from .env)
+     - `Content-Type`: `application/json`
+
+2. **Create Query (Send WhatsApp Text):**
+   ```javascript
+   // Query Name: send_whatsapp_message
+   Method: POST
+   URL: /message/sendText/{{ instanceName.value }}
+   Body: {
+     "number": {{ phoneNumberInput.value }},
+     "text": {{ messageTextArea.value }}
+   }
+   ```
+
+3. **Add UI Components:**
+   - Input: `instanceName` (e.g., "customer_support")
+   - Input: `phoneNumberInput` (e.g., "5511987654321")
+   - TextArea: `messageTextArea`
+   - Button: "Send WhatsApp" → onClick: Run query `send_whatsapp_message`
+
+**Option B: Via n8n Workflow (Recommended for Complex Logic)**
+
+1. **Create n8n Workflow:**
+   - Webhook trigger: `/webhook/send-whatsapp`
+   - HTTP Request node: POST to Evolution API `/message/sendText/{instance}`
+   - Error handling and logging
+
+2. **Lowcoder Query:**
+   ```javascript
+   Method: POST
+   URL: https://n8n.${DOMAIN}/webhook/send-whatsapp
+   Body: {
+     "instance": {{ instanceSelect.value }},
+     "phone": {{ phoneInput.value }},
+     "message": {{ messageText.value }}
+   }
+   ```
+
+**Evolution API Endpoints:**
+
+| Endpoint | Method | Purpose | Response |
+|----------|--------|---------|----------|
+| `/message/sendText/{instance}` | POST | Send text message | `{ key: {...}, message: {...} }` |
+| `/message/sendMedia/{instance}` | POST | Send image/video | `{ key: {...}, message: {...} }` |
+| `/instance/fetchInstances` | GET | List WhatsApp instances | `[{ instance: "name", ... }]` |
+
+**Request Body (sendText):**
+
+```json
+{
+  "number": "5511987654321",
+  "text": "Hello from Lowcoder application!"
+}
+```
+
+**Response:**
+
+```json
+{
+  "key": {
+    "remoteJid": "5511987654321@s.whatsapp.net",
+    "fromMe": true,
+    "id": "3EB0C8F3E7E3A7D8C0F1"
+  },
+  "message": {
+    "conversation": "Hello from Lowcoder application!"
+  },
+  "messageTimestamp": 1735632000
+}
+```
+
+**Example Use Cases:**
+
+- **Customer Notification System**: Select customer from table → Send WhatsApp notification
+- **Bulk Messaging**: Upload CSV with phone numbers → Loop and send via n8n workflow
+- **Order Confirmation**: After order creation → Trigger WhatsApp confirmation message
+
+---
+
+### Pattern 3: Lowcoder → Chatwoot API (Create Contacts/Conversations)
+
+**Use Case**: Create Chatwoot contacts and conversations from Lowcoder applications
+
+**Setup in Lowcoder:**
+
+1. **Create REST API Datasource:**
+   - Name: `chatwoot_api`
+   - Base URL: `https://chatwoot.${DOMAIN}/api/v1`
+   - Headers:
+     - `api_access_token`: `${CHATWOOT_API_TOKEN}` (from .env)
+     - `Content-Type`: `application/json`
+
+2. **Create Contact Query:**
+   ```javascript
+   // Query Name: create_chatwoot_contact
+   Method: POST
+   URL: /accounts/1/contacts
+   Body: {
+     "name": {{ customerNameInput.value }},
+     "email": {{ customerEmailInput.value }},
+     "phone_number": {{ customerPhoneInput.value }},
+     "custom_attributes": {
+       "source": "Lowcoder App",
+       "created_by": {{ currentUser.email }}
+     }
+   }
+   ```
+
+3. **Create Conversation Query:**
+   ```javascript
+   // Query Name: create_chatwoot_conversation
+   Method: POST
+   URL: /accounts/1/conversations
+   Body: {
+     "contact_id": {{ create_chatwoot_contact.data.payload.contact.id }},
+     "inbox_id": 1,
+     "status": "open",
+     "message": {
+       "content": {{ initialMessageText.value }},
+       "message_type": "incoming"
+     }
+   }
+   ```
+
+4. **Add Form Components:**
+   - Input: `customerNameInput`
+   - Input: `customerEmailInput`
+   - Input: `customerPhoneInput`
+   - TextArea: `initialMessageText`
+   - Button: "Create Contact & Conversation" → Sequential queries:
+     1. Run `create_chatwoot_contact`
+     2. On success, run `create_chatwoot_conversation`
+
+**Chatwoot API Endpoints:**
+
+| Endpoint | Method | Purpose | Response |
+|----------|--------|---------|----------|
+| `/accounts/1/contacts` | POST | Create new contact | `{ payload: { contact: { id, name, ... } } }` |
+| `/accounts/1/contacts/search?q={query}` | GET | Search existing contacts | `{ payload: [{ id, name, ... }] }` |
+| `/accounts/1/conversations` | POST | Create new conversation | `{ id, status, inbox_id, ... }` |
+| `/accounts/1/conversations/{id}/messages` | POST | Add message to conversation | `{ id, content, sender, ... }` |
+
+**Create Contact Request:**
+
+```json
+{
+  "name": "João Silva",
+  "email": "joao@example.com",
+  "phone_number": "+5511987654321",
+  "custom_attributes": {
+    "source": "Lowcoder CRM",
+    "vip_customer": true
+  }
+}
+```
+
+**Create Conversation Request:**
+
+```json
+{
+  "contact_id": 42,
+  "inbox_id": 1,
+  "status": "open",
+  "message": {
+    "content": "Customer inquiry from Lowcoder app: Need help with order #12345",
+    "message_type": "incoming"
+  }
+}
+```
+
+**Example Use Cases:**
+
+- **CRM Integration**: Create Chatwoot contact when new lead is added in Lowcoder CRM
+- **Support Ticket Creation**: Form submission → Creates Chatwoot conversation
+- **Contact Import**: Upload CSV → Bulk create contacts via n8n workflow
+
+**Advanced Pattern: Via n8n Workflow**
+
+For complex logic (validation, duplicate check, multi-step):
+
+1. **Create n8n Workflow:**
+   - Webhook: `/webhook/chatwoot-contact-manager`
+   - Search existing contact (avoid duplicates)
+   - Create or update contact
+   - Create conversation
+   - Return contact and conversation IDs
+
+2. **Lowcoder Query:**
+   ```javascript
+   Method: POST
+   URL: https://n8n.${DOMAIN}/webhook/chatwoot-contact-manager
+   Body: {
+     "action": "create_or_update",
+     "contact": {
+       "name": {{ nameInput.value }},
+       "email": {{ emailInput.value }},
+       "phone": {{ phoneInput.value }}
+     },
+     "conversation": {
+       "inbox_id": 1,
+       "initial_message": {{ messageText.value }}
+     }
+   }
+   ```
+
+---
+
+### Pattern 4: n8n Workflow Triggered by Lowcoder Form Submission
+
+**Use Case**: Complex multi-step automation triggered by Lowcoder form
+
+**Example: Order Processing Workflow**
+
+**Lowcoder Form:**
+- Customer details (name, email, phone)
+- Order items (table component)
+- Delivery address (text inputs)
+- Submit button
+
+**n8n Workflow Steps:**
+
+1. **Webhook Trigger** (`/webhook/process-order`)
+   - Receives order data from Lowcoder
+
+2. **Validate Order Data**
+   - Check required fields
+   - Validate email format
+   - Verify phone number
+
+3. **Create Chatwoot Contact**
+   - Search for existing contact
+   - Create if not found
+
+4. **Store Order in Database**
+   - PostgreSQL INSERT query
+   - Store order details in custom table
+
+5. **Send WhatsApp Confirmation**
+   - Evolution API: Send order confirmation via WhatsApp
+
+6. **Create Chatwoot Conversation**
+   - Create conversation for order tracking
+   - Link to contact created in step 3
+
+7. **Send Email Notification**
+   - Email node: Send confirmation email
+
+8. **Return Response to Lowcoder**
+   - Success: Return order ID and tracking info
+   - Error: Return validation errors
+
+**Lowcoder Query:**
+
+```javascript
+// Query Name: submit_order
+Method: POST
+URL: https://n8n.${DOMAIN}/webhook/process-order
+Body: {
+  "customer": {
+    "name": {{ customerNameInput.value }},
+    "email": {{ customerEmailInput.value }},
+    "phone": {{ customerPhoneInput.value }}
+  },
+  "order_items": {{ orderItemsTable.data }},
+  "delivery_address": {
+    "street": {{ streetInput.value }},
+    "city": {{ cityInput.value }},
+    "state": {{ stateSelect.value }},
+    "zip": {{ zipInput.value }}
+  },
+  "total_amount": {{ orderSummary.totalAmount }}
+}
+```
+
+**n8n Response:**
+
+```json
+{
+  "success": true,
+  "order_id": "ORD-1735938600000",
+  "contact_id": 42,
+  "conversation_id": 123,
+  "tracking_number": "BR123456789",
+  "estimated_delivery": "2025-10-10",
+  "whatsapp_sent": true,
+  "email_sent": true
+}
+```
+
+**Lowcoder Success Handler:**
+
+```javascript
+// Display success message
+{{ `Order ${submit_order.data.order_id} created successfully! Tracking: ${submit_order.data.tracking_number}` }}
+
+// Show in modal or notification
+showSuccessModal({
+  title: "Order Confirmed",
+  message: `Your order has been confirmed. Tracking number: ${submit_order.data.tracking_number}`,
+  orderId: submit_order.data.order_id
+})
+```
+
+---
+
+### Integration Testing
+
+**Test Lowcoder → n8n Integration:**
+
+```bash
+# Test webhook manually (simulate Lowcoder request)
+curl -X POST https://n8n.${DOMAIN}/webhook/lowcoder-trigger \
+  -H "Content-Type: application/json" \
+  -d '{
+    "action": "test",
+    "data": {
+      "source": "Lowcoder",
+      "timestamp": "2025-10-04T00:00:00Z"
+    }
+  }'
+```
+
+**Test Lowcoder → Evolution API:**
+
+```bash
+# Test WhatsApp send directly
+curl -X POST https://evolution.${DOMAIN}/message/sendText/customer_support \
+  -H "apikey: ${EVOLUTION_API_KEY}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "number": "5511987654321",
+    "text": "Test from Lowcoder integration"
+  }'
+```
+
+**Test Lowcoder → Chatwoot API:**
+
+```bash
+# Test contact creation
+curl -X POST https://chatwoot.${DOMAIN}/api/v1/accounts/1/contacts \
+  -H "api_access_token: ${CHATWOOT_API_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Test Contact",
+    "email": "test@example.com",
+    "phone_number": "+5511987654321"
+  }'
+```
+
+---
+
+### Troubleshooting Lowcoder Integrations
+
+| Problem | Solution |
+|---------|----------|
+| Webhook not triggered from Lowcoder | Verify n8n workflow is Active, check webhook URL in Lowcoder query |
+| CORS error in Lowcoder | Add `CORS_ALLOWED_ORIGINS=*` to .env (or specific origin) |
+| Evolution API 401 Unauthorized | Verify `EVOLUTION_API_KEY` in datasource headers |
+| Chatwoot API 401 Unauthorized | Verify `CHATWOOT_API_TOKEN` is valid (regenerate if needed) |
+| Query returns no data | Check n8n execution logs for errors, verify request format |
+| Network timeout | Increase timeout in Lowcoder query settings (default: 30s) |
+
+---
+
+### Best Practices for Lowcoder-n8n Integration
+
+1. **Use n8n as Orchestration Layer:**
+   - Complex logic in n8n workflows (validation, error handling, retries)
+   - Lowcoder focuses on UI and user interaction
+   - n8n handles integrations (Evolution API, Chatwoot, databases)
+
+2. **Error Handling:**
+   - n8n workflows should return structured error responses
+   - Lowcoder displays errors to users with retry options
+   - Log all errors for debugging
+
+3. **Security:**
+   - Never expose API keys in Lowcoder frontend code
+   - Store credentials in n8n or Lowcoder datasource config
+   - Use internal network for n8n → Lowcoder communication
+
+4. **Performance:**
+   - Use async workflows for long-running tasks
+   - Return immediate response to Lowcoder, process in background
+   - Implement status polling for long operations
+
+5. **Documentation:**
+   - Document all webhook endpoints in n8n workflows
+   - Provide example request/response in workflow descriptions
+   - Maintain integration testing scripts
+
+---
+
 ## Resources
 
 - **n8n Documentation**: https://docs.n8n.io
 - **n8n Community**: https://community.n8n.io
 - **Workflow Templates**: https://n8n.io/workflows
 - **BorgStack Docs**: ../../../docs/03-services/n8n.md
+- **Lowcoder Integration Guide**: ../../lowcoder/README.md
+- **Evolution API Documentation**: ../../evolution/README.md
+- **Chatwoot API Documentation**: https://www.chatwoot.com/developers/api/
