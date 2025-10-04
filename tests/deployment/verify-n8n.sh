@@ -62,6 +62,10 @@ done
 if [ $WAIT_TIME -ge $MAX_WAIT ]; then
     echo "WARNING: Containers did not become healthy after ${MAX_WAIT}s, proceeding anyway..."
     docker compose ps postgresql redis n8n
+    echo ""
+    echo "=== n8n Container Logs (last 50 lines) ==="
+    docker compose logs n8n --tail=50
+    echo "==========================================="
 fi
 echo ""
 
@@ -75,7 +79,13 @@ if docker compose ps n8n | grep -q "Up"; then
     TESTS_PASSED=$((TESTS_PASSED + 1))
 else
     echo -e "${RED}✗${NC} n8n container is not running"
+    echo ""
+    echo "=== n8n Container Status ==="
     docker compose ps n8n
+    echo ""
+    echo "=== n8n Container Logs (last 100 lines) ==="
+    docker compose logs n8n --tail=100
+    echo "=========================================="
     TESTS_FAILED=$((TESTS_FAILED + 1))
 fi
 echo ""
@@ -106,8 +116,17 @@ done
 
 if [ $HEALTH_CHECK_ELAPSED -ge $HEALTH_CHECK_TIMEOUT ]; then
     echo -e "${RED}✗${NC} n8n health check failed (timeout after ${HEALTH_CHECK_TIMEOUT}s)"
+    echo ""
+    echo "=== n8n Container Status ==="
     docker compose ps n8n
-    docker compose logs --tail=50 n8n
+    echo ""
+    echo "=== n8n Container Logs (last 100 lines) ==="
+    docker compose logs n8n --tail=100
+    echo ""
+    echo "=== n8n Health Endpoint Response ==="
+    docker compose exec -T n8n wget -q -O- http://localhost:5678/healthz/readiness 2>&1 || echo "(no response)"
+    echo ""
+    echo "=========================================="
     TESTS_FAILED=$((TESTS_FAILED + 1))
 fi
 echo ""

@@ -68,6 +68,10 @@ done
 if [ $WAIT_TIME -ge $MAX_WAIT ]; then
     echo "WARNING: Containers did not become healthy after ${MAX_WAIT}s, proceeding anyway..."
     docker compose ps postgresql redis directus
+    echo ""
+    echo "=== Directus Container Logs (last 50 lines) ==="
+    docker compose logs directus --tail=50
+    echo "================================================"
 fi
 echo ""
 
@@ -77,6 +81,13 @@ if docker compose ps directus | grep -q "Up"; then
     log_pass "Directus container is running"
 else
     log_fail "Directus container is not running"
+    echo ""
+    echo "=== Directus Container Status ==="
+    docker compose ps directus
+    echo ""
+    echo "=== Directus Container Logs (last 100 lines) ==="
+    docker compose logs directus --tail=100
+    echo "=============================================="
 fi
 
 # Test 2: Verify correct image version

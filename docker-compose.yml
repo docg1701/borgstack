@@ -283,6 +283,10 @@ services:
 
       # Timezone
       GENERIC_TIMEZONE: America/Sao_Paulo
+
+      # Health check and metrics
+      N8N_METRICS: "true"
+      QUEUE_HEALTH_CHECK_ACTIVE: "true"
     volumes:
       - borgstack_n8n_data:/home/node/.n8n
     depends_on:
@@ -291,11 +295,11 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:5678/healthz || exit 1"]
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:5678/healthz/readiness || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 60s
+      start_period: 90s
 
   # ==========================================================================
   # Evolution API - WhatsApp Business Gateway
@@ -725,11 +729,12 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 60s
-      # Rationale for 60s start_period:
+      start_period: 90s
+      # Rationale for 90s start_period:
       #   - Database migrations: ~20-30s (Knex.js schema creation and updates)
       #   - Extension initialization: ~10s (pgvector and other extensions)
       #   - Redis connection: ~5s (cache initialization)
+      #   - CI environment overhead: +30s additional buffer for CI/CD environments
       #   - Express server startup: ~10s (Node.js application server)
       # Total: ~45-55s (60s provides safety margin)
 
