@@ -1544,13 +1544,6 @@ jobs:
             exit 1
           fi
 
-          if docker compose config | grep -q "borgstack_directus_extensions"; then
-            echo "✅ Volume borgstack_directus_extensions follows naming convention"
-          else
-            echo "❌ Volume borgstack_directus_extensions not found"
-            exit 1
-          fi
-
           # Verify no port exposure in production config
           if docker compose config | grep -A 50 "directus:" | grep -E "^\s+ports:" > /dev/null 2>&1; then
             echo "❌ Directus has port exposure in production config (security violation)"

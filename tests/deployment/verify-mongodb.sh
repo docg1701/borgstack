@@ -324,11 +324,17 @@ fi
 # ============================================================================
 log_test "Test 15: Verifying MongoDB does not expose ports to host (security check)"
 
-# Check that MongoDB container has no published ports
-if docker compose ps mongodb --format json | jq -r '.[0].Publishers' | grep -v "null" | grep -q "27017"; then
-    log_error "MongoDB is exposing port 27017 to host (security violation)"
+# Check that MongoDB container has no published ports using docker inspect
+CONTAINER_ID=$(docker compose ps -q mongodb)
+if [ -n "$CONTAINER_ID" ]; then
+    PORT_BINDINGS=$(docker inspect "$CONTAINER_ID" --format='{{json .NetworkSettings.Ports}}')
+    if echo "$PORT_BINDINGS" | grep -q "HostPort"; then
+        log_error "MongoDB is exposing port 27017 to host (security violation)"
+    else
+        log_success "MongoDB is not exposing ports to host (secure configuration)"
+    fi
 else
-    log_success "MongoDB is not exposing ports to host (secure configuration)"
+    log_error "MongoDB container not found"
 fi
 
 # ============================================================================

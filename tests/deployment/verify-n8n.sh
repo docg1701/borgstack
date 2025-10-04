@@ -38,6 +38,15 @@ echo "════════════════════════�
 echo ""
 
 # ============================================================================
+# Setup: Start n8n and dependencies
+# ============================================================================
+echo "Starting n8n and dependencies..."
+docker compose up -d postgresql redis n8n
+echo "Waiting for containers to be healthy..."
+sleep 10
+echo ""
+
+# ============================================================================
 # Test 1: Verify n8n Container is Running
 # ============================================================================
 echo "Test 1: Verifying n8n container is running..."
