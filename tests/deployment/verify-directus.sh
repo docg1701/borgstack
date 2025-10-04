@@ -31,6 +31,9 @@ log_fail() {
     TESTS_FAILED=$((TESTS_FAILED + 1))
 }
 
+# Navigate to project root
+cd "$(dirname "$0")/../.."
+
 # Load environment variables
 if [ -f .env ]; then
     # shellcheck disable=SC1091

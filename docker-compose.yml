@@ -56,12 +56,12 @@ services:
     # ℹ️  For local development, add port mapping in docker-compose.override.yml
     volumes:
       - borgstack_postgresql_data:/var/lib/postgresql/data
-      - ./config/postgresql/init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql:ro
+      - ./config/postgresql/init-databases.sh:/docker-entrypoint-initdb.d/01-init-databases.sh:ro
       - ./config/postgresql/postgresql.conf:/etc/postgresql/postgresql.conf:ro
     environment:
       # PostgreSQL superuser password (for administration only)
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      # Service-specific database passwords (used in init-databases.sql)
+      # Service-specific database passwords (used in init-databases.sh)
       N8N_DB_PASSWORD: ${N8N_DB_PASSWORD}
       CHATWOOT_DB_PASSWORD: ${CHATWOOT_DB_PASSWORD}
       DIRECTUS_DB_PASSWORD: ${DIRECTUS_DB_PASSWORD}
