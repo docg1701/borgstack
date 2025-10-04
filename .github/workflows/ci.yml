@@ -651,6 +651,9 @@ jobs:
           # Test credentials for CI pipeline
           POSTGRES_PASSWORD=test_postgres_password_12345678
           N8N_DB_PASSWORD=test_n8n_password_12345678
+          CHATWOOT_DB_PASSWORD=test_chatwoot_password_12345678
+          DIRECTUS_DB_PASSWORD=test_directus_password_12345678
+          EVOLUTION_DB_PASSWORD=test_evolution_password_12345678
           N8N_BASIC_AUTH_USER=admin
           N8N_BASIC_AUTH_PASSWORD=test_n8n_auth_password_12345678
           N8N_ENCRYPTION_KEY=test_n8n_encryption_key_12345678901234567890
@@ -1497,7 +1500,10 @@ jobs:
           cat > .env << 'EOF'
           # Test credentials for CI pipeline
           POSTGRES_PASSWORD=test_postgres_password_12345678
+          N8N_DB_PASSWORD=test_n8n_password_12345678
+          CHATWOOT_DB_PASSWORD=test_chatwoot_password_12345678
           DIRECTUS_DB_PASSWORD=test_directus_password_12345678
+          EVOLUTION_DB_PASSWORD=test_evolution_password_12345678
           REDIS_PASSWORD=test_redis_password_12345678901234567890
           DIRECTUS_KEY=test_directus_key_12345678901234567890123456789012
           DIRECTUS_SECRET=test_directus_secret_12345678901234567890123456
