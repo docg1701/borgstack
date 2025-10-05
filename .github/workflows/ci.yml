@@ -2179,6 +2179,137 @@ jobs:
           docker compose down -v --remove-orphans || true
           rm -f .env
 
+  validate-directus-fileflows:
+    name: Validate Directus-FileFlows Integration
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Create .env file for testing
+        run: |
+          echo "Creating temporary .env file with test credentials..."
+          cat > .env << 'EOF'
+          # Test credentials for CI pipeline
+          DOMAIN=example.com.br
+          EMAIL=admin@example.com.br
+          # Directus configuration
+          DIRECTUS_HOST=directus.example.com.br
+          DIRECTUS_API_TOKEN=test_directus_api_token_for_ci_validation
+          DIRECTUS_WEBHOOK_SECRET=test_webhook_secret_32chars_min
+          # FileFlows configuration
+          FILEFLOWS_HOST=fileflows.example.com.br
+          FILEFLOWS_DELETE_ORIGINALS=false
+          DIRECTUS_MEDIA_RETENTION_DAYS=30
+          # n8n configuration
+          N8N_HOST=n8n.example.com.br
+          EOF
+
+      - name: Verify n8n workflow files exist
+        run: |
+          echo "Verifying n8n workflow files for Directus-FileFlows integration..."
+
+          WORKFLOW_FILES=(
+            "config/n8n/workflows/directus-fileflows-upload.json"
+            "config/n8n/workflows/directus-fileflows-complete.json"
+            "config/n8n/workflows/directus-fileflows-error.json"
+            "config/n8n/workflows/media-processing-stats.json"
+            "config/n8n/workflows/missed-files-detector.json"
+          )
+
+          ALL_FOUND=true
+          for workflow in "${WORKFLOW_FILES[@]}"; do
+            if [ -f "$workflow" ]; then
+              echo "✅ $workflow exists"
+            else
+              echo "❌ $workflow not found"
+              ALL_FOUND=false
+            fi
+          done
+
+          if [ "$ALL_FOUND" = false ]; then
+            exit 1
+          fi
+
+      - name: Verify integration documentation exists
+        run: |
+          echo "Verifying integration documentation..."
+
+          if [ -f "docs/04-integrations/directus-fileflows.md" ]; then
+            echo "✅ docs/04-integrations/directus-fileflows.md exists"
+          else
+            echo "❌ Integration documentation not found"
+            exit 1
+          fi
+
+          if [ -f "docs/MANUAL_TASKS_4.3.md" ]; then
+            echo "✅ docs/MANUAL_TASKS_4.3.md exists"
+          else
+            echo "❌ Manual tasks documentation not found"
+            exit 1
+          fi
+
+      - name: Verify environment variables in .env.example
+        run: |
+          echo "Verifying Directus-FileFlows integration variables in .env.example..."
+
+          if grep -q "DIRECTUS_API_TOKEN=" .env.example; then
+            echo "✅ DIRECTUS_API_TOKEN variable in .env.example"
+          else
+            echo "❌ DIRECTUS_API_TOKEN variable not found in .env.example"
+            exit 1
+          fi
+
+          if grep -q "DIRECTUS_WEBHOOK_SECRET=" .env.example; then
+            echo "✅ DIRECTUS_WEBHOOK_SECRET variable in .env.example"
+          else
+            echo "❌ DIRECTUS_WEBHOOK_SECRET variable not found in .env.example"
+            exit 1
+          fi
+
+          if grep -q "FILEFLOWS_DELETE_ORIGINALS=" .env.example; then
+            echo "✅ FILEFLOWS_DELETE_ORIGINALS variable in .env.example"
+          else
+            echo "❌ FILEFLOWS_DELETE_ORIGINALS variable not found in .env.example"
+            exit 1
+          fi
+
+      - name: Verify n8n volume mounts for file access
+        run: |
+          echo "Verifying n8n has volume mounts for Directus and FileFlows..."
+
+          # Check if n8n mounts directus_uploads volume (read-only)
+          if docker compose config | grep -A 20 "n8n:" | grep "borgstack_directus_uploads:/directus/uploads:ro"; then
+            echo "✅ n8n mounts borgstack_directus_uploads (read-only)"
+          else
+            echo "❌ n8n missing borgstack_directus_uploads mount"
+            exit 1
+          fi
+
+          # Check if n8n mounts fileflows_input volume (read-write)
+          if docker compose config | grep -A 20 "n8n:" | grep "borgstack_fileflows_input:/fileflows/input:rw"; then
+            echo "✅ n8n mounts borgstack_fileflows_input (read-write)"
+          else
+            echo "❌ n8n missing borgstack_fileflows_input mount"
+            exit 1
+          fi
+
+      - name: Run Directus-FileFlows integration validation tests
+        run: |
+          echo "Running comprehensive Directus-FileFlows integration tests..."
+          chmod +x tests/deployment/verify-directus-fileflows.sh
+          bash tests/deployment/verify-directus-fileflows.sh
+
+      - name: Cleanup test environment
+        if: always()
+        run: |
+          echo "Cleaning up test environment..."
+          rm -f .env
+
   # ============================================================================
   # FUTURE SERVICES - Placeholders for Epic 5 Stories
   # ============================================================================

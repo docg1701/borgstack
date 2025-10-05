@@ -1,0 +1,253 @@
+{
+  "name": "Missed Files Detector",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 30
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Schedule Every 30 Minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "=https://{{$env.DIRECTUS_HOST}}/items/directus_files",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "directusApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "filter[processing_status][_eq]",
+              "value": "pending"
+            },
+            {
+              "name": "filter[uploaded_on][_lt]",
+              "value": "={{ $now.minus({minutes: 10}).toISO() }}"
+            },
+            {
+              "name": "fields",
+              "value": "id,filename_disk,filename_download,type,uploaded_on"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "query-stuck-files",
+      "name": "Query Stuck Files",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [460, 300],
+      "credentials": {
+        "directusApi": {
+          "id": "1",
+          "name": "Directus API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "// Extract stuck files from Directus response\nconst response = $input.item.json;\nconst stuckFiles = response.data || [];\n\nif (stuckFiles.length === 0) {\n  console.log('No stuck files found - all files processing normally');\n  return [];\n}\n\nconsole.warn(`Found ${stuckFiles.length} stuck files - triggering retry`);\n\nreturn stuckFiles.map(file => ({\n  json: {\n    file_id: file.id,\n    filename_disk: file.filename_disk,\n    filename_download: file.filename_download,\n    type: file.type,\n    uploaded_on: file.uploaded_on,\n    stuck_duration: Math.round(\n      (Date.now() - new Date(file.uploaded_on).getTime()) / 60000\n    )\n  }\n}));"
+      },
+      "id": "extract-stuck-files",
+      "name": "Extract Stuck Files",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{$json.stuck_duration}}",
+              "operation": "largerEqual",
+              "value2": 10
+            }
+          ]
+        }
+      },
+      "id": "filter-stuck-over-10min",
+      "name": "Filter Stuck > 10min",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Log file that will be retried\nconsole.log('Retrying stuck file:', $json.filename_download);\nconsole.log('Stuck for (minutes):', $json.stuck_duration);\nconsole.log('File ID:', $json.file_id);\n\nreturn $input.all();"
+      },
+      "id": "log-retry",
+      "name": "Log Retry Attempt",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1120, 200]
+    },
+    {
+      "parameters": {
+        "command": "cp /directus/uploads/={{$json.filename_disk}} /fileflows/input/={{$json.filename_download}}"
+      },
+      "id": "retry-copy-to-fileflows",
+      "name": "Retry Copy to FileFlows",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [1340, 200]
+    },
+    {
+      "parameters": {
+        "url": "=https://{{$env.DIRECTUS_HOST}}/items/directus_files/{{$json.file_id}}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "directusApi",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "processing_status",
+              "value": "processing"
+            },
+            {
+              "name": "processing_metadata",
+              "value": "={{JSON.stringify({retry_triggered: true, retry_at: $now.toISO(), retry_reason: 'Missed Files Detector'})}}"
+            }
+          ]
+        },
+        "method": "PATCH",
+        "options": {}
+      },
+      "id": "update-status-processing",
+      "name": "Update Status: Processing",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1560, 200],
+      "credentials": {
+        "directusApi": {
+          "id": "1",
+          "name": "Directus API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "// Log successful retry trigger\nconsole.log('Successfully triggered retry for:', $json.filename_download);\n\nreturn $input.all();"
+      },
+      "id": "log-success",
+      "name": "Log Success",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1780, 200]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Log files that are stuck but not yet past 10min threshold\nconsole.log('File still within grace period:', $json.filename_download);\nconsole.log('Stuck for (minutes):', $json.stuck_duration);\nconsole.log('Will retry if still stuck after 10min total');\n\nreturn $input.all();"
+      },
+      "id": "log-grace-period",
+      "name": "Log Grace Period",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1120, 400]
+    }
+  ],
+  "connections": {
+    "Schedule Every 30 Minutes": {
+      "main": [
+        [
+          {
+            "node": "Query Stuck Files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Stuck Files": {
+      "main": [
+        [
+          {
+            "node": "Extract Stuck Files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Stuck Files": {
+      "main": [
+        [
+          {
+            "node": "Filter Stuck > 10min",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Stuck > 10min": {
+      "main": [
+        [
+          {
+            "node": "Log Retry Attempt",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Grace Period",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Retry Attempt": {
+      "main": [
+        [
+          {
+            "node": "Retry Copy to FileFlows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Retry Copy to FileFlows": {
+      "main": [
+        [
+          {
+            "node": "Update Status: Processing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Status: Processing": {
+      "main": [
+        [
+          {
+            "node": "Log Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2025-10-05T21:00:00.000Z",
+  "versionId": "1"
+}

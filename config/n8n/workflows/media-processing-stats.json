@@ -1,0 +1,195 @@
+{
+  "name": "Media Processing Stats Collector",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 15
+            }
+          ]
+        }
+      },
+      "id": "schedule-every-15-min",
+      "name": "Schedule: Every 15 Minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "=https://{{$env.FILEFLOWS_HOST}}/api/statistics",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "options": {}
+      },
+      "id": "query-fileflows-stats",
+      "name": "Query FileFlows Statistics",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [460, 300],
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "2",
+          "name": "FileFlows API"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "=https://{{$env.DIRECTUS_HOST}}/items/directus_files",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "directusApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "aggregate[count]",
+              "value": "*"
+            },
+            {
+              "name": "groupBy[]",
+              "value": "processing_status"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "query-directus-stats",
+      "name": "Query Directus File Stats",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [680, 300],
+      "credentials": {
+        "directusApi": {
+          "id": "1",
+          "name": "Directus API"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "functionCode": "// Calculate processing metrics\nconst fileflowsData = $('Query FileFlows Statistics').item.json || {};\nconst directusData = $('Query Directus File Stats').item.json?.data || [];\n\n// Parse Directus stats\nconst statusCounts = {};\ndirectusData.forEach(item => {\n  statusCounts[item.processing_status || 'unknown'] = parseInt(item.count) || 0;\n});\n\n// Calculate metrics\nconst metrics = {\n  timestamp: new Date().toISOString(),\n  \n  // Directus metrics\n  files_pending: statusCounts.pending || 0,\n  files_processing: statusCounts.processing || 0,\n  files_completed: statusCounts.completed || 0,\n  files_failed: statusCounts.failed || 0,\n  \n  // FileFlows metrics (structure TBD - adjust based on actual API response)\n  total_processed: fileflowsData.totalProcessed || 0,\n  average_processing_time: fileflowsData.avgProcessingTime || 0,\n  success_rate: fileflowsData.successRate || 0,\n  queue_depth: fileflowsData.queueDepth || 0,\n  \n  // Calculated metrics\n  total_files: Object.values(statusCounts).reduce((a, b) => a + b, 0),\n  error_rate: statusCounts.failed && statusCounts.completed \n    ? (statusCounts.failed / (statusCounts.failed + statusCounts.completed) * 100).toFixed(2)\n    : 0\n};\n\nconsole.log('=== Media Processing Stats ===');\nconsole.log('Timestamp:', metrics.timestamp);\nconsole.log('Total Files:', metrics.total_files);\nconsole.log('Pending:', metrics.files_pending);\nconsole.log('Processing:', metrics.files_processing);\nconsole.log('Completed:', metrics.files_completed);\nconsole.log('Failed:', metrics.files_failed);\nconsole.log('Error Rate:', metrics.error_rate + '%');\nconsole.log('Queue Depth:', metrics.queue_depth);\nconsole.log('==============================');\n\nreturn { json: metrics };"
+      },
+      "id": "calculate-metrics",
+      "name": "Calculate Metrics",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{$json.files_pending}}",
+              "operation": "larger",
+              "value2": 20
+            }
+          ]
+        }
+      },
+      "id": "check-high-queue",
+      "name": "Check High Queue Depth",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Alert: High queue depth detected\nconsole.warn('⚠️  HIGH QUEUE DEPTH ALERT');\nconsole.warn('Pending files:', $json.files_pending);\nconsole.warn('Recommendation: Scale FileFlows processing capacity');\n\n// TODO: Send email notification to admin\n// Requires email credentials configuration\n\nreturn $input.all();"
+      },
+      "id": "alert-high-queue",
+      "name": "Alert: High Queue Depth",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1340, 200]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Normal operation - no alerts\nconsole.log('✅ Queue depth normal:', $json.files_pending);\n\nreturn $input.all();"
+      },
+      "id": "log-normal-operation",
+      "name": "Log Normal Operation",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1340, 400]
+    }
+  ],
+  "connections": {
+    "Schedule: Every 15 Minutes": {
+      "main": [
+        [
+          {
+            "node": "Query FileFlows Statistics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query FileFlows Statistics": {
+      "main": [
+        [
+          {
+            "node": "Query Directus File Stats",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Directus File Stats": {
+      "main": [
+        [
+          {
+            "node": "Calculate Metrics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Metrics": {
+      "main": [
+        [
+          {
+            "node": "Check High Queue Depth",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check High Queue Depth": {
+      "main": [
+        [
+          {
+            "node": "Alert: High Queue Depth",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Normal Operation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2025-10-05T00:00:00.000Z",
+  "versionId": "1"
+}

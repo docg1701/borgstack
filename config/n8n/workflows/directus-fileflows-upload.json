@@ -1,0 +1,236 @@
+{
+  "name": "Directus → FileFlows Media Processing",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "directus-upload",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "webhook-directus-upload",
+      "name": "Webhook: Directus Upload",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "directus-upload"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Validate HMAC signature for webhook security\n// Set DIRECTUS_WEBHOOK_SECRET in .env for signature validation\nconst crypto = require('crypto');\n\nconst webhookSecret = $env.DIRECTUS_WEBHOOK_SECRET;\nconst receivedSignature = $input.item.json.headers['x-webhook-signature'];\nconst payload = JSON.stringify($input.item.json.body);\n\n// If no secret configured, skip validation (development mode)\nif (!webhookSecret) {\n  console.warn('DIRECTUS_WEBHOOK_SECRET not set - skipping signature validation');\n  return { json: { valid: true, mode: 'dev' } };\n}\n\n// Calculate expected signature\nconst expectedSignature = crypto\n  .createHmac('sha256', webhookSecret)\n  .update(payload)\n  .digest('hex');\n\n// Compare signatures (timing-safe comparison)\nconst isValid = crypto.timingSafeEqual(\n  Buffer.from(receivedSignature || '', 'hex'),\n  Buffer.from(expectedSignature, 'hex')\n);\n\nif (!isValid) {\n  console.error('Invalid webhook signature - potential security threat');\n}\n\nreturn {\n  json: {\n    valid: isValid,\n    mode: 'production'\n  }\n};"
+      },
+      "id": "validate-hmac-signature",
+      "name": "Validate HMAC Signature",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.valid}}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "check-signature-valid",
+      "name": "Check Signature Valid",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Extract file metadata from Directus Flow event\nconst payload = $input.first().json.body.payload;\n\nreturn {\n  json: {\n    file_id: payload.id,\n    filename_disk: payload.filename_disk,\n    filename_download: payload.filename_download,\n    type: payload.type,\n    filesize: payload.filesize,\n    uploaded_on: payload.uploaded_on,\n    storage: payload.storage\n  }\n};"
+      },
+      "id": "extract-metadata",
+      "name": "Extract File Metadata",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [900, 200]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Log rejected webhook due to invalid signature\nconsole.error('Webhook rejected - invalid HMAC signature');\nconsole.error('Source IP:', $input.first().json.headers['x-forwarded-for']);\n\nreturn {\n  json: {\n    error: 'Invalid signature',\n    rejected: true\n  }\n};"
+      },
+      "id": "log-rejected",
+      "name": "Log Rejected Webhook",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [900, 400]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.type}}",
+              "operation": "contains",
+              "value2": "video/"
+            },
+            {
+              "value1": "={{$json.type}}",
+              "operation": "contains",
+              "value2": "audio/"
+            },
+            {
+              "value1": "={{$json.type}}",
+              "operation": "contains",
+              "value2": "image/"
+            }
+          ]
+        },
+        "combineOperation": "any"
+      },
+      "id": "filter-media-files",
+      "name": "Filter Media Files",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1120, 200]
+    },
+    {
+      "parameters": {
+        "command": "cp /directus/uploads/={{$json.filename_disk}} /fileflows/input/={{$json.filename_download}}"
+      },
+      "id": "copy-file-to-fileflows",
+      "name": "Copy File to FileFlows Input",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [1340, 100]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Generate processing tracking ID\nconst crypto = require('crypto');\nconst trackingId = crypto.randomUUID();\n\nreturn {\n  json: {\n    ....$json,\n    tracking_id: trackingId,\n    processing_status: 'pending',\n    queued_at: new Date().toISOString()\n  }\n};"
+      },
+      "id": "generate-tracking-id",
+      "name": "Generate Tracking ID",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1560, 100]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Log successful file copy\nconsole.log('File copied to FileFlows:', $json.filename_download);\nconsole.log('Tracking ID:', $json.tracking_id);\n\nreturn $input.all();"
+      },
+      "id": "log-success",
+      "name": "Log Success",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1780, 100]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Log skipped non-media file\nconsole.log('Skipped non-media file:', $json.type);\n\nreturn {\n  json: {\n    status: 'skipped',\n    reason: 'Not a media file',\n    type: $json.type\n  }\n};"
+      },
+      "id": "log-skipped",
+      "name": "Log Skipped",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1340, 300]
+    }
+  ],
+  "connections": {
+    "Webhook: Directus Upload": {
+      "main": [
+        [
+          {
+            "node": "Validate HMAC Signature",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate HMAC Signature": {
+      "main": [
+        [
+          {
+            "node": "Check Signature Valid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Signature Valid": {
+      "main": [
+        [
+          {
+            "node": "Extract File Metadata",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Rejected Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract File Metadata": {
+      "main": [
+        [
+          {
+            "node": "Filter Media Files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Media Files": {
+      "main": [
+        [
+          {
+            "node": "Copy File to FileFlows Input",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Skipped",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Copy File to FileFlows Input": {
+      "main": [
+        [
+          {
+            "node": "Generate Tracking ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Tracking ID": {
+      "main": [
+        [
+          {
+            "node": "Log Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2025-10-05T21:00:00.000Z",
+  "versionId": "2"
+}
