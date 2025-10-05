@@ -139,8 +139,8 @@ test_http_redirect() {
 
     # Caddy automatically redirects HTTP to HTTPS
     # Test that port 80 is accessible and responds
-    if docker compose exec caddy wget --spider -q http://localhost:80 2>&1 || \
-       curl -s -o /dev/null -w "%{http_code}" http://localhost:80 2>/dev/null | grep -qE "30[0-9]"; then
+    if docker compose exec caddy wget --spider -q http://127.0.0.1:80 2>&1 || \
+       curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:80 2>/dev/null | grep -qE "30[0-9]"; then
         print_success "HTTP port 80 is accessible (redirects to HTTPS)"
         return 0
     else

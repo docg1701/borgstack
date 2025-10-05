@@ -61,7 +61,7 @@ test_internal_http() {
     local response
     response=$(docker compose exec -T "$service_name" \
         wget --spider --server-response --timeout=10 \
-        "http://localhost:${endpoint}" 2>&1 || true)
+        "http://127.0.0.1:${endpoint}" 2>&1 || true)
 
     # Check HTTP status
     if echo "$response" | grep -q "HTTP/[0-9.]* ${expected_status}"; then
@@ -69,7 +69,7 @@ test_internal_http() {
             # If expected body pattern provided, fetch and check content
             local body
             body=$(docker compose exec -T "$service_name" \
-                wget --quiet --timeout=10 -O- "http://localhost:${endpoint}" 2>/dev/null || true)
+                wget --quiet --timeout=10 -O- "http://127.0.0.1:${endpoint}" 2>/dev/null || true)
 
             if echo "$body" | grep -q "$expected_body"; then
                 return 0
@@ -101,7 +101,7 @@ test_internal_http_body() {
     # Fetch body content
     local body
     body=$(docker compose exec -T "$service_name" \
-        wget --quiet --timeout=10 -O- "http://localhost:${port}${endpoint}" 2>/dev/null || echo "ERROR")
+        wget --quiet --timeout=10 -O- "http://127.0.0.1:${port}${endpoint}" 2>/dev/null || echo "ERROR")
 
     if [ "$body" = "ERROR" ]; then
         echo -e "${RED}✗${NC} Failed to fetch ${service_name} ${endpoint}"
@@ -165,8 +165,10 @@ wait_for_http_endpoint() {
     echo "Waiting for ${service_name} ${endpoint} to respond (timeout: ${timeout}s)..."
 
     while [ $elapsed -lt $timeout ]; do
+        # Use 127.0.0.1 instead of localhost for better Docker compatibility
+        # In some CI environments, localhost may not resolve correctly inside containers
         if docker compose exec -T "$service_name" \
-            wget --spider --quiet --timeout=5 "http://localhost:${port}${endpoint}" 2>/dev/null; then
+            wget --spider --quiet --timeout=5 "http://127.0.0.1:${port}${endpoint}" 2>/dev/null; then
             echo -e "${GREEN}✓${NC} ${service_name} ${endpoint} is responding (after ${elapsed}s)"
             return 0
         fi

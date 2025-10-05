@@ -160,7 +160,7 @@ else
     echo -e "${RED}✗${NC} n8n /healthz/readiness endpoint failed"
     echo ""
     echo "=== n8n /healthz/readiness Response ==="
-    docker compose exec -T n8n wget --quiet -O- http://localhost:5678/healthz/readiness 2>&1 || echo "(no response)"
+    docker compose exec -T n8n wget --quiet -O- http://127.0.0.1:5678/healthz/readiness 2>&1 || echo "(no response)"
     echo "======================================="
     show_diagnostics "n8n"
     TESTS_FAILED=$((TESTS_FAILED + 1))
