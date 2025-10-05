@@ -203,7 +203,10 @@ fileflows.{$DOMAIN} {
 	}
 	reverse_proxy @long_running fileflows:5000 {
 		# 1 hour timeout for large media file processing
-		timeout 3600s
+		transport http {
+			read_timeout 3600s
+			write_timeout 3600s
+		}
 	}
 
 	# Standard requests (UI, short API calls)

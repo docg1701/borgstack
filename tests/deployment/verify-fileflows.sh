@@ -110,11 +110,12 @@ echo ""
 # ============================================================================
 echo "Test 4: Verifying borgstack_fileflows_data volume is mounted..."
 
-if docker volume inspect borgstack_fileflows_data &> /dev/null; then
-    echo -e "${GREEN}✓${NC} borgstack_fileflows_data volume exists"
+# Check if volume is mounted in container (handles docker compose project name prefix)
+if docker inspect borgstack_fileflows --format '{{range .Mounts}}{{if eq .Destination "/app/Data"}}{{.Name}}{{end}}{{end}}' | grep -q "fileflows_data"; then
+    echo -e "${GREEN}✓${NC} borgstack_fileflows_data volume is mounted at /app/Data"
     TESTS_PASSED=$((TESTS_PASSED + 1))
 else
-    echo -e "${RED}✗${NC} borgstack_fileflows_data volume not found"
+    echo -e "${RED}✗${NC} borgstack_fileflows_data volume not found or not mounted"
     TESTS_FAILED=$((TESTS_FAILED + 1))
 fi
 echo ""

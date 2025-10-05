@@ -1987,49 +1987,206 @@ jobs:
           docker compose down -v --remove-orphans || true
           rm -f .env
 
+  validate-fileflows:
+    name: Validate FileFlows Configuration
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Create .env file for testing
+        run: |
+          echo "Creating temporary .env file with test credentials..."
+          cat > .env << 'EOF'
+          # Test credentials for CI pipeline
+          # Domain and email
+          DOMAIN=example.com.br
+          EMAIL=admin@example.com.br
+          # FileFlows configuration
+          FILEFLOWS_HOST=fileflows.example.com.br
+          FILEFLOWS_LOG_LEVEL=Information
+          EOF
+
+      - name: Verify FileFlows configuration in docker-compose.yml
+        run: |
+          echo "Verifying FileFlows service is configured..."
+
+          # Check FileFlows image version is pinned correctly
+          if docker compose config | grep -q "image: revenz/fileflows:25.09"; then
+            echo "✅ FileFlows image correctly configured (revenz/fileflows:25.09)"
+          else
+            echo "❌ FileFlows image not configured correctly"
+            exit 1
+          fi
+
+          # Check FileFlows is on both networks (internal + external for Caddy)
+          if docker compose config | grep -A 50 "fileflows:" | grep -q "borgstack_internal"; then
+            echo "✅ FileFlows connected to borgstack_internal network"
+          else
+            echo "❌ FileFlows not connected to borgstack_internal network"
+            exit 1
+          fi
+
+          if docker compose config | grep -A 50 "fileflows:" | grep -q "borgstack_external"; then
+            echo "✅ FileFlows connected to borgstack_external network"
+          else
+            echo "❌ FileFlows not connected to borgstack_external network"
+            exit 1
+          fi
+
+          # Verify volume naming convention
+          if docker compose config | grep -q "borgstack_fileflows_data"; then
+            echo "✅ Volume borgstack_fileflows_data follows naming convention"
+          else
+            echo "❌ Volume borgstack_fileflows_data not found"
+            exit 1
+          fi
+
+          if docker compose config | grep -q "borgstack_fileflows_input"; then
+            echo "✅ Volume borgstack_fileflows_input follows naming convention"
+          else
+            echo "❌ Volume borgstack_fileflows_input not found"
+            exit 1
+          fi
+
+          if docker compose config | grep -q "borgstack_fileflows_output"; then
+            echo "✅ Volume borgstack_fileflows_output follows naming convention"
+          else
+            echo "❌ Volume borgstack_fileflows_output not found"
+            exit 1
+          fi
+
+          if docker compose config | grep -q "borgstack_fileflows_temp"; then
+            echo "✅ Volume borgstack_fileflows_temp follows naming convention"
+          else
+            echo "❌ Volume borgstack_fileflows_temp not found"
+            exit 1
+          fi
+
+          # Verify no port exposure in production config
+          if docker compose config | grep -A 50 "fileflows:" | grep -E "^\s+ports:" > /dev/null 2>&1; then
+            echo "❌ FileFlows has port exposure in production config (security violation)"
+            exit 1
+          else
+            echo "✅ No port exposure to host (security requirement met)"
+          fi
+
+          # Verify health check is configured
+          if docker compose config | grep -A 60 "fileflows:" | grep -q "healthcheck:"; then
+            echo "✅ Health check configured for FileFlows"
+          else
+            echo "❌ Health check not configured for FileFlows"
+            exit 1
+          fi
+
+      - name: Verify FileFlows environment variables
+        run: |
+          echo "Verifying FileFlows environment variables configuration..."
+
+          # Check TZ is set
+          if docker compose config | grep -A 60 "fileflows:" | grep -q "TZ:"; then
+            echo "✅ TZ (timezone) configured"
+          else
+            echo "❌ TZ not configured"
+            exit 1
+          fi
+
+          # Check PUID/PGID are set for file permissions
+          if docker compose config | grep -A 60 "fileflows:" | grep -q "PUID:"; then
+            echo "✅ PUID configured for file permissions"
+          else
+            echo "❌ PUID not configured"
+            exit 1
+          fi
+
+          if docker compose config | grep -A 60 "fileflows:" | grep -q "PGID:"; then
+            echo "✅ PGID configured for file permissions"
+          else
+            echo "❌ PGID not configured"
+            exit 1
+          fi
+
+          # Check log level is configured
+          if docker compose config | grep -A 60 "fileflows:" | grep -q "LogLevel:"; then
+            echo "✅ LogLevel configured"
+          else
+            echo "❌ LogLevel not configured"
+            exit 1
+          fi
+
+      - name: Verify FileFlows .env.example variables
+        run: |
+          echo "Verifying FileFlows variables in .env.example..."
+
+          if grep -q "FILEFLOWS_HOST=" .env.example; then
+            echo "✅ FILEFLOWS_HOST variable in .env.example"
+          else
+            echo "❌ FILEFLOWS_HOST variable not found in .env.example"
+            exit 1
+          fi
+
+          if grep -q "FILEFLOWS_LOG_LEVEL=" .env.example; then
+            echo "✅ FILEFLOWS_LOG_LEVEL variable in .env.example"
+          else
+            echo "❌ FILEFLOWS_LOG_LEVEL variable not found in .env.example"
+            exit 1
+          fi
+
+      - name: Verify FileFlows validation test script exists
+        run: |
+          echo "Verifying FileFlows validation test script exists..."
+
+          if [ -f "tests/deployment/verify-fileflows.sh" ]; then
+            echo "✅ verify-fileflows.sh exists"
+          else
+            echo "❌ verify-fileflows.sh not found"
+            exit 1
+          fi
+
+          if [ -x "tests/deployment/verify-fileflows.sh" ]; then
+            echo "✅ verify-fileflows.sh is executable"
+          else
+            echo "❌ verify-fileflows.sh is not executable"
+            exit 1
+          fi
+
+      - name: Verify FileFlows documentation exists
+        run: |
+          echo "Verifying FileFlows documentation exists..."
+
+          if [ -f "config/fileflows/README.md" ]; then
+            echo "✅ config/fileflows/README.md exists"
+          else
+            echo "❌ config/fileflows/README.md not found"
+            exit 1
+          fi
+
+      - name: Run FileFlows validation tests
+        timeout-minutes: 15
+        run: |
+          echo "Running comprehensive FileFlows validation tests..."
+          chmod +x tests/deployment/verify-fileflows.sh
+          bash tests/deployment/verify-fileflows.sh
+
+      - name: Cleanup FileFlows test environment
+        if: always()
+        run: |
+          echo "Cleaning up test environment..."
+          docker compose down -v --remove-orphans || true
+          rm -f .env
+
   # ============================================================================
-  # FUTURE SERVICES - Placeholders for Epic 4 & 5 Stories
+  # FUTURE SERVICES - Placeholders for Epic 5 Stories
   # ============================================================================
   # The following services will be implemented in future stories.
   # Uncomment and configure when implementing:
-  # - Story 4.2: FileFlows Media Processing
   # - Story 5.1: SeaweedFS Object Storage
   # - Story 5.2: Duplicati Backup System
   # ============================================================================
-
-  # validate-fileflows:
-  #   name: Validate FileFlows Configuration
-  #   runs-on: ubuntu-24.04
-  #
-  #   steps:
-  #     - name: Checkout repository
-  #       uses: actions/checkout@v4
-  #
-  #     - name: Set up Docker Buildx
-  #       uses: docker/setup-buildx-action@v3
-  #
-  #     - name: Create .env file for testing
-  #       run: |
-  #         echo "Creating temporary .env file with test credentials..."
-  #         # TODO: Add FileFlows-specific environment variables
-  #
-  #     - name: Verify FileFlows configuration in docker-compose.yml
-  #       run: |
-  #         echo "Verifying FileFlows service is configured..."
-  #         # TODO: Add FileFlows configuration checks
-  #
-  #     - name: Run FileFlows validation tests
-  #       run: |
-  #         echo "Running comprehensive FileFlows validation tests..."
-  #         chmod +x tests/deployment/verify-fileflows.sh
-  #         bash tests/deployment/verify-fileflows.sh
-  #
-  #     - name: Cleanup FileFlows test environment
-  #       if: always()
-  #       run: |
-  #         echo "Cleaning up test environment..."
-  #         docker compose down -v --remove-orphans || true
-  #         rm -f .env
 
   # validate-seaweedfs:
   #   name: Validate SeaweedFS Configuration
