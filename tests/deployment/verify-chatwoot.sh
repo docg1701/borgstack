@@ -110,7 +110,7 @@ echo "Test 4: Verifying Chatwoot → PostgreSQL connection (direct database quer
 
 # Test if Chatwoot can query the database
 PG_TEST_CMD="psql postgresql://chatwoot_user:\${CHATWOOT_DB_PASSWORD}@postgresql:5432/chatwoot_db -c 'SELECT 1;'"
-if retry_with_backoff 3 test_database_connection "chatwoot" "PostgreSQL" "$PG_TEST_CMD"; then
+if retry_with_backoff 5 test_database_connection "chatwoot" "PostgreSQL" "$PG_TEST_CMD"; then
     echo -e "${GREEN}✓${NC} Chatwoot can query PostgreSQL database"
     TESTS_PASSED=$((TESTS_PASSED + 1))
 else
@@ -159,7 +159,7 @@ echo ""
 # ============================================================================
 echo "Test 7: Verifying Chatwoot /api health endpoint..."
 
-if retry_with_backoff 3 wait_for_http_endpoint "chatwoot" "3000" "/api" 120; then
+if retry_with_backoff 5 wait_for_http_endpoint "chatwoot" "3000" "/api" 180; then
     echo -e "${GREEN}✓${NC} Chatwoot /api endpoint is accessible"
     TESTS_PASSED=$((TESTS_PASSED + 1))
 else

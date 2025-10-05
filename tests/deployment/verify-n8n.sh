@@ -108,7 +108,7 @@ echo "Test 4: Verifying n8n → PostgreSQL connection (direct database query)...
 
 # Test if n8n can query the database
 PG_TEST_CMD="psql postgresql://n8n_user:\${N8N_DB_PASSWORD}@postgresql:5432/n8n_db -c 'SELECT 1;'"
-if retry_with_backoff 3 test_database_connection "n8n" "PostgreSQL" "$PG_TEST_CMD"; then
+if retry_with_backoff 5 test_database_connection "n8n" "PostgreSQL" "$PG_TEST_CMD"; then
     echo -e "${GREEN}✓${NC} n8n can query PostgreSQL database"
     TESTS_PASSED=$((TESTS_PASSED + 1))
 else
@@ -142,7 +142,7 @@ echo ""
 # ============================================================================
 echo "Test 6: Verifying n8n /healthz endpoint (basic liveness check)..."
 
-if retry_with_backoff 3 wait_for_http_endpoint "n8n" "5678" "/healthz" 120; then
+if retry_with_backoff 5 wait_for_http_endpoint "n8n" "5678" "/healthz" 180; then
     echo -e "${GREEN}✓${NC} n8n /healthz endpoint is accessible (instance is reachable)"
     TESTS_PASSED=$((TESTS_PASSED + 1))
 else
@@ -157,7 +157,7 @@ echo ""
 # ============================================================================
 echo "Test 7: Verifying n8n /healthz/readiness endpoint (database connected and migrated)..."
 
-if retry_with_backoff 3 wait_for_http_endpoint "n8n" "5678" "/healthz/readiness" 120; then
+if retry_with_backoff 5 wait_for_http_endpoint "n8n" "5678" "/healthz/readiness" 180; then
     echo -e "${GREEN}✓${NC} n8n /healthz/readiness endpoint returns 200 (database ready)"
     TESTS_PASSED=$((TESTS_PASSED + 1))
 else

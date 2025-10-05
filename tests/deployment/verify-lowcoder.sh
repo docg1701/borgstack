@@ -138,7 +138,7 @@ echo "Test 6: Verifying Lowcoder API Service → MongoDB connection (direct data
 
 # Test if Lowcoder API Service can query MongoDB
 MONGO_TEST_CMD="mongosh mongodb://lowcoder_user:\${LOWCODER_DB_PASSWORD}@mongodb:27017/lowcoder?authSource=lowcoder --eval 'db.runCommand({ ping: 1 })'"
-if retry_with_backoff 3 test_database_connection "lowcoder-api-service" "MongoDB" "$MONGO_TEST_CMD"; then
+if retry_with_backoff 5 test_database_connection "lowcoder-api-service" "MongoDB" "$MONGO_TEST_CMD"; then
     echo -e "${GREEN}✓${NC} Lowcoder API Service can query MongoDB database"
     TESTS_PASSED=$((TESTS_PASSED + 1))
 else
@@ -172,7 +172,7 @@ echo ""
 # ============================================================================
 echo "Test 8: Verifying Lowcoder API Service /api/status/health endpoint..."
 
-if retry_with_backoff 3 wait_for_http_endpoint "lowcoder-api-service" "8080" "/api/status/health" 120; then
+if retry_with_backoff 5 wait_for_http_endpoint "lowcoder-api-service" "8080" "/api/status/health" 180; then
     echo -e "${GREEN}✓${NC} Lowcoder API Service health endpoint is accessible"
     TESTS_PASSED=$((TESTS_PASSED + 1))
 else

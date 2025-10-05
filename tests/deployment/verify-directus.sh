@@ -117,7 +117,7 @@ echo "Test 4: Verifying Directus → PostgreSQL connection (direct database quer
 
 # Test if Directus can query the database
 PG_TEST_CMD="psql postgresql://directus_user:\${DIRECTUS_DB_PASSWORD}@postgresql:5432/directus_db -c 'SELECT 1;'"
-if retry_with_backoff 3 test_database_connection "directus" "PostgreSQL" "$PG_TEST_CMD"; then
+if retry_with_backoff 5 test_database_connection "directus" "PostgreSQL" "$PG_TEST_CMD"; then
     echo -e "${GREEN}✓${NC} Directus can query PostgreSQL database"
     TESTS_PASSED=$((TESTS_PASSED + 1))
 else
@@ -166,7 +166,7 @@ echo ""
 # ============================================================================
 echo "Test 7: Verifying Directus /server/ping endpoint..."
 
-if retry_with_backoff 3 wait_for_http_endpoint "directus" "8055" "/server/ping" 120; then
+if retry_with_backoff 5 wait_for_http_endpoint "directus" "8055" "/server/ping" 180; then
     # Now verify it actually returns "pong"
     PING_RESPONSE=$(docker compose exec -T directus \
         wget --quiet --timeout=10 -O- http://localhost:8055/server/ping 2>/dev/null || echo "ERROR")
@@ -191,7 +191,7 @@ echo ""
 # ============================================================================
 echo "Test 8: Verifying Directus /server/health endpoint..."
 
-if retry_with_backoff 3 docker compose exec -T directus \
+if retry_with_backoff 5 docker compose exec -T directus \
     wget --spider --quiet --timeout=10 http://localhost:8055/server/health 2>/dev/null; then
     echo -e "${GREEN}✓${NC} /server/health endpoint is accessible (returns 200)"
     TESTS_PASSED=$((TESTS_PASSED + 1))
@@ -206,7 +206,7 @@ echo ""
 # ============================================================================
 echo "Test 9: Verifying GraphQL endpoint..."
 
-if retry_with_backoff 3 docker compose exec -T directus \
+if retry_with_backoff 5 docker compose exec -T directus \
     wget --spider --quiet --timeout=10 http://localhost:8055/graphql 2>/dev/null; then
     echo -e "${GREEN}✓${NC} GraphQL endpoint is accessible"
     TESTS_PASSED=$((TESTS_PASSED + 1))

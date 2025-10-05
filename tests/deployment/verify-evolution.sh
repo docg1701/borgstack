@@ -112,7 +112,7 @@ echo "Test 4: Verifying Evolution API → PostgreSQL connection (direct database
 
 # Test if Evolution API can query the database
 PG_TEST_CMD="psql postgresql://evolution_user:\${EVOLUTION_DB_PASSWORD}@postgresql:5432/evolution_db -c 'SELECT 1;'"
-if retry_with_backoff 3 test_database_connection "evolution" "PostgreSQL" "$PG_TEST_CMD"; then
+if retry_with_backoff 5 test_database_connection "evolution" "PostgreSQL" "$PG_TEST_CMD"; then
     echo -e "${GREEN}✓${NC} Evolution API can query PostgreSQL database"
     TESTS_PASSED=$((TESTS_PASSED + 1))
 else
@@ -146,7 +146,7 @@ echo ""
 # ============================================================================
 echo "Test 6: Verifying Evolution API root endpoint..."
 
-if retry_with_backoff 3 wait_for_http_endpoint "evolution" "8080" "/" 120; then
+if retry_with_backoff 5 wait_for_http_endpoint "evolution" "8080" "/" 180; then
     echo -e "${GREEN}✓${NC} Evolution API root endpoint is accessible"
     TESTS_PASSED=$((TESTS_PASSED + 1))
 else

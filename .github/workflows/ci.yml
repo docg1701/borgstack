@@ -649,18 +649,47 @@ jobs:
           echo "Creating temporary .env file with test credentials..."
           cat > .env << 'EOF'
           # Test credentials for CI pipeline
+          # PostgreSQL passwords
           POSTGRES_PASSWORD=test_postgres_password_12345678
           N8N_DB_PASSWORD=test_n8n_password_12345678
           CHATWOOT_DB_PASSWORD=test_chatwoot_password_12345678
           DIRECTUS_DB_PASSWORD=test_directus_password_12345678
           EVOLUTION_DB_PASSWORD=test_evolution_password_12345678
-          N8N_BASIC_AUTH_USER=admin
-          N8N_BASIC_AUTH_PASSWORD=test_n8n_auth_password_12345678
-          N8N_ENCRYPTION_KEY=test_n8n_encryption_key_12345678901234567890
+          # MongoDB passwords
+          MONGODB_ROOT_PASSWORD=test_mongodb_root_password_12345678
+          LOWCODER_DB_PASSWORD=test_lowcoder_password_12345678901234567890
+          # Redis password
           REDIS_PASSWORD=test_redis_password_12345678901234567890
+          # Domain and email
           DOMAIN=example.com.br
           EMAIL=admin@example.com.br
           CORS_ALLOWED_ORIGINS=*
+          # n8n configuration
+          N8N_HOST=n8n.example.com.br
+          N8N_BASIC_AUTH_USER=admin
+          N8N_BASIC_AUTH_PASSWORD=test_n8n_auth_password_12345678
+          N8N_ENCRYPTION_KEY=test_n8n_encryption_key_12345678901234567890
+          # Chatwoot configuration
+          CHATWOOT_HOST=chatwoot.example.com.br
+          CHATWOOT_SECRET_KEY_BASE=test_chatwoot_secret_key_base_128_character_hex_string_0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          CHATWOOT_API_TOKEN=test_chatwoot_api_token_dummy_for_ci
+          # Evolution API configuration
+          EVOLUTION_HOST=evolution.example.com.br
+          EVOLUTION_API_KEY=test_evolution_api_key_12345678
+          EVOLUTION_WEBHOOK_URL=https://n8n.example.com.br/webhook/whatsapp-incoming
+          DATABASE_CONNECTION_CLIENT_NAME=evolution_api
+          # Lowcoder configuration
+          LOWCODER_HOST=lowcoder.example.com.br
+          LOWCODER_ADMIN_EMAIL=admin@example.com.br
+          LOWCODER_ADMIN_PASSWORD=test_lowcoder_admin_password_12345678
+          LOWCODER_ENCRYPTION_PASSWORD=test_lowcoder_encryption_pass_123456
+          LOWCODER_ENCRYPTION_SALT=test_lowcoder_encryption_salt_123456
+          # Directus configuration
+          DIRECTUS_HOST=directus.example.com.br
+          DIRECTUS_KEY=test_directus_key_12345678901234567890123456789012
+          DIRECTUS_SECRET=test_directus_secret_12345678901234567890123456
+          DIRECTUS_ADMIN_EMAIL=admin@example.com.br
+          DIRECTUS_ADMIN_PASSWORD=test_directus_admin_password_12345678
           EOF
 
       - name: Verify n8n configuration in docker-compose.yml
@@ -888,17 +917,47 @@ jobs:
           echo "Creating temporary .env file with test credentials..."
           cat > .env << 'EOF'
           # Test credentials for CI pipeline
+          # PostgreSQL passwords
           POSTGRES_PASSWORD=test_postgres_password_12345678
-          EVOLUTION_DB_PASSWORD=test_evolution_password_12345678
-          EVOLUTION_API_KEY=test_evolution_api_key_12345678
-          EVOLUTION_WEBHOOK_URL=https://n8n.example.com.br/webhook/whatsapp-incoming
-          EVOLUTION_HOST=evolution.example.com.br
-          DATABASE_CONNECTION_CLIENT_NAME=evolution_api
           N8N_DB_PASSWORD=test_n8n_password_12345678
+          CHATWOOT_DB_PASSWORD=test_chatwoot_password_12345678
+          DIRECTUS_DB_PASSWORD=test_directus_password_12345678
+          EVOLUTION_DB_PASSWORD=test_evolution_password_12345678
+          # MongoDB passwords
+          MONGODB_ROOT_PASSWORD=test_mongodb_root_password_12345678
+          LOWCODER_DB_PASSWORD=test_lowcoder_password_12345678901234567890
+          # Redis password
           REDIS_PASSWORD=test_redis_password_12345678901234567890
+          # Domain and email
           DOMAIN=example.com.br
           EMAIL=admin@example.com.br
           CORS_ALLOWED_ORIGINS=*
+          # n8n configuration
+          N8N_HOST=n8n.example.com.br
+          N8N_BASIC_AUTH_USER=admin
+          N8N_BASIC_AUTH_PASSWORD=test_n8n_auth_password_12345678
+          N8N_ENCRYPTION_KEY=test_n8n_encryption_key_12345678901234567890
+          # Chatwoot configuration
+          CHATWOOT_HOST=chatwoot.example.com.br
+          CHATWOOT_SECRET_KEY_BASE=test_chatwoot_secret_key_base_128_character_hex_string_0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          CHATWOOT_API_TOKEN=test_chatwoot_api_token_dummy_for_ci
+          # Evolution API configuration
+          EVOLUTION_HOST=evolution.example.com.br
+          EVOLUTION_API_KEY=test_evolution_api_key_12345678
+          EVOLUTION_WEBHOOK_URL=https://n8n.example.com.br/webhook/whatsapp-incoming
+          DATABASE_CONNECTION_CLIENT_NAME=evolution_api
+          # Lowcoder configuration
+          LOWCODER_HOST=lowcoder.example.com.br
+          LOWCODER_ADMIN_EMAIL=admin@example.com.br
+          LOWCODER_ADMIN_PASSWORD=test_lowcoder_admin_password_12345678
+          LOWCODER_ENCRYPTION_PASSWORD=test_lowcoder_encryption_pass_123456
+          LOWCODER_ENCRYPTION_SALT=test_lowcoder_encryption_salt_123456
+          # Directus configuration
+          DIRECTUS_HOST=directus.example.com.br
+          DIRECTUS_KEY=test_directus_key_12345678901234567890123456789012
+          DIRECTUS_SECRET=test_directus_secret_12345678901234567890123456
+          DIRECTUS_ADMIN_EMAIL=admin@example.com.br
+          DIRECTUS_ADMIN_PASSWORD=test_directus_admin_password_12345678
           EOF
 
       - name: Verify Evolution API configuration in docker-compose.yml
@@ -1099,14 +1158,47 @@ jobs:
           echo "Creating temporary .env file with test credentials..."
           cat > .env << 'EOF'
           # Test credentials for CI pipeline
+          # PostgreSQL passwords
           POSTGRES_PASSWORD=test_postgres_password_12345678
+          N8N_DB_PASSWORD=test_n8n_password_12345678
           CHATWOOT_DB_PASSWORD=test_chatwoot_password_12345678
-          CHATWOOT_SECRET_KEY_BASE=test_chatwoot_secret_key_base_128_character_hex_string_0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          CHATWOOT_HOST=chatwoot.example.com.br
+          DIRECTUS_DB_PASSWORD=test_directus_password_12345678
+          EVOLUTION_DB_PASSWORD=test_evolution_password_12345678
+          # MongoDB passwords
+          MONGODB_ROOT_PASSWORD=test_mongodb_root_password_12345678
+          LOWCODER_DB_PASSWORD=test_lowcoder_password_12345678901234567890
+          # Redis password
           REDIS_PASSWORD=test_redis_password_12345678901234567890
+          # Domain and email
           DOMAIN=example.com.br
           EMAIL=admin@example.com.br
           CORS_ALLOWED_ORIGINS=*
+          # n8n configuration
+          N8N_HOST=n8n.example.com.br
+          N8N_BASIC_AUTH_USER=admin
+          N8N_BASIC_AUTH_PASSWORD=test_n8n_auth_password_12345678
+          N8N_ENCRYPTION_KEY=test_n8n_encryption_key_12345678901234567890
+          # Chatwoot configuration
+          CHATWOOT_HOST=chatwoot.example.com.br
+          CHATWOOT_SECRET_KEY_BASE=test_chatwoot_secret_key_base_128_character_hex_string_0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          CHATWOOT_API_TOKEN=test_chatwoot_api_token_dummy_for_ci
+          # Evolution API configuration
+          EVOLUTION_HOST=evolution.example.com.br
+          EVOLUTION_API_KEY=test_evolution_api_key_12345678
+          EVOLUTION_WEBHOOK_URL=https://n8n.example.com.br/webhook/whatsapp-incoming
+          DATABASE_CONNECTION_CLIENT_NAME=evolution_api
+          # Lowcoder configuration
+          LOWCODER_HOST=lowcoder.example.com.br
+          LOWCODER_ADMIN_EMAIL=admin@example.com.br
+          LOWCODER_ADMIN_PASSWORD=test_lowcoder_admin_password_12345678
+          LOWCODER_ENCRYPTION_PASSWORD=test_lowcoder_encryption_pass_123456
+          LOWCODER_ENCRYPTION_SALT=test_lowcoder_encryption_salt_123456
+          # Directus configuration
+          DIRECTUS_HOST=directus.example.com.br
+          DIRECTUS_KEY=test_directus_key_12345678901234567890123456789012
+          DIRECTUS_SECRET=test_directus_secret_12345678901234567890123456
+          DIRECTUS_ADMIN_EMAIL=admin@example.com.br
+          DIRECTUS_ADMIN_PASSWORD=test_directus_admin_password_12345678
           EOF
 
       - name: Verify Chatwoot configuration in docker-compose.yml
@@ -1290,16 +1382,47 @@ jobs:
           echo "Creating temporary .env file with test credentials..."
           cat > .env << 'EOF'
           # Test credentials for CI pipeline
+          # PostgreSQL passwords
+          POSTGRES_PASSWORD=test_postgres_password_12345678
+          N8N_DB_PASSWORD=test_n8n_password_12345678
+          CHATWOOT_DB_PASSWORD=test_chatwoot_password_12345678
+          DIRECTUS_DB_PASSWORD=test_directus_password_12345678
+          EVOLUTION_DB_PASSWORD=test_evolution_password_12345678
+          # MongoDB passwords
           MONGODB_ROOT_PASSWORD=test_mongodb_root_password_12345678
           LOWCODER_DB_PASSWORD=test_lowcoder_password_12345678901234567890
+          # Redis password
           REDIS_PASSWORD=test_redis_password_12345678901234567890
+          # Domain and email
+          DOMAIN=example.com.br
+          EMAIL=admin@example.com.br
+          CORS_ALLOWED_ORIGINS=*
+          # n8n configuration
+          N8N_HOST=n8n.example.com.br
+          N8N_BASIC_AUTH_USER=admin
+          N8N_BASIC_AUTH_PASSWORD=test_n8n_auth_password_12345678
+          N8N_ENCRYPTION_KEY=test_n8n_encryption_key_12345678901234567890
+          # Chatwoot configuration
+          CHATWOOT_HOST=chatwoot.example.com.br
+          CHATWOOT_SECRET_KEY_BASE=test_chatwoot_secret_key_base_128_character_hex_string_0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          CHATWOOT_API_TOKEN=test_chatwoot_api_token_dummy_for_ci
+          # Evolution API configuration
+          EVOLUTION_HOST=evolution.example.com.br
+          EVOLUTION_API_KEY=test_evolution_api_key_12345678
+          EVOLUTION_WEBHOOK_URL=https://n8n.example.com.br/webhook/whatsapp-incoming
+          DATABASE_CONNECTION_CLIENT_NAME=evolution_api
+          # Lowcoder configuration
+          LOWCODER_HOST=lowcoder.example.com.br
           LOWCODER_ADMIN_EMAIL=admin@example.com.br
           LOWCODER_ADMIN_PASSWORD=test_lowcoder_admin_password_12345678
           LOWCODER_ENCRYPTION_PASSWORD=test_lowcoder_encryption_pass_123456
           LOWCODER_ENCRYPTION_SALT=test_lowcoder_encryption_salt_123456
-          DOMAIN=example.com.br
-          EMAIL=admin@example.com.br
-          CORS_ALLOWED_ORIGINS=*
+          # Directus configuration
+          DIRECTUS_HOST=directus.example.com.br
+          DIRECTUS_KEY=test_directus_key_12345678901234567890123456789012
+          DIRECTUS_SECRET=test_directus_secret_12345678901234567890123456
+          DIRECTUS_ADMIN_EMAIL=admin@example.com.br
+          DIRECTUS_ADMIN_PASSWORD=test_directus_admin_password_12345678
           EOF
 
       - name: Verify Lowcoder configuration in docker-compose.yml
@@ -1622,20 +1745,47 @@ jobs:
           echo "Creating temporary .env file with test credentials..."
           cat > .env << 'EOF'
           # Test credentials for CI pipeline
+          # PostgreSQL passwords
           POSTGRES_PASSWORD=test_postgres_password_12345678
           N8N_DB_PASSWORD=test_n8n_password_12345678
           CHATWOOT_DB_PASSWORD=test_chatwoot_password_12345678
           DIRECTUS_DB_PASSWORD=test_directus_password_12345678
           EVOLUTION_DB_PASSWORD=test_evolution_password_12345678
+          # MongoDB passwords
+          MONGODB_ROOT_PASSWORD=test_mongodb_root_password_12345678
+          LOWCODER_DB_PASSWORD=test_lowcoder_password_12345678901234567890
+          # Redis password
           REDIS_PASSWORD=test_redis_password_12345678901234567890
+          # Domain and email
+          DOMAIN=example.com.br
+          EMAIL=admin@example.com.br
+          CORS_ALLOWED_ORIGINS=*
+          # n8n configuration
+          N8N_HOST=n8n.example.com.br
+          N8N_BASIC_AUTH_USER=admin
+          N8N_BASIC_AUTH_PASSWORD=test_n8n_auth_password_12345678
+          N8N_ENCRYPTION_KEY=test_n8n_encryption_key_12345678901234567890
+          # Chatwoot configuration
+          CHATWOOT_HOST=chatwoot.example.com.br
+          CHATWOOT_SECRET_KEY_BASE=test_chatwoot_secret_key_base_128_character_hex_string_0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          CHATWOOT_API_TOKEN=test_chatwoot_api_token_dummy_for_ci
+          # Evolution API configuration
+          EVOLUTION_HOST=evolution.example.com.br
+          EVOLUTION_API_KEY=test_evolution_api_key_12345678
+          EVOLUTION_WEBHOOK_URL=https://n8n.example.com.br/webhook/whatsapp-incoming
+          DATABASE_CONNECTION_CLIENT_NAME=evolution_api
+          # Lowcoder configuration
+          LOWCODER_HOST=lowcoder.example.com.br
+          LOWCODER_ADMIN_EMAIL=admin@example.com.br
+          LOWCODER_ADMIN_PASSWORD=test_lowcoder_admin_password_12345678
+          LOWCODER_ENCRYPTION_PASSWORD=test_lowcoder_encryption_pass_123456
+          LOWCODER_ENCRYPTION_SALT=test_lowcoder_encryption_salt_123456
+          # Directus configuration
+          DIRECTUS_HOST=directus.example.com.br
           DIRECTUS_KEY=test_directus_key_12345678901234567890123456789012
           DIRECTUS_SECRET=test_directus_secret_12345678901234567890123456
           DIRECTUS_ADMIN_EMAIL=admin@example.com.br
           DIRECTUS_ADMIN_PASSWORD=test_directus_admin_password_12345678
-          DIRECTUS_HOST=directus.example.com.br
-          DOMAIN=example.com.br
-          EMAIL=admin@example.com.br
-          CORS_ALLOWED_ORIGINS=*
           EOF
 
       - name: Verify Directus configuration in docker-compose.yml
