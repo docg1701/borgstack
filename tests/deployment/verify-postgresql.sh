@@ -98,8 +98,8 @@ log_test "Test 4: Starting PostgreSQL and verifying health check"
 log_info "Starting PostgreSQL container..."
 docker compose up -d postgresql
 
-log_info "Waiting for PostgreSQL to become healthy (max 60 seconds)..."
-TIMEOUT=60
+log_info "Waiting for PostgreSQL to become healthy (max 180 seconds for CI)..."
+TIMEOUT=180
 ELAPSED=0
 HEALTHY=false
 
@@ -108,12 +108,15 @@ while [ $ELAPSED -lt $TIMEOUT ]; do
         HEALTHY=true
         break
     fi
-    sleep 2
-    ELAPSED=$((ELAPSED + 2))
+    if [ $((ELAPSED % 30)) -eq 0 ] && [ $ELAPSED -gt 0 ]; then
+        log_info "Still waiting... ${ELAPSED}s elapsed"
+    fi
+    sleep 5
+    ELAPSED=$((ELAPSED + 5))
 done
 
 if [ "$HEALTHY" = true ]; then
-    log_success "PostgreSQL container is healthy"
+    log_success "PostgreSQL container is healthy (after ${ELAPSED}s)"
 else
     log_error "PostgreSQL failed to become healthy within ${TIMEOUT} seconds"
     docker compose logs postgresql
@@ -172,9 +175,65 @@ else
 fi
 
 # ============================================================================
-# Test 7: pgvector Extension Verification (AC: 2)
+# Test 7: Database Isolation (Users Cannot Access Other Databases)
 # ============================================================================
-log_test "Test 7: Verifying pgvector extension installation"
+log_test "Test 7: Verifying database isolation (users cannot access other databases)"
+
+# Test n8n_user CANNOT access chatwoot_db
+if docker compose exec -T postgresql psql -U n8n_user -d chatwoot_db -c "SELECT 1;" 2>&1 | grep -q "permission denied\|FATAL"; then
+    log_success "n8n_user correctly denied access to chatwoot_db (isolation working)"
+else
+    log_error "n8n_user can access chatwoot_db (isolation FAILED)"
+fi
+
+# Test chatwoot_user CANNOT access directus_db
+if docker compose exec -T postgresql psql -U chatwoot_user -d directus_db -c "SELECT 1;" 2>&1 | grep -q "permission denied\|FATAL"; then
+    log_success "chatwoot_user correctly denied access to directus_db (isolation working)"
+else
+    log_error "chatwoot_user can access directus_db (isolation FAILED)"
+fi
+
+# Test directus_user CANNOT access evolution_db
+if docker compose exec -T postgresql psql -U directus_user -d evolution_db -c "SELECT 1;" 2>&1 | grep -q "permission denied\|FATAL"; then
+    log_success "directus_user correctly denied access to evolution_db (isolation working)"
+else
+    log_error "directus_user can access evolution_db (isolation FAILED)"
+fi
+
+# ============================================================================
+# Test 8: Concurrent Connections Test
+# ============================================================================
+log_test "Test 8: Testing concurrent database connections"
+
+log_info "Simulating concurrent connections from multiple users..."
+
+# Run 4 concurrent queries from different users
+{
+    docker compose exec -T postgresql psql -U n8n_user -d n8n_db -c "SELECT pg_sleep(0.5), current_database();" > /dev/null 2>&1 &
+    docker compose exec -T postgresql psql -U chatwoot_user -d chatwoot_db -c "SELECT pg_sleep(0.5), current_database();" > /dev/null 2>&1 &
+    docker compose exec -T postgresql psql -U directus_user -d directus_db -c "SELECT pg_sleep(0.5), current_database();" > /dev/null 2>&1 &
+    docker compose exec -T postgresql psql -U evolution_user -d evolution_db -c "SELECT pg_sleep(0.5), current_database();" > /dev/null 2>&1 &
+    wait
+} 2>/dev/null
+
+if [ $? -eq 0 ]; then
+    log_success "Concurrent connections handled successfully"
+else
+    log_error "Concurrent connections failed"
+fi
+
+# Verify active connections
+ACTIVE_CONNS=$(docker compose exec -T postgresql psql -U postgres -t -c "SELECT count(*) FROM pg_stat_activity WHERE state = 'active' OR state = 'idle';" | xargs)
+if [ "$ACTIVE_CONNS" -ge 1 ]; then
+    log_success "PostgreSQL managing connections correctly ($ACTIVE_CONNS active/idle connections)"
+else
+    log_error "No active connections found"
+fi
+
+# ============================================================================
+# Test 9: pgvector Extension Verification (AC: 2)
+# ============================================================================
+log_test "Test 9: Verifying pgvector extension installation"
 
 # Verify pgvector extension in n8n_db
 if docker compose exec -T postgresql psql -U postgres -d n8n_db -c "SELECT extname FROM pg_extension WHERE extname = 'vector';" | grep -q "vector"; then
@@ -190,17 +249,49 @@ else
     log_error "pgvector extension not found in directus_db"
 fi
 
-# Test pgvector functionality works
-if docker compose exec -T postgresql psql -U postgres -d n8n_db -c "SELECT '[1,2,3]'::vector;" | grep -q "\[1,2,3\]"; then
-    log_success "pgvector extension is functional (vector operations work)"
+# Test pgvector functionality with real vector operations
+log_info "Testing pgvector similarity search functionality..."
+
+# Create test table with vectors
+docker compose exec -T postgresql psql -U postgres -d n8n_db -c "
+    CREATE TABLE IF NOT EXISTS test_vectors (id SERIAL PRIMARY KEY, embedding vector(3));
+    INSERT INTO test_vectors (embedding) VALUES ('[1,2,3]'), ('[4,5,6]'), ('[7,8,9]');
+" > /dev/null 2>&1
+
+# Test L2 distance similarity search
+if docker compose exec -T postgresql psql -U postgres -d n8n_db -t -c "
+    SELECT id FROM test_vectors ORDER BY embedding <-> '[1,2,3]' LIMIT 1;
+" | grep -q "1"; then
+    log_success "pgvector L2 distance search works correctly"
 else
-    log_error "pgvector extension is not functional"
+    log_error "pgvector L2 distance search failed"
 fi
 
+# Test cosine distance
+if docker compose exec -T postgresql psql -U postgres -d n8n_db -t -c "
+    SELECT 1 - (embedding <=> '[1,2,3]') AS similarity FROM test_vectors LIMIT 1;
+" | grep -q "1"; then
+    log_success "pgvector cosine similarity works correctly"
+else
+    log_error "pgvector cosine similarity failed"
+fi
+
+# Test vector dimensions validation
+if docker compose exec -T postgresql psql -U postgres -d n8n_db -t -c "
+    SELECT vector_dims(embedding) FROM test_vectors LIMIT 1;
+" | grep -q "3"; then
+    log_success "pgvector dimension validation works"
+else
+    log_error "pgvector dimension validation failed"
+fi
+
+# Cleanup test vectors
+docker compose exec -T postgresql psql -U postgres -d n8n_db -c "DROP TABLE IF EXISTS test_vectors;" > /dev/null 2>&1
+
 # ============================================================================
-# Test 8: Volume Persistence Verification (AC: 6)
+# Test 10: Volume Persistence Verification (AC: 6)
 # ============================================================================
-log_test "Test 8: Verifying data persistence across container restarts"
+log_test "Test 10: Verifying data persistence across container restarts"
 
 # Create test table and insert data
 log_info "Creating test data in n8n_db..."
@@ -245,9 +336,9 @@ fi
 docker compose exec -T postgresql psql -U postgres -d n8n_db -c "DROP TABLE test_persistence;" > /dev/null
 
 # ============================================================================
-# Test 9: Performance Configuration Verification (AC: 7)
+# Test 11: Performance Configuration Verification (AC: 7)
 # ============================================================================
-log_test "Test 9: Verifying custom postgresql.conf is loaded"
+log_test "Test 11: Verifying custom postgresql.conf is loaded"
 
 # Verify shared_buffers setting
 if docker compose exec -T postgresql psql -U postgres -t -c "SHOW shared_buffers;" | grep -q "8GB"; then
@@ -278,9 +369,9 @@ else
 fi
 
 # ============================================================================
-# Test 10: Volume Naming Convention (Story Coding Standards)
+# Test 12: Volume Naming Convention (Story Coding Standards)
 # ============================================================================
-log_test "Test 10: Verifying volume naming convention"
+log_test "Test 12: Verifying volume naming convention"
 
 if docker compose config | grep -q "borgstack_postgresql_data:"; then
     log_success "Volume follows borgstack_ naming convention"

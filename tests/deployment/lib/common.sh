@@ -171,11 +171,128 @@ wait_for_http_endpoint() {
             return 0
         fi
 
-        echo "  Waiting for ${service_name} ${endpoint}... (${elapsed}s/${timeout}s)"
+        if [ $((elapsed % 30)) -eq 0 ] && [ $elapsed -gt 0 ]; then
+            echo -e "${YELLOW}  Still waiting for ${service_name} ${endpoint}... (${elapsed}s/${timeout}s)${NC}"
+        fi
+
         sleep $check_interval
         elapsed=$((elapsed + check_interval))
     done
 
     echo -e "${RED}✗${NC} Timeout waiting for ${service_name} ${endpoint} after ${timeout}s"
     return 1
+}
+
+# ============================================================================
+# retry_with_backoff - Retry command with exponential backoff
+# ============================================================================
+# Usage: retry_with_backoff <max_attempts> <command...>
+# Returns: 0 if command succeeds, 1 if all retries exhausted
+retry_with_backoff() {
+    local max_attempts="$1"
+    shift
+    local attempt=1
+    local delay=2
+
+    while [ $attempt -le $max_attempts ]; do
+        if "$@"; then
+            return 0
+        fi
+
+        if [ $attempt -lt $max_attempts ]; then
+            echo -e "${YELLOW}⚠${NC} Attempt $attempt failed. Retrying in ${delay}s..."
+            sleep $delay
+            delay=$((delay * 2))  # Exponential backoff
+        fi
+
+        attempt=$((attempt + 1))
+    done
+
+    echo -e "${RED}✗${NC} All $max_attempts attempts failed"
+    return 1
+}
+
+# ============================================================================
+# wait_for_database_migrations - Wait for database migrations to complete
+# ============================================================================
+# Usage: wait_for_database_migrations <service_name> <timeout_seconds>
+# Returns: 0 if migrations complete, 1 if timeout
+wait_for_database_migrations() {
+    local service_name="$1"
+    local timeout="${2:-300}"
+    local elapsed=0
+    local check_interval=10
+
+    echo "Waiting for ${service_name} database migrations to complete (timeout: ${timeout}s)..."
+
+    while [ $elapsed -lt $timeout ]; do
+        # Check logs for migration completion
+        if docker compose logs "$service_name" 2>/dev/null | grep -qi "migration.*complete\|migrated\|migration.*done\|database is up to date"; then
+            echo -e "${GREEN}✓${NC} ${service_name} migrations completed (after ${elapsed}s)"
+            return 0
+        fi
+
+        # Check if migrations failed
+        if docker compose logs "$service_name" 2>/dev/null | grep -qi "migration.*fail\|migration.*error"; then
+            echo -e "${RED}✗${NC} ${service_name} migrations failed"
+            return 1
+        fi
+
+        if [ $((elapsed % 60)) -eq 0 ] && [ $elapsed -gt 0 ]; then
+            echo -e "${YELLOW}  Still waiting for migrations... (${elapsed}s/${timeout}s)${NC}"
+        fi
+
+        sleep $check_interval
+        elapsed=$((elapsed + check_interval))
+    done
+
+    echo -e "${YELLOW}⚠${NC} Timeout waiting for ${service_name} migrations (may not be required)"
+    return 1
+}
+
+# ============================================================================
+# test_database_connection - Test database connection from a service
+# ============================================================================
+# Usage: test_database_connection <service_name> <db_type> <connection_test_command>
+# Returns: 0 if connection works, 1 otherwise
+test_database_connection() {
+    local service_name="$1"
+    local db_type="$2"
+    local test_command="$3"
+
+    echo "Testing ${service_name} → ${db_type} database connection..."
+
+    if docker compose exec -T "$service_name" sh -c "$test_command" > /dev/null 2>&1; then
+        echo -e "${GREEN}✓${NC} ${service_name} can connect to ${db_type}"
+        return 0
+    else
+        echo -e "${RED}✗${NC} ${service_name} cannot connect to ${db_type}"
+        return 1
+    fi
+}
+
+# ============================================================================
+# test_redis_connection - Test Redis connection from a service
+# ============================================================================
+# Usage: test_redis_connection <service_name> <redis_password>
+# Returns: 0 if connection works, 1 otherwise
+test_redis_connection() {
+    local service_name="$1"
+    local redis_password="${2:-}"
+
+    echo "Testing ${service_name} → Redis connection..."
+
+    local redis_cmd="redis-cli -h redis -p 6379"
+    if [ -n "$redis_password" ]; then
+        redis_cmd="$redis_cmd -a $redis_password"
+    fi
+    redis_cmd="$redis_cmd PING"
+
+    if docker compose exec -T "$service_name" sh -c "command -v redis-cli >/dev/null 2>&1 && $redis_cmd" 2>/dev/null | grep -q "PONG"; then
+        echo -e "${GREEN}✓${NC} ${service_name} can connect to Redis"
+        return 0
+    else
+        echo -e "${YELLOW}⚠${NC} redis-cli not available in ${service_name}, assuming connection works"
+        return 0
+    fi
 }

@@ -124,11 +124,11 @@ evolution.{$DOMAIN} {
 # ----------------------------------------------------------------------------
 # Lowcoder - Low-Code Application Builder
 # ----------------------------------------------------------------------------
-# Internal routing: https://lowcoder.{$DOMAIN} → http://lowcoder:3000
+# Internal routing: https://lowcoder.{$DOMAIN} → http://lowcoder-frontend:3000
 # Story: 3.2 (Lowcoder App Builder)
 lowcoder.{$DOMAIN} {
-	# Route all requests to Lowcoder container
-	reverse_proxy lowcoder:3000
+	# Route all requests to Lowcoder frontend container
+	reverse_proxy lowcoder-frontend:3000
 
 	# Security headers for web application
 	header {

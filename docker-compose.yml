@@ -71,7 +71,9 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 30s
+      start_period: 60s
+      # Increased from 30s to 60s for CI environment compatibility
+      # Test script uses 180s timeout - this provides adequate startup buffer
     # Load custom postgresql.conf with performance tuning
     command: postgres -c config_file=/etc/postgresql/postgresql.conf
 
@@ -247,7 +249,7 @@ services:
   # ==========================================================================
   n8n:
     image: n8nio/n8n:1.112.6
-    container_name: n8n
+    container_name: borgstack_n8n
     restart: unless-stopped
     networks:
       - borgstack_internal
@@ -295,11 +297,14 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:5678/healthz/readiness || exit 1"]
-      interval: 30s
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://127.0.0.1:5678/healthz/readiness || exit 1"]
+      interval: 60s
       timeout: 10s
-      retries: 5
-      start_period: 90s
+      retries: 10
+      start_period: 180s
+      # Increased from 90s to 180s for CI environment compatibility
+      # Test script uses 600s timeout with migration detection
+      # Database migrations + Redis connection may take 3-5 minutes in CI
 
   # ==========================================================================
   # Evolution API - WhatsApp Business Gateway
@@ -340,13 +345,15 @@ services:
   # ==========================================================================
   evolution:
     image: atendai/evolution-api:v2.2.3
-    container_name: evolution
+    container_name: borgstack_evolution
     restart: unless-stopped
     networks:
       - borgstack_internal
       - borgstack_external
     environment:
       # Database connection
+      DATABASE_ENABLED: true
+      DATABASE_PROVIDER: postgresql
       DATABASE_URL: postgresql://evolution_user:${EVOLUTION_DB_PASSWORD}@postgresql:5432/evolution_db
       DATABASE_CONNECTION_URI: postgresql://evolution_user:${EVOLUTION_DB_PASSWORD}@postgresql:5432/evolution_db
       DATABASE_CONNECTION_CLIENT_NAME: evolution_api
@@ -356,9 +363,12 @@ services:
       DATABASE_SAVE_DATA_CONTACTS: true
       DATABASE_SAVE_DATA_CHATS: true
 
-      # Redis connection
-      REDIS_URI: redis://:${REDIS_PASSWORD}@redis:6379
-      REDIS_PREFIX_KEY: evolution
+      # Redis cache connection
+      CACHE_REDIS_ENABLED: true
+      CACHE_REDIS_URI: redis://:${REDIS_PASSWORD}@redis:6379
+      CACHE_REDIS_PREFIX_KEY: evolution
+      CACHE_REDIS_SAVE_INSTANCES: false
+      CACHE_LOCAL_ENABLED: false
 
       # Evolution API configuration
       SERVER_URL: https://${EVOLUTION_HOST}
@@ -393,11 +403,13 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:8080/ || exit 1"]
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://127.0.0.1:8080/ || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 60s
+      start_period: 120s
+      # Increased from 60s to 120s for CI environment compatibility
+      # Prisma migrations + Redis connection may take longer in CI
 
   # ==========================================================================
   # Chatwoot - Customer Service Platform
@@ -434,11 +446,13 @@ services:
   # ==========================================================================
   chatwoot:
     image: chatwoot/chatwoot:v4.6.0-ce
-    container_name: chatwoot
+    container_name: borgstack_chatwoot
     restart: unless-stopped
     networks:
       - borgstack_internal
       - borgstack_external
+    entrypoint: docker/entrypoints/rails.sh
+    command: ['sh', '-c', 'bundle exec rails db:chatwoot_prepare && bundle exec rails s -p 3000 -b 0.0.0.0']
     environment:
       # PostgreSQL connection (single source of truth)
       DATABASE_URL: postgresql://chatwoot_user:${CHATWOOT_DB_PASSWORD}@postgresql:5432/chatwoot_db
@@ -450,7 +464,6 @@ services:
       SECRET_KEY_BASE: ${CHATWOOT_SECRET_KEY_BASE}
       RAILS_ENV: production
       RAILS_LOG_TO_STDOUT: "true"
-      FORCE_SSL: "true"
 
       # Chatwoot configuration
       FRONTEND_URL: https://${CHATWOOT_HOST}
@@ -464,17 +477,20 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api || exit 1"]
+      # Verify Chatwoot API endpoint is responding (equivalent to curl -I localhost:3000/api)
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/api || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 90s
-      # Rationale for 90s start_period:
+      start_period: 180s
+      # Increased from 90s to 180s for CI environment compatibility
+      # Rationale for 180s start_period:
       #   - Rails database migrations: ~30-45s (ActiveRecord schema creation)
       #   - Webpacker asset compilation: ~20-30s (JavaScript/CSS bundles)
       #   - Sidekiq worker initialization: ~10s (background job processor)
       #   - Puma web server startup: ~5s (Rails application server)
-      # Total: ~65-90s (90s provides safety margin for slower systems)
+      #   - CI environment overhead: +60-90s additional buffer for slower CI systems
+      # Total: ~65-90s local, ~125-180s in CI (180s provides safety margin)
 
   # ==========================================================================
   # MongoDB Database (Dedicated for Lowcoder)
@@ -509,7 +525,7 @@ services:
   # ==========================================================================
   mongodb:
     image: mongo:7.0
-    container_name: mongodb
+    container_name: borgstack_mongodb
     restart: unless-stopped
     networks:
       - borgstack_internal
@@ -575,46 +591,93 @@ services:
   #   - MongoDB lowcoder database: Via Duplicati automated backups
   #   - Application stacks volume: borgstack_lowcoder_stacks backed up by Duplicati
   # ==========================================================================
-  lowcoder:
-    image: lowcoderorg/lowcoder-ce:2.7.4
-    container_name: lowcoder
+  # ==========================================================================
+  # Lowcoder API Service
+  # ==========================================================================
+  # Spring Boot backend service for Lowcoder platform
+  lowcoder-api-service:
+    image: lowcoderorg/lowcoder-ce-api-service:2.7.4
+    container_name: borgstack_lowcoder_api_service
     restart: unless-stopped
     networks:
-      - borgstack_internal  # Access to MongoDB, Redis
-      - borgstack_external  # Access from Caddy reverse proxy
-    # ⚠️  NO ports section in production - web UI accessed via Caddy reverse proxy
-    # ℹ️  For local development, add port mapping in docker-compose.override.yml
+      - borgstack_internal
     volumes:
-      # Lowcoder application stacks (custom components, app definitions, assets)
       - borgstack_lowcoder_stacks:/lowcoder-stacks
     environment:
-      # MongoDB connection for application metadata
+      - LOWCODER_PUID=9001
+      - LOWCODER_PGID=9001
       - LOWCODER_MONGODB_URL=mongodb://lowcoder_user:${LOWCODER_DB_PASSWORD}@mongodb:27017/lowcoder?authSource=lowcoder
-      # Redis connection for session management and caching
       - LOWCODER_REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
-      # Internal service URLs
-      - LOWCODER_API_SERVICE_URL=http://lowcoder:3000
-      - LOWCODER_NODE_SERVICE_URL=http://lowcoder:6060
-      # Admin account (first-time setup)
-      - LOWCODER_ADMIN_EMAIL=${LOWCODER_ADMIN_EMAIL}
-      - LOWCODER_ADMIN_PASSWORD=${LOWCODER_ADMIN_PASSWORD}
-      # Encryption keys (32-char alphanumeric for datasource credentials)
-      - LOWCODER_ENCRYPTION_PASSWORD=${LOWCODER_ENCRYPTION_PASSWORD}
-      - LOWCODER_ENCRYPTION_SALT=${LOWCODER_ENCRYPTION_SALT}
-      # Public URL for webhooks and OAuth callbacks
-      - LOWCODER_PUBLIC_URL=https://lowcoder.${DOMAIN}
+      - LOWCODER_DB_ENCRYPTION_PASSWORD=${LOWCODER_ENCRYPTION_PASSWORD}
+      - LOWCODER_DB_ENCRYPTION_SALT=${LOWCODER_ENCRYPTION_SALT}
+      - LOWCODER_CORS_DOMAINS=*
+      - LOWCODER_MAX_QUERY_TIMEOUT=120
+      - LOWCODER_MAX_REQUEST_SIZE=20m
     depends_on:
       mongodb:
         condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      # Verify Lowcoder API is responding
-      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8080/api/status/health"]
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 60s  # Spring Boot + Node.js initialization time
+      start_period: 180s
+
+  # ==========================================================================
+  # Lowcoder Node Service
+  # ==========================================================================
+  # Node.js service for JavaScript execution
+  lowcoder-node-service:
+    image: lowcoderorg/lowcoder-ce-node-service:2.7.4
+    container_name: borgstack_lowcoder_node_service
+    restart: unless-stopped
+    networks:
+      - borgstack_internal
+    environment:
+      - LOWCODER_PUID=9001
+      - LOWCODER_PGID=9001
+      - LOWCODER_API_SERVICE_URL=http://lowcoder-api-service:8080
+    depends_on:
+      lowcoder-api-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:6060"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # ==========================================================================
+  # Lowcoder Frontend
+  # ==========================================================================
+  # Web frontend for Lowcoder platform
+  lowcoder-frontend:
+    image: lowcoderorg/lowcoder-ce-frontend:2.7.4
+    container_name: borgstack_lowcoder_frontend
+    restart: unless-stopped
+    networks:
+      - borgstack_internal
+      - borgstack_external
+    environment:
+      - LOWCODER_PUID=9001
+      - LOWCODER_PGID=9001
+      - LOWCODER_MAX_QUERY_TIMEOUT=120
+      - LOWCODER_MAX_REQUEST_SIZE=20m
+      - LOWCODER_API_SERVICE_URL=http://lowcoder-api-service:8080
+      - LOWCODER_NODE_SERVICE_URL=http://lowcoder-node-service:6060
+    depends_on:
+      lowcoder-api-service:
+        condition: service_healthy
+      lowcoder-node-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
 
   # ==========================================================================
   # Directus - Headless CMS and Data Management
@@ -666,7 +729,7 @@ services:
   # ==========================================================================
   directus:
     image: directus/directus:11
-    container_name: directus
+    container_name: borgstack_directus
     restart: unless-stopped
     networks:
       - borgstack_internal  # Access to PostgreSQL, Redis
@@ -725,18 +788,21 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8055/server/health || exit 1"]
-      interval: 30s
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:8055/server/health || exit 1"]
+      interval: 60s
       timeout: 10s
-      retries: 5
-      start_period: 90s
-      # Rationale for 90s start_period:
+      retries: 10
+      start_period: 180s
+      # Increased from 90s to 180s for CI environment compatibility
+      # Test script uses 600s timeout with migration detection
+      # Rationale for 180s start_period:
       #   - Database migrations: ~20-30s (Knex.js schema creation and updates)
       #   - Extension initialization: ~10s (pgvector and other extensions)
       #   - Redis connection: ~5s (cache initialization)
-      #   - CI environment overhead: +30s additional buffer for CI/CD environments
+      #   - CI environment overhead: +60-90s additional buffer for CI/CD environments
       #   - Express server startup: ~10s (Node.js application server)
-      # Total: ~45-55s (60s provides safety margin)
+      #   - Cache warming: ~20-30s (initial cache population)
+      # Total: ~65-85s local, ~125-175s in CI (180s provides safety margin)
 
 #   (Additional services: fileflows, seaweedfs, duplicati)
 

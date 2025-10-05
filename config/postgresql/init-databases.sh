@@ -62,7 +62,14 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
 	ALTER DATABASE chatwoot_db OWNER TO chatwoot_user;
 EOSQL
 
-echo -e "${GREEN}[BorgStack]${NC} ✓ chatwoot_db created"
+# Enable required extensions for Chatwoot
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "chatwoot_db" <<-EOSQL
+	CREATE EXTENSION IF NOT EXISTS vector;
+	CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
+	CREATE EXTENSION IF NOT EXISTS pgcrypto;
+EOSQL
+
+echo -e "${GREEN}[BorgStack]${NC} ✓ chatwoot_db created with required extensions (pgvector, pg_stat_statements, pgcrypto)"
 
 # ===========================================================================
 # Directus Database Configuration
