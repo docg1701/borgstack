@@ -1,0 +1,264 @@
+{
+  "fileflows_version": "25.09",
+  "description": "Example flow configurations for FileFlows media processing. These are reference templates - create flows manually in the FileFlows UI using these specifications.",
+  "note": "FileFlows flows are created in the web UI using the visual flow designer. This file provides the configuration details for each example flow.",
+  "flows": [
+    {
+      "name": "Video H.264 Transcode",
+      "description": "Convert video files to H.264 format with balanced quality settings",
+      "enabled": true,
+      "trigger": {
+        "type": "Library",
+        "library": "Media Input",
+        "file_pattern": "*.mp4,*.mkv,*.avi,*.mov,*.webm,*.flv"
+      },
+      "nodes": [
+        {
+          "id": 1,
+          "type": "Input",
+          "name": "Input File",
+          "description": "File from library"
+        },
+        {
+          "id": 2,
+          "type": "File Filter",
+          "name": "Video File Filter",
+          "description": "Check if file is a video",
+          "config": {
+            "extensions": ["mp4", "mkv", "avi", "mov", "webm", "flv"],
+            "min_size_mb": 1,
+            "max_size_mb": 10000
+          }
+        },
+        {
+          "id": 3,
+          "type": "FFmpeg",
+          "name": "Transcode to H.264",
+          "description": "Convert video to H.264 with AAC audio",
+          "config": {
+            "command": "-c:v libx264 -crf 23 -preset medium -c:a aac -b:a 128k -movflags +faststart",
+            "output_extension": "mp4",
+            "explanation": {
+              "video_codec": "libx264 (H.264 software encoder)",
+              "crf": "23 (Constant Rate Factor - 18=high quality, 28=low quality, 23=balanced)",
+              "preset": "medium (encoding speed - ultrafast to veryslow, medium=balanced)",
+              "audio_codec": "aac (AAC audio codec)",
+              "audio_bitrate": "128k (128 kbps audio bitrate)",
+              "movflags": "+faststart (optimize MP4 for web streaming)"
+            }
+          }
+        },
+        {
+          "id": 4,
+          "type": "Move File",
+          "name": "Move to Output",
+          "description": "Move processed file to output directory",
+          "config": {
+            "destination": "/output/{filename}_h264.mp4",
+            "overwrite": false
+          }
+        },
+        {
+          "id": 5,
+          "type": "Delete Original",
+          "name": "Delete Original File",
+          "description": "Remove original file from input (OPTIONAL - disable to keep originals)",
+          "config": {
+            "enabled": false,
+            "note": "Enable this node if you want to automatically delete original files after successful processing"
+          }
+        }
+      ],
+      "processing_steps": "Input → Video Filter → FFmpeg Transcode → Move to Output → (Optional) Delete Original",
+      "use_case": "General-purpose video transcoding for web delivery, reducing file size while maintaining quality"
+    },
+    {
+      "name": "Audio Normalization",
+      "description": "Normalize audio levels using FFmpeg loudnorm filter for consistent volume",
+      "enabled": true,
+      "trigger": {
+        "type": "Library",
+        "library": "Media Input",
+        "file_pattern": "*.mp3,*.wav,*.flac,*.m4a,*.aac,*.ogg"
+      },
+      "nodes": [
+        {
+          "id": 1,
+          "type": "Input",
+          "name": "Input File",
+          "description": "File from library"
+        },
+        {
+          "id": 2,
+          "type": "File Filter",
+          "name": "Audio File Filter",
+          "description": "Check if file is an audio file",
+          "config": {
+            "extensions": ["mp3", "wav", "flac", "m4a", "aac", "ogg"],
+            "min_size_kb": 100,
+            "max_size_mb": 500
+          }
+        },
+        {
+          "id": 3,
+          "type": "FFmpeg",
+          "name": "Normalize Audio (loudnorm)",
+          "description": "Apply loudness normalization to audio file",
+          "config": {
+            "command": "-af loudnorm=I=-16:TP=-1.5:LRA=11 -c:a aac -b:a 192k",
+            "output_extension": "m4a",
+            "explanation": {
+              "filter": "loudnorm (EBU R128 loudness normalization)",
+              "I": "-16 LUFS (Integrated loudness target - broadcast standard)",
+              "TP": "-1.5 dBTP (True Peak limit - prevent clipping)",
+              "LRA": "11 LU (Loudness Range target - dynamic range)",
+              "output_codec": "aac (AAC audio codec)",
+              "bitrate": "192k (192 kbps - high quality)"
+            }
+          }
+        },
+        {
+          "id": 4,
+          "type": "Move File",
+          "name": "Move to Output",
+          "description": "Move normalized file to output directory",
+          "config": {
+            "destination": "/output/{filename}_normalized.m4a",
+            "overwrite": false
+          }
+        }
+      ],
+      "processing_steps": "Input → Audio Filter → FFmpeg Normalize → Move to Output",
+      "use_case": "Normalize podcast episodes, music tracks, or audiobooks for consistent playback volume across devices"
+    },
+    {
+      "name": "Image WebP Conversion",
+      "description": "Convert images to WebP format for optimized web delivery (80% quality)",
+      "enabled": true,
+      "trigger": {
+        "type": "Library",
+        "library": "Media Input",
+        "file_pattern": "*.jpg,*.jpeg,*.png,*.bmp,*.tiff"
+      },
+      "nodes": [
+        {
+          "id": 1,
+          "type": "Input",
+          "name": "Input File",
+          "description": "File from library"
+        },
+        {
+          "id": 2,
+          "type": "File Filter",
+          "name": "Image File Filter",
+          "description": "Check if file is an image",
+          "config": {
+            "extensions": ["jpg", "jpeg", "png", "bmp", "tiff"],
+            "min_size_kb": 10,
+            "max_size_mb": 50
+          }
+        },
+        {
+          "id": 3,
+          "type": "FFmpeg",
+          "name": "Convert to WebP",
+          "description": "Convert image to WebP format with 80% quality",
+          "config": {
+            "command": "-c:v libwebp -quality 80 -compression_level 6",
+            "output_extension": "webp",
+            "explanation": {
+              "codec": "libwebp (WebP image codec)",
+              "quality": "80 (WebP quality - 0=worst, 100=lossless, 80=balanced)",
+              "compression_level": "6 (Compression effort - 0=fast, 6=balanced, 9=slow/best)"
+            }
+          }
+        },
+        {
+          "id": 4,
+          "type": "Move File",
+          "name": "Move to Output",
+          "description": "Move optimized image to output directory",
+          "config": {
+            "destination": "/output/{filename}.webp",
+            "overwrite": false
+          }
+        }
+      ],
+      "processing_steps": "Input → Image Filter → FFmpeg Convert → Move to Output",
+      "use_case": "Optimize images for web delivery - WebP provides 25-35% smaller file sizes compared to JPEG/PNG with equivalent quality"
+    }
+  ],
+  "manual_creation_instructions": {
+    "description": "How to create these flows in the FileFlows web UI",
+    "steps": [
+      "1. Access FileFlows UI: https://fileflows.${DOMAIN}",
+      "2. Navigate to **Flows** → **Add Flow**",
+      "3. Enter flow name (e.g., 'Video H.264 Transcode')",
+      "4. Click **Create** to open Flow Designer",
+      "5. Drag nodes from left toolbox onto canvas:",
+      "   - Input node (automatic)",
+      "   - File Filter node (configure extensions)",
+      "   - FFmpeg node (enter command from above)",
+      "   - Move File node (set output path)",
+      "6. Connect nodes by dragging from output to input",
+      "7. Configure each node by clicking it (properties panel on right)",
+      "8. Enable flow: Toggle **Enabled** switch",
+      "9. Save flow: Click **Save** button",
+      "10. Test flow: Upload test file to /input directory"
+    ]
+  },
+  "testing_flows": {
+    "description": "How to test flows after creation",
+    "upload_test_file": "docker compose cp test-file.mp4 fileflows:/input/",
+    "monitor_processing": "Navigate to **Processing** → **Active Jobs** in FileFlows UI",
+    "view_output": "docker compose exec fileflows ls -la /output/",
+    "check_logs": "docker compose logs fileflows --tail=100 | grep -i 'processing\\|error'"
+  },
+  "advanced_flow_examples": {
+    "conditional_processing": {
+      "name": "Conditional Video Encoding (4K → 1080p)",
+      "description": "Transcode only if video resolution exceeds 1080p",
+      "nodes": [
+        "Input → Video Info → If (height > 1080) → FFmpeg Scale (1920x1080) → Move to Output",
+        "                   → Else → Move to Output (no processing)"
+      ]
+    },
+    "multi_output": {
+      "name": "Multi-Resolution Video Encoding",
+      "description": "Generate multiple output resolutions (1080p, 720p, 480p)",
+      "nodes": [
+        "Input → Video Filter → FFmpeg (1080p) → Move to /output/1080p/",
+        "                     → FFmpeg (720p) → Move to /output/720p/",
+        "                     → FFmpeg (480p) → Move to /output/480p/"
+      ]
+    },
+    "webhook_notification": {
+      "name": "Processing with n8n Webhook Notification",
+      "description": "Notify n8n when processing completes",
+      "nodes": [
+        "Input → FFmpeg Process → Move to Output → Webhook (POST https://n8n.${DOMAIN}/webhook/fileflows-complete)"
+      ]
+    }
+  },
+  "ffmpeg_reference": {
+    "common_video_codecs": {
+      "h264": "-c:v libx264 -crf 23 -preset medium",
+      "h265": "-c:v libx265 -crf 28 -preset medium",
+      "vp9": "-c:v libvpx-vp9 -crf 31 -b:v 0",
+      "av1": "-c:v libaom-av1 -crf 30 -b:v 0"
+    },
+    "common_audio_codecs": {
+      "aac": "-c:a aac -b:a 128k",
+      "mp3": "-c:a libmp3lame -b:a 192k",
+      "opus": "-c:a libopus -b:a 128k",
+      "flac": "-c:a flac"
+    },
+    "common_filters": {
+      "scale": "-vf scale=1920:1080 (resize to 1920x1080)",
+      "crop": "-vf crop=1920:1080:0:0 (crop to 1920x1080 from top-left)",
+      "loudnorm": "-af loudnorm=I=-16:TP=-1.5:LRA=11 (audio normalization)",
+      "deinterlace": "-vf yadif=0:-1:0 (deinterlace video)",
+      "denoise": "-vf hqdn3d (video noise reduction)"
+    }
+  }
+}

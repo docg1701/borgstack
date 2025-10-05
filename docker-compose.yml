@@ -808,7 +808,116 @@ services:
       #   - Cache warming: ~20-30s (initial cache population)
       # Total: ~65-85s local, ~125-175s in CI (180s provides safety margin)
 
-#   (Additional services: fileflows, seaweedfs, duplicati)
+  # ==========================================================================
+  # FileFlows - Media Processing Automation
+  # ==========================================================================
+  # Automated media file conversion and processing platform with FFmpeg
+  # Image: revenz/fileflows:25.09
+  #
+  # Purpose:
+  #   - Automated media file conversion and processing workflows
+  #   - FFmpeg-based transcoding (video, audio, image)
+  #   - Directory watching for automatic processing
+  #   - Integration with Directus and n8n for media workflow automation
+  #
+  # Architecture:
+  #   - Node.js application with FFmpeg processing engine
+  #   - Port 5000: Web UI (Flow Designer) + API endpoint
+  #   - File processing: Input directory monitoring → Processing → Output directory
+  #   - Flow designer: Visual workflow builder for processing pipelines
+  #
+  # Storage Strategy:
+  #   - Story 4.2: Local volume storage (borgstack_fileflows_input/output/temp)
+  #   - Story 5.1: Migration to SeaweedFS S3-compatible storage (planned)
+  #   - MIGRATION: Switch to SeaweedFS S3 storage in Story 5.1
+  #
+  # Integration Patterns:
+  #   - Directus → n8n → FileFlows: Trigger processing when media uploaded to CMS
+  #   - FileFlows → n8n: Webhook notification on processing completion
+  #   - n8n → Directus: Update CMS with processed media URL
+  #
+  # Access:
+  #   - Web UI: https://fileflows.{DOMAIN} (via Caddy reverse proxy)
+  #   - Flow Designer: https://fileflows.{DOMAIN}/flows
+  #   - Processing Nodes: Configured in web UI (local server node)
+  #
+  # Security:
+  #   - NO port exposure to host (access via Caddy only)
+  #   - File permissions managed with PUID/PGID
+  #   - Network isolation (internal for future SeaweedFS, external for Caddy)
+  #   - HTTPS enforced via Caddy with automatic Let's Encrypt SSL
+  #
+  # Processing Capabilities:
+  #   - Video transcoding: H.264/H.265 encoding, resolution scaling
+  #   - Audio processing: Normalization (loudnorm), format conversion
+  #   - Image optimization: WebP conversion, resizing, compression
+  #   - Batch processing: Queue multiple files with concurrent processing
+  #
+  # Backup Strategy:
+  #   - Configuration: borgstack_fileflows_data backed up by Duplicati
+  #   - Processing logs: borgstack_fileflows_logs backed up by Duplicati
+  #   - Media files: Input/output volumes backed up by Duplicati
+  # ==========================================================================
+  fileflows:
+    image: revenz/fileflows:25.09
+    container_name: borgstack_fileflows
+    restart: unless-stopped
+    networks:
+      - borgstack_internal  # For future SeaweedFS access (Story 5.1)
+      - borgstack_external  # Access from Caddy reverse proxy
+    # ⚠️  NO ports section in production - web UI accessed via Caddy reverse proxy
+    # ℹ️  For local development, add port mapping in docker-compose.override.yml
+    volumes:
+      # Application data and configuration
+      - borgstack_fileflows_data:/app/Data
+      # Processing logs
+      - borgstack_fileflows_logs:/app/Logs
+      # Temporary processing workspace (scratch space for FFmpeg)
+      - borgstack_fileflows_temp:/temp
+      # Media input directory (watch directory for new files)
+      # MIGRATION: Switch to SeaweedFS S3 storage in Story 5.1
+      - borgstack_fileflows_input:/input
+      # Media output directory (processed files)
+      # MIGRATION: Switch to SeaweedFS S3 storage in Story 5.1
+      - borgstack_fileflows_output:/output
+    environment:
+      # ======================================================================
+      # FileFlows Core Configuration
+      # ======================================================================
+      # Timezone for log timestamps
+      TZ: ${TZ:-America/Sao_Paulo}
+      # File permission management (UID/GID for container user)
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
+      # FileFlows base URL (for reverse proxy routing)
+      BaseUrl: https://${FILEFLOWS_HOST}
+      # Temp directory path (for FFmpeg processing workspace)
+      TempPath: /temp
+      # Log level (Trace, Debug, Information, Warning, Error, Critical)
+      LogLevel: ${FILEFLOWS_LOG_LEVEL:-Information}
+
+      # ======================================================================
+      # File Storage Configuration (Local Volumes - Story 4.2)
+      # ======================================================================
+      # MIGRATION: Switch to SeaweedFS S3 storage in Story 5.1
+      # See config/fileflows/s3-storage.env.example for S3 configuration template
+      # Current: Local Docker volumes
+      # Future: S3-compatible storage via SeaweedFS
+
+      # Optional: License key for commercial features
+      # LicenseKey: ${FILEFLOWS_LICENSE_KEY}
+    depends_on:
+      caddy:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+      # Start period allows application initialization (Node.js startup, FFmpeg verification)
+
+#   (Additional services: seaweedfs, duplicati)
 
 networks:
   borgstack_internal:
@@ -948,7 +1057,41 @@ volumes:
     # MIGRATION: Will be replaced with SeaweedFS S3 storage in Story 5.1
     # Manual backup: docker compose exec -T directus tar czf - /directus/uploads > directus-uploads-backup-$(date +%Y%m%d).tar.gz
 
+  borgstack_fileflows_data:
+    # FileFlows application data and configuration directory
+    # Contains: Flow definitions, processing node configurations, application settings
+    # Backed up by Duplicati (Story 5.2)
+    # CRITICAL: Contains all processing workflows and configurations
+    # Manual backup: docker compose exec -T fileflows tar czf - /app/Data > fileflows-data-backup-$(date +%Y%m%d).tar.gz
+
+  borgstack_fileflows_logs:
+    # FileFlows processing logs directory
+    # Contains: Processing history, error logs, job execution records
+    # Backed up by Duplicati (Story 5.2)
+    # Useful for troubleshooting failed processing jobs
+    # Manual backup: docker compose exec -T fileflows tar czf - /app/Logs > fileflows-logs-backup-$(date +%Y%m%d).tar.gz
+
+  borgstack_fileflows_temp:
+    # FileFlows temporary processing workspace
+    # Contains: Scratch files during active FFmpeg transcoding
+    # NOT backed up (temporary workspace, auto-cleaned)
+    # Auto-cleanup: FileFlows cleans up temp files after job completion
+    # Disk space: Ensure adequate space for largest media file × concurrent jobs
+
+  borgstack_fileflows_input:
+    # FileFlows media input directory (watch directory)
+    # Contains: Media files awaiting processing (user uploads, Directus uploads)
+    # Backed up by Duplicati (Story 5.2)
+    # MIGRATION: Will be replaced with SeaweedFS S3 storage in Story 5.1
+    # Manual backup: docker compose exec -T fileflows tar czf - /input > fileflows-input-backup-$(date +%Y%m%d).tar.gz
+
+  borgstack_fileflows_output:
+    # FileFlows processed media output directory
+    # Contains: Transcoded/optimized media files ready for delivery
+    # Backed up by Duplicati (Story 5.2)
+    # MIGRATION: Will be replaced with SeaweedFS S3 storage in Story 5.1
+    # Manual backup: docker compose exec -T fileflows tar czf - /output > fileflows-output-backup-$(date +%Y%m%d).tar.gz
+
 # Additional volumes (to be added in future stories):
-#   borgstack_fileflows_data:
 #   borgstack_seaweedfs_data:
 #   borgstack_duplicati_data:
