@@ -95,7 +95,7 @@ echo "Note: Evolution API start_period is 120s, Prisma migrations may take 2-5 m
 wait_for_database_migrations "evolution" 300 || echo -e "${YELLOW}⚠${NC} Migration logs not detected, proceeding..."
 
 # Now wait for container health with extended timeout for CI
-if wait_for_container_healthy "evolution" 600; then
+if wait_for_container_healthy "evolution" 300; then
     echo -e "${GREEN}✓${NC} Evolution API container is healthy"
     TESTS_PASSED=$((TESTS_PASSED + 1))
 else
@@ -142,7 +142,7 @@ echo ""
 # ============================================================================
 echo "Test 6: Verifying Evolution API root endpoint..."
 
-if retry_with_backoff 5 wait_for_http_endpoint "evolution" "8080" "/" 180; then
+if retry_with_backoff 3 wait_for_http_endpoint "evolution" "8080" "/" 60; then
     echo -e "${GREEN}✓${NC} Evolution API root endpoint is accessible"
     TESTS_PASSED=$((TESTS_PASSED + 1))
 else

@@ -93,7 +93,7 @@ echo "Note: Chatwoot start_period is 180s, Rails migrations + Sidekiq may take 5
 wait_for_database_migrations "chatwoot" 300 || echo -e "${YELLOW}⚠${NC} Migration logs not detected, proceeding..."
 
 # Now wait for container health with extended timeout for CI
-if wait_for_container_healthy "chatwoot" 600; then
+if wait_for_container_healthy "chatwoot" 300; then
     echo -e "${GREEN}✓${NC} Chatwoot container is healthy"
     TESTS_PASSED=$((TESTS_PASSED + 1))
 else
@@ -155,7 +155,7 @@ echo ""
 # ============================================================================
 echo "Test 7: Verifying Chatwoot /api health endpoint..."
 
-if retry_with_backoff 5 wait_for_http_endpoint "chatwoot" "3000" "/api" 180; then
+if retry_with_backoff 3 wait_for_http_endpoint "chatwoot" "3000" "/api" 60; then
     echo -e "${GREEN}✓${NC} Chatwoot /api endpoint is accessible"
     TESTS_PASSED=$((TESTS_PASSED + 1))
 else

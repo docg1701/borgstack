@@ -100,7 +100,7 @@ echo "Note: Directus start_period is 90s, Knex migrations + cache warming may ta
 wait_for_database_migrations "directus" 300 || echo -e "${YELLOW}⚠${NC} Migration logs not detected, proceeding..."
 
 # Now wait for container health with extended timeout for CI
-if wait_for_container_healthy "directus" 600; then
+if wait_for_container_healthy "directus" 300; then
     echo -e "${GREEN}✓${NC} Directus container is healthy"
     TESTS_PASSED=$((TESTS_PASSED + 1))
 else
@@ -162,7 +162,7 @@ echo ""
 # ============================================================================
 echo "Test 7: Verifying Directus /server/ping endpoint..."
 
-if retry_with_backoff 5 wait_for_http_endpoint "directus" "8055" "/server/ping" 180; then
+if retry_with_backoff 3 wait_for_http_endpoint "directus" "8055" "/server/ping" 60; then
     # Now verify it actually returns "pong"
     PING_RESPONSE=$(docker compose exec -T directus \
         wget --quiet --timeout=10 -O- http://127.0.0.1:8055/server/ping 2>/dev/null || echo "ERROR")

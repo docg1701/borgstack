@@ -91,7 +91,7 @@ echo "Test 3: Waiting for Lowcoder API Service to become healthy..."
 echo "Note: Lowcoder API Service start_period is 180s, may take 3-5 minutes in CI"
 
 # Wait for container health with extended timeout for CI
-if wait_for_container_healthy "lowcoder-api-service" 600; then
+if wait_for_container_healthy "lowcoder-api-service" 300; then
     echo -e "${GREEN}✓${NC} Lowcoder API Service container is healthy"
     TESTS_PASSED=$((TESTS_PASSED + 1))
 else

@@ -91,7 +91,7 @@ echo "Note: n8n start_period is 90s, database migrations + Redis may take 5-10 m
 wait_for_database_migrations "n8n" 300 || echo -e "${YELLOW}⚠${NC} Migration logs not detected, proceeding..."
 
 # Now wait for container health with extended timeout for CI
-if wait_for_container_healthy "n8n" 600; then
+if wait_for_container_healthy "n8n" 300; then
     echo -e "${GREEN}✓${NC} n8n container is healthy"
     TESTS_PASSED=$((TESTS_PASSED + 1))
 else
@@ -138,7 +138,7 @@ echo ""
 # ============================================================================
 echo "Test 6: Verifying n8n /healthz endpoint (basic liveness check)..."
 
-if retry_with_backoff 5 wait_for_http_endpoint "n8n" "5678" "/healthz" 180; then
+if retry_with_backoff 3 wait_for_http_endpoint "n8n" "5678" "/healthz" 60; then
     echo -e "${GREEN}✓${NC} n8n /healthz endpoint is accessible (instance is reachable)"
     TESTS_PASSED=$((TESTS_PASSED + 1))
 else
@@ -153,7 +153,7 @@ echo ""
 # ============================================================================
 echo "Test 7: Verifying n8n /healthz/readiness endpoint (database connected and migrated)..."
 
-if retry_with_backoff 5 wait_for_http_endpoint "n8n" "5678" "/healthz/readiness" 180; then
+if retry_with_backoff 3 wait_for_http_endpoint "n8n" "5678" "/healthz/readiness" 60; then
     echo -e "${GREEN}✓${NC} n8n /healthz/readiness endpoint returns 200 (database ready)"
     TESTS_PASSED=$((TESTS_PASSED + 1))
 else
