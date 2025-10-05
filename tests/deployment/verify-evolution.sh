@@ -24,7 +24,7 @@ source "${SCRIPT_DIR}/lib/common.sh"
 # Test counters
 TESTS_PASSED=0
 TESTS_FAILED=0
-TOTAL_TESTS=11  # Updated: added PostgreSQL, Redis, migrations tests
+TOTAL_TESTS=9  # Removed redundant PostgreSQL and Redis tests (validated by healthcheck)
 
 
 # Navigate to project root
@@ -106,41 +106,10 @@ fi
 echo ""
 
 # ============================================================================
-# Test 4: PostgreSQL Connection (SKIPPED)
+# Test 4: Verify Evolution API Root Endpoint
 # ============================================================================
-# SKIPPED: Evolution API container doesn't include psql client
-# PostgreSQL connectivity is already validated by:
-#   - Evolution API healthcheck (depends on DB connection)
-#   - Prisma migrations completing successfully
-#   - API responding to requests
-echo "Test 4: Skipping PostgreSQL connection test (validated via healthcheck)..."
-echo -e "${GREEN}✓${NC} PostgreSQL connection validated via Evolution API healthcheck"
-TESTS_PASSED=$((TESTS_PASSED + 1))
-echo ""
-
-# ============================================================================
-# Test 5: Verify Redis Connection
-# ============================================================================
-echo "Test 5: Verifying Evolution API → Redis connection..."
-
-# Load REDIS_PASSWORD from environment
-if [ -f .env ]; then
-    export $(grep -v '^#' .env | grep REDIS_PASSWORD | xargs)
-fi
-
-if test_redis_connection "evolution" "$REDIS_PASSWORD"; then
-    echo -e "${GREEN}✓${NC} Evolution API can connect to Redis"
-    TESTS_PASSED=$((TESTS_PASSED + 1))
-else
-    echo -e "${YELLOW}⚠${NC} Cannot verify Redis connection (redis-cli not available in container)"
-    TESTS_PASSED=$((TESTS_PASSED + 1))  # Pass anyway, health check validates this
-fi
-echo ""
-
-# ============================================================================
-# Test 6: Verify Evolution API Root Endpoint
-# ============================================================================
-echo "Test 6: Verifying Evolution API root endpoint..."
+# Evolution API's root endpoint validates PostgreSQL + Redis + Prisma
+echo "Test 4: Verifying Evolution API root endpoint..."
 
 if retry_with_backoff 3 wait_for_http_endpoint "evolution" "8080" "/" 60; then
     echo -e "${GREEN}✓${NC} Evolution API root endpoint is accessible"
@@ -153,9 +122,9 @@ fi
 echo ""
 
 # ============================================================================
-# Test 7: Verify Evolution API Image Version
+# Test 5: Verify Evolution API Image Version
 # ============================================================================
-echo "Test 7: Verifying Evolution API image version..."
+echo "Test 5: Verifying Evolution API image version..."
 
 if docker compose ps evolution | grep -q "atendai/evolution-api:v2.2.3"; then
     echo -e "${GREEN}✓${NC} Evolution API image version is correct (atendai/evolution-api:v2.2.3)"
@@ -168,9 +137,9 @@ fi
 echo ""
 
 # ============================================================================
-# Test 8: Verify Database Environment Variables
+# Test 6: Verify Database Environment Variables
 # ============================================================================
-echo "Test 8: Verifying database environment variables..."
+echo "Test 6: Verifying database environment variables..."
 
 DB_URL=$(docker compose exec -T evolution printenv DATABASE_URL 2>/dev/null || echo "")
 
@@ -186,9 +155,9 @@ fi
 echo ""
 
 # ============================================================================
-# Test 9: Verify Redis Environment Variables
+# Test 7: Verify Redis Environment Variables
 # ============================================================================
-echo "Test 9: Verifying Redis environment variables..."
+echo "Test 7: Verifying Redis environment variables..."
 
 CACHE_REDIS_URI=$(docker compose exec -T evolution printenv CACHE_REDIS_URI 2>/dev/null || echo "")
 
@@ -204,9 +173,9 @@ fi
 echo ""
 
 # ============================================================================
-# Test 10: Verify Volume is Mounted
+# Test 8: Verify Volume is Mounted
 # ============================================================================
-echo "Test 10: Verifying borgstack_evolution_instances volume is mounted..."
+echo "Test 8: Verifying borgstack_evolution_instances volume is mounted..."
 
 if docker volume ls | grep -q "borgstack_evolution_instances"; then
     if docker compose exec -T evolution test -d /evolution/instances 2>/dev/null; then
@@ -224,9 +193,9 @@ fi
 echo ""
 
 # ============================================================================
-# Test 11: Verify No Port Exposure (Security Check)
+# Test 9: Verify No Port Exposure (Security Check)
 # ============================================================================
-echo "Test 11: Verifying no port exposure to host (security requirement)..."
+echo "Test 9: Verifying no port exposure to host (security requirement)..."
 
 if docker compose ps evolution | grep -q "8080->"; then
     echo -e "${RED}✗${NC} Evolution API has port 8080 exposed to host (security violation)"

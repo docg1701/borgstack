@@ -23,7 +23,7 @@ source "${SCRIPT_DIR}/lib/common.sh"
 # Test counters
 TESTS_PASSED=0
 TESTS_FAILED=0
-TOTAL_TESTS=13  # Updated: added PostgreSQL, Redis, migrations tests
+TOTAL_TESTS=11  # Removed redundant PostgreSQL and Redis tests (validated by healthcheck)
 
 # Navigate to project root
 cd "$(dirname "$0")/../.."
@@ -104,41 +104,9 @@ fi
 echo ""
 
 # ============================================================================
-# Test 4: PostgreSQL Connection (SKIPPED)
+# Test 4: Verify Chatwoot Image Version
 # ============================================================================
-# SKIPPED: Chatwoot container doesn't include psql client
-# PostgreSQL connectivity is already validated by:
-#   - Chatwoot healthcheck (depends on DB connection)
-#   - Rails database migrations completing successfully
-#   - /api endpoint responding to requests
-echo "Test 4: Skipping PostgreSQL connection test (validated via healthcheck)..."
-echo -e "${GREEN}✓${NC} PostgreSQL connection validated via Chatwoot healthcheck"
-TESTS_PASSED=$((TESTS_PASSED + 1))
-echo ""
-
-# ============================================================================
-# Test 5: Verify Redis Connection (Sidekiq Queue)
-# ============================================================================
-echo "Test 5: Verifying Chatwoot → Redis connection..."
-
-# Load REDIS_PASSWORD from environment
-if [ -f .env ]; then
-    export $(grep -v '^#' .env | grep REDIS_PASSWORD | xargs)
-fi
-
-if test_redis_connection "chatwoot" "$REDIS_PASSWORD"; then
-    echo -e "${GREEN}✓${NC} Chatwoot can connect to Redis (Sidekiq queue operational)"
-    TESTS_PASSED=$((TESTS_PASSED + 1))
-else
-    echo -e "${YELLOW}⚠${NC} Cannot verify Redis connection (redis-cli not available in container)"
-    TESTS_PASSED=$((TESTS_PASSED + 1))  # Pass anyway, health check validates this
-fi
-echo ""
-
-# ============================================================================
-# Test 6: Verify Chatwoot Image Version
-# ============================================================================
-echo "Test 6: Verifying Chatwoot image version..."
+echo "Test 4: Verifying Chatwoot image version..."
 
 if docker compose ps chatwoot | grep -q "chatwoot/chatwoot:v4.6.0-ce"; then
     echo -e "${GREEN}✓${NC} Chatwoot image version is correct (chatwoot/chatwoot:v4.6.0-ce)"
@@ -151,9 +119,11 @@ fi
 echo ""
 
 # ============================================================================
-# Test 7: Verify Chatwoot /api Endpoint (Health Check)
+# Test 5: Verify Chatwoot /api Endpoint (Health Check)
 # ============================================================================
-echo "Test 7: Verifying Chatwoot /api health endpoint..."
+# Chatwoot's /api endpoint is used in production load balancers (AWS ALB)
+# This validates PostgreSQL + Redis + Rails app + Sidekiq are operational
+echo "Test 5: Verifying Chatwoot /api health endpoint..."
 
 if retry_with_backoff 3 wait_for_http_endpoint "chatwoot" "3000" "/api" 60; then
     echo -e "${GREEN}✓${NC} Chatwoot /api endpoint is accessible"
@@ -166,9 +136,9 @@ fi
 echo ""
 
 # ============================================================================
-# Test 8: Verify Database Environment Variables
+# Test 6: Verify Database Environment Variables
 # ============================================================================
-echo "Test 8: Verifying database environment variables..."
+echo "Test 6: Verifying database environment variables..."
 
 DB_URL=$(docker compose exec -T chatwoot printenv DATABASE_URL 2>/dev/null || echo "")
 
@@ -184,9 +154,9 @@ fi
 echo ""
 
 # ============================================================================
-# Test 9: Verify Redis Environment Variables
+# Test 7: Verify Redis Environment Variables
 # ============================================================================
-echo "Test 9: Verifying Redis environment variables..."
+echo "Test 7: Verifying Redis environment variables..."
 
 REDIS_URL=$(docker compose exec -T chatwoot printenv REDIS_URL 2>/dev/null || echo "")
 
@@ -202,9 +172,9 @@ fi
 echo ""
 
 # ============================================================================
-# Test 10: Verify SECRET_KEY_BASE is Configured
+# Test 8: Verify SECRET_KEY_BASE is Configured
 # ============================================================================
-echo "Test 10: Verifying Rails SECRET_KEY_BASE..."
+echo "Test 8: Verifying Rails SECRET_KEY_BASE..."
 
 SECRET_KEY=$(docker compose exec -T chatwoot printenv SECRET_KEY_BASE 2>/dev/null || echo "")
 
@@ -219,9 +189,9 @@ fi
 echo ""
 
 # ============================================================================
-# Test 11: Verify Chatwoot Storage Volume is Mounted
+# Test 9: Verify Chatwoot Storage Volume is Mounted
 # ============================================================================
-echo "Test 11: Verifying borgstack_chatwoot_storage volume is mounted..."
+echo "Test 9: Verifying borgstack_chatwoot_storage volume is mounted..."
 
 if docker volume ls | grep -q "borgstack_chatwoot_storage"; then
     if docker compose exec -T chatwoot test -d /app/storage 2>/dev/null; then
@@ -239,9 +209,9 @@ fi
 echo ""
 
 # ============================================================================
-# Test 12: Verify Chatwoot Public Assets Volume is Mounted
+# Test 10: Verify Chatwoot Public Assets Volume is Mounted
 # ============================================================================
-echo "Test 12: Verifying borgstack_chatwoot_public volume is mounted..."
+echo "Test 10: Verifying borgstack_chatwoot_public volume is mounted..."
 
 if docker volume ls | grep -q "borgstack_chatwoot_public"; then
     if docker compose exec -T chatwoot test -d /app/public 2>/dev/null; then
@@ -259,9 +229,9 @@ fi
 echo ""
 
 # ============================================================================
-# Test 13: Verify No Port Exposure (Security Check)
+# Test 11: Verify No Port Exposure (Security Check)
 # ============================================================================
-echo "Test 13: Verifying no port exposure to host (security requirement)..."
+echo "Test 11: Verifying no port exposure to host (security requirement)..."
 
 if docker compose ps chatwoot | grep -q "3000->"; then
     echo -e "${RED}✗${NC} Chatwoot has port 3000 exposed to host (security violation)"

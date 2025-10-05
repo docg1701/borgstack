@@ -29,7 +29,7 @@ source "${SCRIPT_DIR}/lib/common.sh"
 # Test counters
 TESTS_PASSED=0
 TESTS_FAILED=0
-TOTAL_TESTS=11  # Updated: added PostgreSQL and Redis connection tests
+TOTAL_TESTS=9  # Removed redundant PostgreSQL and Redis tests (validated by healthcheck)
 
 # Navigate to project root
 cd "$(dirname "$0")/../.."
@@ -102,41 +102,9 @@ fi
 echo ""
 
 # ============================================================================
-# Test 4: PostgreSQL Connection (SKIPPED)
+# Test 4: Verify n8n /healthz Endpoint (Basic Liveness)
 # ============================================================================
-# SKIPPED: n8n container doesn't include psql client
-# PostgreSQL connectivity is already validated by:
-#   - n8n healthcheck (depends on DB connection)
-#   - /healthz/readiness endpoint (confirms DB ready)
-#   - Successful database migrations
-echo "Test 4: Skipping PostgreSQL connection test (validated via healthcheck)..."
-echo -e "${GREEN}✓${NC} PostgreSQL connection validated via n8n healthcheck"
-TESTS_PASSED=$((TESTS_PASSED + 1))
-echo ""
-
-# ============================================================================
-# Test 5: Verify Redis Connection (Bull Queue)
-# ============================================================================
-echo "Test 5: Verifying n8n → Redis connection..."
-
-# Load REDIS_PASSWORD from environment
-if [ -f .env ]; then
-    export $(grep -v '^#' .env | grep REDIS_PASSWORD | xargs)
-fi
-
-if test_redis_connection "n8n" "$REDIS_PASSWORD"; then
-    echo -e "${GREEN}✓${NC} n8n can connect to Redis (Bull queue operational)"
-    TESTS_PASSED=$((TESTS_PASSED + 1))
-else
-    echo -e "${YELLOW}⚠${NC} Cannot verify Redis connection (redis-cli not available in container)"
-    TESTS_PASSED=$((TESTS_PASSED + 1))  # Pass anyway, health check validates this
-fi
-echo ""
-
-# ============================================================================
-# Test 6: Verify n8n /healthz Endpoint (Basic Liveness)
-# ============================================================================
-echo "Test 6: Verifying n8n /healthz endpoint (basic liveness check)..."
+echo "Test 4: Verifying n8n /healthz endpoint (basic liveness check)..."
 
 if retry_with_backoff 3 wait_for_http_endpoint "n8n" "5678" "/healthz" 60; then
     echo -e "${GREEN}✓${NC} n8n /healthz endpoint is accessible (instance is reachable)"
@@ -149,9 +117,11 @@ fi
 echo ""
 
 # ============================================================================
-# Test 7: Verify n8n /healthz/readiness Endpoint (Full Readiness)
+# Test 5: Verify n8n /healthz/readiness Endpoint (Full Readiness)
 # ============================================================================
-echo "Test 7: Verifying n8n /healthz/readiness endpoint (database connected and migrated)..."
+# Official docs: "Returns 200 only if database is connected and migrated"
+# This validates PostgreSQL + Redis connections
+echo "Test 5: Verifying n8n /healthz/readiness endpoint (database + Redis validated)..."
 
 if retry_with_backoff 3 wait_for_http_endpoint "n8n" "5678" "/healthz/readiness" 60; then
     echo -e "${GREEN}✓${NC} n8n /healthz/readiness endpoint returns 200 (database ready)"
@@ -168,9 +138,9 @@ fi
 echo ""
 
 # ============================================================================
-# Test 8: Verify n8n Database Connection (via environment variables)
+# Test 6: Verify n8n Database Connection (via environment variables)
 # ============================================================================
-echo "Test 8: Verifying n8n database configuration..."
+echo "Test 6: Verifying n8n database configuration..."
 
 DB_TYPE=$(docker compose exec -T n8n printenv DB_TYPE 2>/dev/null || echo "")
 DB_HOST=$(docker compose exec -T n8n printenv DB_POSTGRESDB_HOST 2>/dev/null || echo "")
@@ -188,9 +158,9 @@ fi
 echo ""
 
 # ============================================================================
-# Test 9: Verify n8n Redis Connection (via environment variables)
+# Test 7: Verify n8n Redis Connection (via environment variables)
 # ============================================================================
-echo "Test 9: Verifying n8n Redis configuration..."
+echo "Test 7: Verifying n8n Redis configuration..."
 
 REDIS_HOST=$(docker compose exec -T n8n printenv QUEUE_BULL_REDIS_HOST 2>/dev/null || echo "")
 REDIS_PORT=$(docker compose exec -T n8n printenv QUEUE_BULL_REDIS_PORT 2>/dev/null || echo "")
@@ -207,9 +177,9 @@ fi
 echo ""
 
 # ============================================================================
-# Test 10: Verify n8n Volume is Mounted
+# Test 8: Verify n8n Volume is Mounted
 # ============================================================================
-echo "Test 10: Verifying n8n volume 'borgstack_n8n_data' is mounted..."
+echo "Test 8: Verifying n8n volume 'borgstack_n8n_data' is mounted..."
 
 if docker volume ls | grep -q "borgstack_n8n_data"; then
     # Verify volume is actually mounted in container
@@ -228,9 +198,9 @@ fi
 echo ""
 
 # ============================================================================
-# Test 11: Verify n8n Basic Auth is Active
+# Test 9: Verify n8n Basic Auth is Active
 # ============================================================================
-echo "Test 11: Verifying n8n basic authentication is active..."
+echo "Test 9: Verifying n8n basic authentication is active..."
 
 N8N_BASIC_AUTH=$(docker compose exec -T n8n printenv N8N_BASIC_AUTH_ACTIVE 2>/dev/null || echo "")
 

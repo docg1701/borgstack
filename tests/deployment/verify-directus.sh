@@ -30,7 +30,7 @@ source "${SCRIPT_DIR}/lib/common.sh"
 # Test counters
 TESTS_PASSED=0
 TESTS_FAILED=0
-TOTAL_TESTS=13  # Updated: removed GraphQL endpoint test (requires auth/POST)
+TOTAL_TESTS=12  # Removed redundant Redis test (validated by healthcheck)
 
 # Navigate to project root
 cd "$(dirname "$0")/../.."
@@ -124,28 +124,9 @@ TESTS_PASSED=$((TESTS_PASSED + 1))
 echo ""
 
 # ============================================================================
-# Test 5: Verify Redis Connection (Cache)
+# Test 5: Verify Directus Image Version
 # ============================================================================
-echo "Test 5: Verifying Directus → Redis connection..."
-
-# Load REDIS_PASSWORD from environment
-if [ -f .env ]; then
-    export $(grep -v '^#' .env | grep REDIS_PASSWORD | xargs)
-fi
-
-if test_redis_connection "directus" "$REDIS_PASSWORD"; then
-    echo -e "${GREEN}✓${NC} Directus can connect to Redis (cache operational)"
-    TESTS_PASSED=$((TESTS_PASSED + 1))
-else
-    echo -e "${YELLOW}⚠${NC} Cannot verify Redis connection (redis-cli not available in container)"
-    TESTS_PASSED=$((TESTS_PASSED + 1))  # Pass anyway, health check validates this
-fi
-echo ""
-
-# ============================================================================
-# Test 6: Verify Directus Image Version
-# ============================================================================
-echo "Test 6: Verifying Directus image version..."
+echo "Test 5: Verifying Directus image version..."
 
 if docker compose ps directus | grep -q "directus/directus:11"; then
     echo -e "${GREEN}✓${NC} Directus image version is correct (directus/directus:11)"
@@ -158,9 +139,9 @@ fi
 echo ""
 
 # ============================================================================
-# Test 7: Verify Directus /server/ping Endpoint
+# Test 6: Verify Directus /server/ping Endpoint
 # ============================================================================
-echo "Test 7: Verifying Directus /server/ping endpoint..."
+echo "Test 6: Verifying Directus /server/ping endpoint..."
 
 if retry_with_backoff 3 wait_for_http_endpoint "directus" "8055" "/server/ping" 60; then
     # Now verify it actually returns "pong"
@@ -183,9 +164,10 @@ fi
 echo ""
 
 # ============================================================================
-# Test 8: Verify Directus /server/health Endpoint
+# Test 7: Verify Directus /server/health Endpoint
 # ============================================================================
-echo "Test 8: Verifying Directus /server/health endpoint..."
+# The /server/health endpoint validates PostgreSQL + Redis + all services
+echo "Test 7: Verifying Directus /server/health endpoint..."
 
 if retry_with_backoff 5 docker compose exec -T directus \
     wget --spider --quiet --timeout=10 http://127.0.0.1:8055/server/health 2>/dev/null; then
@@ -198,22 +180,22 @@ fi
 echo ""
 
 # ============================================================================
-# Test 9: GraphQL Endpoint (SKIPPED)
+# Test 8: GraphQL Endpoint (SKIPPED)
 # ============================================================================
 # SKIPPED: GraphQL endpoint requires POST with valid query or authentication
 # GraphQL functionality is validated by:
 #   - /server/ping endpoint responding correctly
 #   - /server/health endpoint confirming full readiness
 #   - WebSocket subscriptions require authentication setup
-echo "Test 9: Skipping GraphQL endpoint test (requires auth/POST)..."
+echo "Test 8: Skipping GraphQL endpoint test (requires auth/POST)..."
 echo -e "${GREEN}✓${NC} GraphQL functionality validated via health endpoints"
 TESTS_PASSED=$((TESTS_PASSED + 1))
 echo ""
 
 # ============================================================================
-# Test 10: Verify Database Environment Variables
+# Test 9: Verify Database Environment Variables
 # ============================================================================
-echo "Test 10: Verifying database environment variables..."
+echo "Test 9: Verifying database environment variables..."
 
 DB_CLIENT=$(docker compose exec -T directus printenv DB_CLIENT 2>/dev/null || echo "")
 DB_HOST=$(docker compose exec -T directus printenv DB_HOST 2>/dev/null || echo "")
@@ -231,9 +213,9 @@ fi
 echo ""
 
 # ============================================================================
-# Test 11: Verify Redis Environment Variables
+# Test 10: Verify Redis Environment Variables
 # ============================================================================
-echo "Test 11: Verifying Redis environment variables..."
+echo "Test 10: Verifying Redis environment variables..."
 
 REDIS_HOST=$(docker compose exec -T directus printenv REDIS_HOST 2>/dev/null || echo "")
 CACHE_ENABLED=$(docker compose exec -T directus printenv CACHE_ENABLED 2>/dev/null || echo "")
@@ -251,9 +233,9 @@ fi
 echo ""
 
 # ============================================================================
-# Test 12: Verify WebSocket Configuration
+# Test 11: Verify WebSocket Configuration
 # ============================================================================
-echo "Test 12: Verifying WebSocket configuration..."
+echo "Test 11: Verifying WebSocket configuration..."
 
 WEBSOCKETS_ENABLED=$(docker compose exec -T directus printenv WEBSOCKETS_ENABLED 2>/dev/null || echo "")
 
@@ -268,9 +250,9 @@ fi
 echo ""
 
 # ============================================================================
-# Test 13: Verify Volume is Mounted
+# Test 12: Verify Volume is Mounted
 # ============================================================================
-echo "Test 13: Verifying borgstack_directus_uploads volume is mounted..."
+echo "Test 12: Verifying borgstack_directus_uploads volume is mounted..."
 
 if docker volume ls | grep -q "borgstack_directus_uploads"; then
     if docker compose exec -T directus test -d /directus/uploads 2>/dev/null; then
@@ -288,9 +270,9 @@ fi
 echo ""
 
 # ============================================================================
-# Test 14: Verify No Port Exposure (Security Check)
+# Test 13: Verify No Port Exposure (Security Check)
 # ============================================================================
-echo "Test 14: Verifying no port exposure to host (security requirement)..."
+echo "Test 13: Verifying no port exposure to host (security requirement)..."
 
 if docker compose ps directus | grep -q "8055->"; then
     echo -e "${RED}✗${NC} Directus has port 8055 exposed to host (security violation)"

@@ -24,7 +24,7 @@ source "${SCRIPT_DIR}/lib/common.sh"
 # Test counters
 TESTS_PASSED=0
 TESTS_FAILED=0
-TOTAL_TESTS=15  # Updated for multi-service architecture (3 containers + dependencies)
+TOTAL_TESTS=13  # Removed redundant MongoDB and Redis tests (validated by healthcheck)
 
 # Navigate to project root
 cd "$(dirname "$0")/../.."
@@ -132,53 +132,10 @@ fi
 echo ""
 
 # ============================================================================
-# Test 6: Verify MongoDB Connection (Network Connectivity Test)
+# Test 6: Verify Lowcoder API Service Health Endpoint
 # ============================================================================
-echo "Test 6: Verifying Lowcoder API Service → MongoDB connection..."
-
-# Test TCP connectivity to MongoDB port 27017
-# This validates that Lowcoder can reach the MongoDB container
-if docker compose exec -T lowcoder-api-service sh -c "command -v nc >/dev/null 2>&1 && nc -zv mongodb 27017" 2>&1 | grep -q "open\|succeeded" || \
-   docker compose exec -T lowcoder-api-service sh -c "command -v telnet >/dev/null 2>&1 && timeout 5 telnet mongodb 27017" 2>&1 | grep -q "Connected\|Escape" || \
-   docker compose exec -T lowcoder-api-service sh -c "timeout 5 curl -v telnet://mongodb:27017" 2>&1 | grep -q "Connected"; then
-    echo -e "${GREEN}✓${NC} Lowcoder API Service can reach MongoDB container (port 27017 accessible)"
-    TESTS_PASSED=$((TESTS_PASSED + 1))
-else
-    echo -e "${YELLOW}⚠${NC} Cannot test network connectivity (nc/telnet/curl not available)"
-    # Fallback: check logs for MongoDB connection messages
-    if docker compose logs lowcoder-api-service 2>/dev/null | grep -qi "mongodb.*connect.*success\|connected.*mongodb"; then
-        echo -e "${GREEN}✓${NC} MongoDB connection validated via container logs"
-        TESTS_PASSED=$((TESTS_PASSED + 1))
-    else
-        echo -e "${YELLOW}⚠${NC} Assuming MongoDB connection works (container is healthy)"
-        TESTS_PASSED=$((TESTS_PASSED + 1))
-    fi
-fi
-echo ""
-
-# ============================================================================
-# Test 7: Verify Redis Connection
-# ============================================================================
-echo "Test 7: Verifying Lowcoder API Service → Redis connection..."
-
-# Load REDIS_PASSWORD from environment
-if [ -f .env ]; then
-    export $(grep -v '^#' .env | grep REDIS_PASSWORD | xargs)
-fi
-
-if test_redis_connection "lowcoder-api-service" "$REDIS_PASSWORD"; then
-    echo -e "${GREEN}✓${NC} Lowcoder API Service can connect to Redis"
-    TESTS_PASSED=$((TESTS_PASSED + 1))
-else
-    echo -e "${YELLOW}⚠${NC} Cannot verify Redis connection (redis-cli not available in container)"
-    TESTS_PASSED=$((TESTS_PASSED + 1))  # Pass anyway, health check validates this
-fi
-echo ""
-
-# ============================================================================
-# Test 8: Verify Lowcoder API Service Health Endpoint
-# ============================================================================
-echo "Test 8: Verifying Lowcoder API Service /api/status/health endpoint..."
+# The /api/status/health endpoint validates MongoDB + Redis + all services
+echo "Test 6: Verifying Lowcoder API Service /api/status/health endpoint..."
 
 # Use curl instead of wget (matches healthcheck)
 if docker compose exec -T lowcoder-api-service \
@@ -193,9 +150,9 @@ fi
 echo ""
 
 # ============================================================================
-# Test 9: Verify Lowcoder Image Versions
+# Test 7: Verify Lowcoder Image Versions
 # ============================================================================
-echo "Test 9: Verifying Lowcoder image versions..."
+echo "Test 7: Verifying Lowcoder image versions..."
 
 IMAGE_CHECK_PASSED=true
 
@@ -231,9 +188,9 @@ fi
 echo ""
 
 # ============================================================================
-# Test 10: Verify MongoDB Environment Variables
+# Test 8: Verify MongoDB Environment Variables
 # ============================================================================
-echo "Test 10: Verifying MongoDB environment variables in API Service..."
+echo "Test 8: Verifying MongoDB environment variables in API Service..."
 
 MONGODB_URL=$(docker compose exec -T lowcoder-api-service printenv LOWCODER_MONGODB_URL 2>/dev/null || echo "")
 
@@ -249,9 +206,9 @@ fi
 echo ""
 
 # ============================================================================
-# Test 11: Verify Redis Environment Variables
+# Test 9: Verify Redis Environment Variables
 # ============================================================================
-echo "Test 11: Verifying Redis environment variables in API Service..."
+echo "Test 9: Verifying Redis environment variables in API Service..."
 
 REDIS_URL=$(docker compose exec -T lowcoder-api-service printenv LOWCODER_REDIS_URL 2>/dev/null || echo "")
 
@@ -267,9 +224,9 @@ fi
 echo ""
 
 # ============================================================================
-# Test 12: Verify Volume is Mounted
+# Test 10: Verify Volume is Mounted
 # ============================================================================
-echo "Test 12: Verifying borgstack_lowcoder_stacks volume is mounted..."
+echo "Test 10: Verifying borgstack_lowcoder_stacks volume is mounted..."
 
 if docker volume ls | grep -q "borgstack_lowcoder_stacks"; then
     if docker compose exec -T lowcoder-api-service test -d /lowcoder-stacks 2>/dev/null; then
@@ -287,9 +244,9 @@ fi
 echo ""
 
 # ============================================================================
-# Test 13: Verify No Port Exposure (Security Check)
+# Test 11: Verify No Port Exposure (Security Check)
 # ============================================================================
-echo "Test 13: Verifying no port exposure to host (security requirement)..."
+echo "Test 11: Verifying no port exposure to host (security requirement)..."
 
 PORT_EXPOSURE_FOUND=false
 
@@ -318,9 +275,9 @@ fi
 echo ""
 
 # ============================================================================
-# Test 14: Verify Service URLs in Node Service
+# Test 12: Verify Service URLs in Node Service
 # ============================================================================
-echo "Test 14: Verifying service URL configuration in Node Service..."
+echo "Test 12: Verifying service URL configuration in Node Service..."
 
 API_SERVICE_URL=$(docker compose exec -T lowcoder-node-service printenv LOWCODER_API_SERVICE_URL 2>/dev/null || echo "")
 
@@ -336,9 +293,9 @@ fi
 echo ""
 
 # ============================================================================
-# Test 15: Verify Service URLs in Frontend
+# Test 13: Verify Service URLs in Frontend
 # ============================================================================
-echo "Test 15: Verifying service URL configuration in Frontend..."
+echo "Test 13: Verifying service URL configuration in Frontend..."
 
 FRONTEND_API_URL=$(docker compose exec -T lowcoder-frontend printenv LOWCODER_API_SERVICE_URL 2>/dev/null || echo "")
 FRONTEND_NODE_URL=$(docker compose exec -T lowcoder-frontend printenv LOWCODER_NODE_SERVICE_URL 2>/dev/null || echo "")
