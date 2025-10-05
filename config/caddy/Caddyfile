@@ -188,8 +188,28 @@ directus.{$DOMAIN} {
 # ----------------------------------------------------------------------------
 # Internal routing: https://fileflows.{$DOMAIN} → http://fileflows:5000
 # Story: 4.2 (FileFlows Media Processing)
+# Note: Long timeout needed for media processing, WebSocket for real-time updates
 fileflows.{$DOMAIN} {
-	# Route all requests to FileFlows container
+	# WebSocket support for real-time processing status updates
+	@websockets {
+		header Connection *Upgrade*
+		header Upgrade websocket
+	}
+	reverse_proxy @websockets fileflows:5000
+
+	# Long-running processing requests (flow execution, file processing)
+	@long_running {
+		path /api/flow/*
+	}
+	reverse_proxy @long_running fileflows:5000 {
+		# 1 hour timeout for large media file processing
+		transport http {
+			read_timeout 3600s
+			write_timeout 3600s
+		}
+	}
+
+	# Standard requests (UI, short API calls)
 	reverse_proxy fileflows:5000
 
 	# Security headers for web application
