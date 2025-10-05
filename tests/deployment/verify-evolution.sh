@@ -190,15 +190,15 @@ echo ""
 # ============================================================================
 echo "Test 9: Verifying Redis environment variables..."
 
-REDIS_URI=$(docker compose exec -T evolution printenv REDIS_URI 2>/dev/null || echo "")
+CACHE_REDIS_URI=$(docker compose exec -T evolution printenv CACHE_REDIS_URI 2>/dev/null || echo "")
 
-if echo "$REDIS_URI" | grep -q "redis://.*@redis:6379"; then
+if echo "$CACHE_REDIS_URI" | grep -q "redis://.*@redis:6379"; then
     echo -e "${GREEN}✓${NC} Redis environment variables are correct"
-    echo "   REDIS_URI configured correctly"
+    echo "   CACHE_REDIS_URI configured correctly"
     TESTS_PASSED=$((TESTS_PASSED + 1))
 else
     echo -e "${RED}✗${NC} Redis environment variables are incorrect"
-    echo "   REDIS_URI=$REDIS_URI"
+    echo "   CACHE_REDIS_URI=$CACHE_REDIS_URI"
     TESTS_FAILED=$((TESTS_FAILED + 1))
 fi
 echo ""
