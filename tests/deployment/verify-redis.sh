@@ -299,7 +299,7 @@ test_performance_baseline() {
 
     # Run benchmark and capture output
     BENCHMARK_OUTPUT=$(docker compose exec redis redis-benchmark \
-        -h localhost -p 6379 -a "${REDIS_PASSWORD}" \
+        -h 127.0.0.1 -p 6379 -a "${REDIS_PASSWORD}" \
         -t get,set -n 100000 -q 2>&1)
 
     print_info "Benchmark results:"

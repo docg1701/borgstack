@@ -622,14 +622,9 @@ jobs:
 
       - name: Run MongoDB validation tests
         run: |
-          echo "⚠️  Skipping full MongoDB validation tests in CI"
-          echo "Full test suite (15 tests) requires MongoDB container runtime"
-          echo "Configuration tests (1-7) already validated ✅"
-          echo ""
-          echo "To run full validation locally:"
-          echo "  ./tests/deployment/verify-mongodb.sh"
-          echo ""
-          echo "MongoDB configuration validated successfully ✅"
+          echo "Running comprehensive MongoDB validation tests..."
+          chmod +x tests/deployment/verify-mongodb.sh
+          bash tests/deployment/verify-mongodb.sh
 
       - name: Cleanup MongoDB test environment
         if: always()
@@ -654,15 +649,47 @@ jobs:
           echo "Creating temporary .env file with test credentials..."
           cat > .env << 'EOF'
           # Test credentials for CI pipeline
+          # PostgreSQL passwords
           POSTGRES_PASSWORD=test_postgres_password_12345678
           N8N_DB_PASSWORD=test_n8n_password_12345678
-          N8N_BASIC_AUTH_USER=admin
-          N8N_BASIC_AUTH_PASSWORD=test_n8n_auth_password_12345678
-          N8N_ENCRYPTION_KEY=test_n8n_encryption_key_12345678901234567890
+          CHATWOOT_DB_PASSWORD=test_chatwoot_password_12345678
+          DIRECTUS_DB_PASSWORD=test_directus_password_12345678
+          EVOLUTION_DB_PASSWORD=test_evolution_password_12345678
+          # MongoDB passwords
+          MONGODB_ROOT_PASSWORD=test_mongodb_root_password_12345678
+          LOWCODER_DB_PASSWORD=test_lowcoder_password_12345678901234567890
+          # Redis password
           REDIS_PASSWORD=test_redis_password_12345678901234567890
+          # Domain and email
           DOMAIN=example.com.br
           EMAIL=admin@example.com.br
           CORS_ALLOWED_ORIGINS=*
+          # n8n configuration
+          N8N_HOST=n8n.example.com.br
+          N8N_BASIC_AUTH_USER=admin
+          N8N_BASIC_AUTH_PASSWORD=test_n8n_auth_password_12345678
+          N8N_ENCRYPTION_KEY=test_n8n_encryption_key_12345678901234567890
+          # Chatwoot configuration
+          CHATWOOT_HOST=chatwoot.example.com.br
+          CHATWOOT_SECRET_KEY_BASE=test_chatwoot_secret_key_base_128_character_hex_string_0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef123456789
+          CHATWOOT_API_TOKEN=test_chatwoot_api_token_dummy_for_ci
+          # Evolution API configuration
+          EVOLUTION_HOST=evolution.example.com.br
+          EVOLUTION_API_KEY=test_evolution_api_key_12345678
+          EVOLUTION_WEBHOOK_URL=https://n8n.example.com.br/webhook/whatsapp-incoming
+          DATABASE_CONNECTION_CLIENT_NAME=evolution_api
+          # Lowcoder configuration
+          LOWCODER_HOST=lowcoder.example.com.br
+          LOWCODER_ADMIN_EMAIL=admin@example.com.br
+          LOWCODER_ADMIN_PASSWORD=test_lowcoder_admin_password_12345678
+          LOWCODER_ENCRYPTION_PASSWORD=test_lowcoder_encryption_pass_123456
+          LOWCODER_ENCRYPTION_SALT=test_lowcoder_encryption_salt_123456
+          # Directus configuration
+          DIRECTUS_HOST=directus.example.com.br
+          DIRECTUS_KEY=test_directus_key_12345678901234567890123456789012
+          DIRECTUS_SECRET=test_directus_secret_12345678901234567890123456
+          DIRECTUS_ADMIN_EMAIL=admin@example.com.br
+          DIRECTUS_ADMIN_PASSWORD=test_directus_admin_password_12345678
           EOF
 
       - name: Verify n8n configuration in docker-compose.yml
@@ -860,6 +887,13 @@ jobs:
             exit 1
           fi
 
+      - name: Run n8n validation tests
+        timeout-minutes: 15
+        run: |
+          echo "Running comprehensive n8n validation tests..."
+          chmod +x tests/deployment/verify-n8n.sh
+          bash tests/deployment/verify-n8n.sh
+
       - name: Cleanup n8n test environment
         if: always()
         run: |
@@ -883,17 +917,47 @@ jobs:
           echo "Creating temporary .env file with test credentials..."
           cat > .env << 'EOF'
           # Test credentials for CI pipeline
+          # PostgreSQL passwords
           POSTGRES_PASSWORD=test_postgres_password_12345678
-          EVOLUTION_DB_PASSWORD=test_evolution_password_12345678
-          EVOLUTION_API_KEY=test_evolution_api_key_12345678
-          EVOLUTION_WEBHOOK_URL=https://n8n.example.com.br/webhook/whatsapp-incoming
-          EVOLUTION_HOST=evolution.example.com.br
-          DATABASE_CONNECTION_CLIENT_NAME=evolution_api
           N8N_DB_PASSWORD=test_n8n_password_12345678
+          CHATWOOT_DB_PASSWORD=test_chatwoot_password_12345678
+          DIRECTUS_DB_PASSWORD=test_directus_password_12345678
+          EVOLUTION_DB_PASSWORD=test_evolution_password_12345678
+          # MongoDB passwords
+          MONGODB_ROOT_PASSWORD=test_mongodb_root_password_12345678
+          LOWCODER_DB_PASSWORD=test_lowcoder_password_12345678901234567890
+          # Redis password
           REDIS_PASSWORD=test_redis_password_12345678901234567890
+          # Domain and email
           DOMAIN=example.com.br
           EMAIL=admin@example.com.br
           CORS_ALLOWED_ORIGINS=*
+          # n8n configuration
+          N8N_HOST=n8n.example.com.br
+          N8N_BASIC_AUTH_USER=admin
+          N8N_BASIC_AUTH_PASSWORD=test_n8n_auth_password_12345678
+          N8N_ENCRYPTION_KEY=test_n8n_encryption_key_12345678901234567890
+          # Chatwoot configuration
+          CHATWOOT_HOST=chatwoot.example.com.br
+          CHATWOOT_SECRET_KEY_BASE=test_chatwoot_secret_key_base_128_character_hex_string_0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef123456789
+          CHATWOOT_API_TOKEN=test_chatwoot_api_token_dummy_for_ci
+          # Evolution API configuration
+          EVOLUTION_HOST=evolution.example.com.br
+          EVOLUTION_API_KEY=test_evolution_api_key_12345678
+          EVOLUTION_WEBHOOK_URL=https://n8n.example.com.br/webhook/whatsapp-incoming
+          DATABASE_CONNECTION_CLIENT_NAME=evolution_api
+          # Lowcoder configuration
+          LOWCODER_HOST=lowcoder.example.com.br
+          LOWCODER_ADMIN_EMAIL=admin@example.com.br
+          LOWCODER_ADMIN_PASSWORD=test_lowcoder_admin_password_12345678
+          LOWCODER_ENCRYPTION_PASSWORD=test_lowcoder_encryption_pass_123456
+          LOWCODER_ENCRYPTION_SALT=test_lowcoder_encryption_salt_123456
+          # Directus configuration
+          DIRECTUS_HOST=directus.example.com.br
+          DIRECTUS_KEY=test_directus_key_12345678901234567890123456789012
+          DIRECTUS_SECRET=test_directus_secret_12345678901234567890123456
+          DIRECTUS_ADMIN_EMAIL=admin@example.com.br
+          DIRECTUS_ADMIN_PASSWORD=test_directus_admin_password_12345678
           EOF
 
       - name: Verify Evolution API configuration in docker-compose.yml
@@ -1064,6 +1128,13 @@ jobs:
             exit 1
           fi
 
+      - name: Run Evolution API validation tests
+        timeout-minutes: 15
+        run: |
+          echo "Running comprehensive Evolution API validation tests..."
+          chmod +x tests/deployment/verify-evolution.sh
+          bash tests/deployment/verify-evolution.sh
+
       - name: Cleanup Evolution API test environment
         if: always()
         run: |
@@ -1087,14 +1158,47 @@ jobs:
           echo "Creating temporary .env file with test credentials..."
           cat > .env << 'EOF'
           # Test credentials for CI pipeline
+          # PostgreSQL passwords
           POSTGRES_PASSWORD=test_postgres_password_12345678
+          N8N_DB_PASSWORD=test_n8n_password_12345678
           CHATWOOT_DB_PASSWORD=test_chatwoot_password_12345678
-          CHATWOOT_SECRET_KEY_BASE=test_chatwoot_secret_key_base_128_character_hex_string_0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          CHATWOOT_HOST=chatwoot.example.com.br
+          DIRECTUS_DB_PASSWORD=test_directus_password_12345678
+          EVOLUTION_DB_PASSWORD=test_evolution_password_12345678
+          # MongoDB passwords
+          MONGODB_ROOT_PASSWORD=test_mongodb_root_password_12345678
+          LOWCODER_DB_PASSWORD=test_lowcoder_password_12345678901234567890
+          # Redis password
           REDIS_PASSWORD=test_redis_password_12345678901234567890
+          # Domain and email
           DOMAIN=example.com.br
           EMAIL=admin@example.com.br
           CORS_ALLOWED_ORIGINS=*
+          # n8n configuration
+          N8N_HOST=n8n.example.com.br
+          N8N_BASIC_AUTH_USER=admin
+          N8N_BASIC_AUTH_PASSWORD=test_n8n_auth_password_12345678
+          N8N_ENCRYPTION_KEY=test_n8n_encryption_key_12345678901234567890
+          # Chatwoot configuration
+          CHATWOOT_HOST=chatwoot.example.com.br
+          CHATWOOT_SECRET_KEY_BASE=test_chatwoot_secret_key_base_128_character_hex_string_0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef123456789
+          CHATWOOT_API_TOKEN=test_chatwoot_api_token_dummy_for_ci
+          # Evolution API configuration
+          EVOLUTION_HOST=evolution.example.com.br
+          EVOLUTION_API_KEY=test_evolution_api_key_12345678
+          EVOLUTION_WEBHOOK_URL=https://n8n.example.com.br/webhook/whatsapp-incoming
+          DATABASE_CONNECTION_CLIENT_NAME=evolution_api
+          # Lowcoder configuration
+          LOWCODER_HOST=lowcoder.example.com.br
+          LOWCODER_ADMIN_EMAIL=admin@example.com.br
+          LOWCODER_ADMIN_PASSWORD=test_lowcoder_admin_password_12345678
+          LOWCODER_ENCRYPTION_PASSWORD=test_lowcoder_encryption_pass_123456
+          LOWCODER_ENCRYPTION_SALT=test_lowcoder_encryption_salt_123456
+          # Directus configuration
+          DIRECTUS_HOST=directus.example.com.br
+          DIRECTUS_KEY=test_directus_key_12345678901234567890123456789012
+          DIRECTUS_SECRET=test_directus_secret_12345678901234567890123456
+          DIRECTUS_ADMIN_EMAIL=admin@example.com.br
+          DIRECTUS_ADMIN_PASSWORD=test_directus_admin_password_12345678
           EOF
 
       - name: Verify Chatwoot configuration in docker-compose.yml
@@ -1248,6 +1352,13 @@ jobs:
             exit 1
           fi
 
+      - name: Run Chatwoot validation tests
+        timeout-minutes: 15
+        run: |
+          echo "Running comprehensive Chatwoot validation tests..."
+          chmod +x tests/deployment/verify-chatwoot.sh
+          bash tests/deployment/verify-chatwoot.sh
+
       - name: Cleanup Chatwoot test environment
         if: always()
         run: |
@@ -1271,42 +1382,97 @@ jobs:
           echo "Creating temporary .env file with test credentials..."
           cat > .env << 'EOF'
           # Test credentials for CI pipeline
+          # PostgreSQL passwords
+          POSTGRES_PASSWORD=test_postgres_password_12345678
+          N8N_DB_PASSWORD=test_n8n_password_12345678
+          CHATWOOT_DB_PASSWORD=test_chatwoot_password_12345678
+          DIRECTUS_DB_PASSWORD=test_directus_password_12345678
+          EVOLUTION_DB_PASSWORD=test_evolution_password_12345678
+          # MongoDB passwords
           MONGODB_ROOT_PASSWORD=test_mongodb_root_password_12345678
           LOWCODER_DB_PASSWORD=test_lowcoder_password_12345678901234567890
+          # Redis password
           REDIS_PASSWORD=test_redis_password_12345678901234567890
+          # Domain and email
+          DOMAIN=example.com.br
+          EMAIL=admin@example.com.br
+          CORS_ALLOWED_ORIGINS=*
+          # n8n configuration
+          N8N_HOST=n8n.example.com.br
+          N8N_BASIC_AUTH_USER=admin
+          N8N_BASIC_AUTH_PASSWORD=test_n8n_auth_password_12345678
+          N8N_ENCRYPTION_KEY=test_n8n_encryption_key_12345678901234567890
+          # Chatwoot configuration
+          CHATWOOT_HOST=chatwoot.example.com.br
+          CHATWOOT_SECRET_KEY_BASE=test_chatwoot_secret_key_base_128_character_hex_string_0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef123456789
+          CHATWOOT_API_TOKEN=test_chatwoot_api_token_dummy_for_ci
+          # Evolution API configuration
+          EVOLUTION_HOST=evolution.example.com.br
+          EVOLUTION_API_KEY=test_evolution_api_key_12345678
+          EVOLUTION_WEBHOOK_URL=https://n8n.example.com.br/webhook/whatsapp-incoming
+          DATABASE_CONNECTION_CLIENT_NAME=evolution_api
+          # Lowcoder configuration
+          LOWCODER_HOST=lowcoder.example.com.br
           LOWCODER_ADMIN_EMAIL=admin@example.com.br
           LOWCODER_ADMIN_PASSWORD=test_lowcoder_admin_password_12345678
           LOWCODER_ENCRYPTION_PASSWORD=test_lowcoder_encryption_pass_123456
           LOWCODER_ENCRYPTION_SALT=test_lowcoder_encryption_salt_123456
-          DOMAIN=example.com.br
-          EMAIL=admin@example.com.br
-          CORS_ALLOWED_ORIGINS=*
+          # Directus configuration
+          DIRECTUS_HOST=directus.example.com.br
+          DIRECTUS_KEY=test_directus_key_12345678901234567890123456789012
+          DIRECTUS_SECRET=test_directus_secret_12345678901234567890123456
+          DIRECTUS_ADMIN_EMAIL=admin@example.com.br
+          DIRECTUS_ADMIN_PASSWORD=test_directus_admin_password_12345678
           EOF
 
       - name: Verify Lowcoder configuration in docker-compose.yml
         run: |
-          echo "Verifying Lowcoder service is configured..."
+          echo "Verifying Lowcoder multi-service architecture is configured..."
 
-          # Check Lowcoder image version is pinned correctly
-          if docker compose config | grep -q "image: lowcoderorg/lowcoder-ce:2.7.4"; then
-            echo "✅ Lowcoder image correctly configured (lowcoderorg/lowcoder-ce:2.7.4)"
+          # Check Lowcoder API Service image version is pinned correctly
+          if docker compose config | grep -q "image: lowcoderorg/lowcoder-ce-api-service:2.7.4"; then
+            echo "✅ Lowcoder API Service image correctly configured (lowcoderorg/lowcoder-ce-api-service:2.7.4)"
           else
-            echo "❌ Lowcoder image not configured correctly"
+            echo "❌ Lowcoder API Service image not configured correctly"
             exit 1
           fi
 
-          # Check Lowcoder is on both networks (internal for MongoDB/Redis, external for Caddy)
-          if docker compose config | grep -A 50 "lowcoder:" | grep -q "borgstack_internal"; then
-            echo "✅ Lowcoder connected to borgstack_internal network"
+          # Check Lowcoder Node Service image version is pinned correctly
+          if docker compose config | grep -q "image: lowcoderorg/lowcoder-ce-node-service:2.7.4"; then
+            echo "✅ Lowcoder Node Service image correctly configured (lowcoderorg/lowcoder-ce-node-service:2.7.4)"
           else
-            echo "❌ Lowcoder not connected to borgstack_internal network"
+            echo "❌ Lowcoder Node Service image not configured correctly"
             exit 1
           fi
 
-          if docker compose config | grep -A 50 "lowcoder:" | grep -q "borgstack_external"; then
-            echo "✅ Lowcoder connected to borgstack_external network"
+          # Check Lowcoder Frontend image version is pinned correctly
+          if docker compose config | grep -q "image: lowcoderorg/lowcoder-ce-frontend:2.7.4"; then
+            echo "✅ Lowcoder Frontend image correctly configured (lowcoderorg/lowcoder-ce-frontend:2.7.4)"
           else
-            echo "❌ Lowcoder not connected to borgstack_external network"
+            echo "❌ Lowcoder Frontend image not configured correctly"
+            exit 1
+          fi
+
+          # Check Lowcoder API Service is on borgstack_internal network
+          if docker compose config | grep -A 50 "lowcoder-api-service:" | grep -q "borgstack_internal"; then
+            echo "✅ Lowcoder API Service connected to borgstack_internal network"
+          else
+            echo "❌ Lowcoder API Service not connected to borgstack_internal network"
+            exit 1
+          fi
+
+          # Check Lowcoder Frontend is on both networks (internal + external for Caddy)
+          if docker compose config | grep -A 50 "lowcoder-frontend:" | grep -q "borgstack_internal"; then
+            echo "✅ Lowcoder Frontend connected to borgstack_internal network"
+          else
+            echo "❌ Lowcoder Frontend not connected to borgstack_internal network"
+            exit 1
+          fi
+
+          if docker compose config | grep -A 50 "lowcoder-frontend:" | grep -q "borgstack_external"; then
+            echo "✅ Lowcoder Frontend connected to borgstack_external network"
+          else
+            echo "❌ Lowcoder Frontend not connected to borgstack_external network"
             exit 1
           fi
 
@@ -1318,19 +1484,33 @@ jobs:
             exit 1
           fi
 
-          # Verify no port exposure in production config
-          if docker compose config | grep -A 50 "lowcoder:" | grep -E "^\s+ports:" > /dev/null 2>&1; then
+          # Verify no port exposure in production config for all Lowcoder services
+          if docker compose config | grep -A 50 "lowcoder-api-service:\|lowcoder-node-service:\|lowcoder-frontend:" | grep -E "^\s+ports:" > /dev/null 2>&1; then
             echo "❌ Lowcoder has port exposure in production config (security violation)"
             exit 1
           else
             echo "✅ No port exposure to host (security requirement met)"
           fi
 
-          # Verify health check is configured
-          if docker compose config | grep -A 50 "lowcoder:" | grep -q "healthcheck:"; then
-            echo "✅ Health check configured for Lowcoder"
+          # Verify health checks are configured for all services
+          if docker compose config | grep -A 30 "lowcoder-api-service:" | grep -q "healthcheck:"; then
+            echo "✅ Health check configured for Lowcoder API Service"
           else
-            echo "❌ Health check not configured for Lowcoder"
+            echo "❌ Health check not configured for Lowcoder API Service"
+            exit 1
+          fi
+
+          if docker compose config | grep -A 30 "lowcoder-node-service:" | grep -q "healthcheck:"; then
+            echo "✅ Health check configured for Lowcoder Node Service"
+          else
+            echo "❌ Health check not configured for Lowcoder Node Service"
+            exit 1
+          fi
+
+          if docker compose config | grep -A 30 "lowcoder-frontend:" | grep -q "healthcheck:"; then
+            echo "✅ Health check configured for Lowcoder Frontend"
+          else
+            echo "❌ Health check not configured for Lowcoder Frontend"
             exit 1
           fi
 
@@ -1338,49 +1518,73 @@ jobs:
         run: |
           echo "Verifying Lowcoder environment variables configuration..."
 
+          # ===================================================================
+          # Lowcoder API Service Environment Variables
+          # ===================================================================
+          echo "Checking Lowcoder API Service environment variables..."
+
           # Check MongoDB connection string
-          if docker compose config | grep -A 50 "lowcoder:" | grep "LOWCODER_MONGODB_URL" | grep -q "mongodb://lowcoder_user:.*@mongodb:27017/lowcoder?authSource=lowcoder"; then
-            echo "✅ LOWCODER_MONGODB_URL configured correctly"
+          if docker compose config | grep -A 50 "lowcoder-api-service:" | grep "LOWCODER_MONGODB_URL" | grep -q "mongodb://lowcoder_user:.*@mongodb:27017/lowcoder?authSource=lowcoder"; then
+            echo "✅ LOWCODER_MONGODB_URL configured correctly in API service"
           else
-            echo "❌ LOWCODER_MONGODB_URL not configured correctly"
+            echo "❌ LOWCODER_MONGODB_URL not configured correctly in API service"
             exit 1
           fi
 
           # Check Redis connection string
-          if docker compose config | grep -A 50 "lowcoder:" | grep "LOWCODER_REDIS_URL" | grep -q "redis://"; then
-            echo "✅ LOWCODER_REDIS_URL configured correctly"
+          if docker compose config | grep -A 50 "lowcoder-api-service:" | grep "LOWCODER_REDIS_URL" | grep -q "redis://"; then
+            echo "✅ LOWCODER_REDIS_URL configured correctly in API service"
           else
-            echo "❌ LOWCODER_REDIS_URL not configured correctly"
+            echo "❌ LOWCODER_REDIS_URL not configured correctly in API service"
             exit 1
           fi
 
-          # Check admin credentials
-          if docker compose config | grep -A 50 "lowcoder:" | grep -q "LOWCODER_ADMIN_EMAIL:"; then
-            echo "✅ LOWCODER_ADMIN_EMAIL configured"
+          # Check encryption keys in API service
+          if docker compose config | grep -A 50 "lowcoder-api-service:" | grep -q "LOWCODER_DB_ENCRYPTION_PASSWORD:"; then
+            echo "✅ LOWCODER_DB_ENCRYPTION_PASSWORD configured in API service"
           else
-            echo "❌ LOWCODER_ADMIN_EMAIL not configured"
+            echo "❌ LOWCODER_DB_ENCRYPTION_PASSWORD not configured in API service"
             exit 1
           fi
 
-          if docker compose config | grep -A 50 "lowcoder:" | grep -q "LOWCODER_ADMIN_PASSWORD:"; then
-            echo "✅ LOWCODER_ADMIN_PASSWORD configured"
+          if docker compose config | grep -A 50 "lowcoder-api-service:" | grep -q "LOWCODER_DB_ENCRYPTION_SALT:"; then
+            echo "✅ LOWCODER_DB_ENCRYPTION_SALT configured in API service"
           else
-            echo "❌ LOWCODER_ADMIN_PASSWORD not configured"
+            echo "❌ LOWCODER_DB_ENCRYPTION_SALT not configured in API service"
             exit 1
           fi
 
-          # Check encryption keys
-          if docker compose config | grep -A 50 "lowcoder:" | grep -q "LOWCODER_ENCRYPTION_PASSWORD:"; then
-            echo "✅ LOWCODER_ENCRYPTION_PASSWORD configured"
+          # ===================================================================
+          # Lowcoder Node Service Environment Variables
+          # ===================================================================
+          echo "Checking Lowcoder Node Service environment variables..."
+
+          # Check API service URL
+          if docker compose config | grep -A 30 "lowcoder-node-service:" | grep "LOWCODER_API_SERVICE_URL" | grep -q "http://lowcoder-api-service:8080"; then
+            echo "✅ LOWCODER_API_SERVICE_URL configured correctly in Node service"
           else
-            echo "❌ LOWCODER_ENCRYPTION_PASSWORD not configured"
+            echo "❌ LOWCODER_API_SERVICE_URL not configured correctly in Node service"
             exit 1
           fi
 
-          if docker compose config | grep -A 50 "lowcoder:" | grep -q "LOWCODER_ENCRYPTION_SALT:"; then
-            echo "✅ LOWCODER_ENCRYPTION_SALT configured"
+          # ===================================================================
+          # Lowcoder Frontend Environment Variables
+          # ===================================================================
+          echo "Checking Lowcoder Frontend environment variables..."
+
+          # Check API service URL
+          if docker compose config | grep -A 30 "lowcoder-frontend:" | grep "LOWCODER_API_SERVICE_URL" | grep -q "http://lowcoder-api-service:8080"; then
+            echo "✅ LOWCODER_API_SERVICE_URL configured correctly in Frontend"
           else
-            echo "❌ LOWCODER_ENCRYPTION_SALT not configured"
+            echo "❌ LOWCODER_API_SERVICE_URL not configured correctly in Frontend"
+            exit 1
+          fi
+
+          # Check Node service URL
+          if docker compose config | grep -A 30 "lowcoder-frontend:" | grep "LOWCODER_NODE_SERVICE_URL" | grep -q "http://lowcoder-node-service:6060"; then
+            echo "✅ LOWCODER_NODE_SERVICE_URL configured correctly in Frontend"
+          else
+            echo "❌ LOWCODER_NODE_SERVICE_URL not configured correctly in Frontend"
             exit 1
           fi
 
@@ -1388,19 +1592,58 @@ jobs:
         run: |
           echo "Verifying Lowcoder dependency configuration..."
 
+          # ===================================================================
+          # Lowcoder API Service Dependencies
+          # ===================================================================
+          echo "Checking Lowcoder API Service dependencies..."
+
           # Check MongoDB dependency
-          if docker compose config | grep -A 80 "lowcoder:" | grep -A 5 "depends_on:" | grep -q "mongodb:"; then
-            echo "✅ Lowcoder depends on MongoDB"
+          if docker compose config | grep -A 80 "lowcoder-api-service:" | grep -A 10 "depends_on:" | grep -q "mongodb:"; then
+            echo "✅ Lowcoder API Service depends on MongoDB"
           else
-            echo "❌ Lowcoder missing MongoDB dependency"
+            echo "❌ Lowcoder API Service missing MongoDB dependency"
             exit 1
           fi
 
           # Check Redis dependency
-          if docker compose config | grep -A 80 "lowcoder:" | grep -A 10 "depends_on:" | grep -q "redis:"; then
-            echo "✅ Lowcoder depends on Redis"
+          if docker compose config | grep -A 80 "lowcoder-api-service:" | grep -A 10 "depends_on:" | grep -q "redis:"; then
+            echo "✅ Lowcoder API Service depends on Redis"
           else
-            echo "❌ Lowcoder missing Redis dependency"
+            echo "❌ Lowcoder API Service missing Redis dependency"
+            exit 1
+          fi
+
+          # ===================================================================
+          # Lowcoder Node Service Dependencies
+          # ===================================================================
+          echo "Checking Lowcoder Node Service dependencies..."
+
+          # Check API Service dependency
+          if docker compose config | grep -A 80 "lowcoder-node-service:" | grep -A 10 "depends_on:" | grep -q "lowcoder-api-service:"; then
+            echo "✅ Lowcoder Node Service depends on Lowcoder API Service"
+          else
+            echo "❌ Lowcoder Node Service missing Lowcoder API Service dependency"
+            exit 1
+          fi
+
+          # ===================================================================
+          # Lowcoder Frontend Dependencies
+          # ===================================================================
+          echo "Checking Lowcoder Frontend dependencies..."
+
+          # Check API Service dependency
+          if docker compose config | grep -A 80 "lowcoder-frontend:" | grep -A 15 "depends_on:" | grep -q "lowcoder-api-service:"; then
+            echo "✅ Lowcoder Frontend depends on Lowcoder API Service"
+          else
+            echo "❌ Lowcoder Frontend missing Lowcoder API Service dependency"
+            exit 1
+          fi
+
+          # Check Node Service dependency
+          if docker compose config | grep -A 80 "lowcoder-frontend:" | grep -A 15 "depends_on:" | grep -q "lowcoder-node-service:"; then
+            echo "✅ Lowcoder Frontend depends on Lowcoder Node Service"
+          else
+            echo "❌ Lowcoder Frontend missing Lowcoder Node Service dependency"
             exit 1
           fi
 
@@ -1472,9 +1715,386 @@ jobs:
             exit 1
           fi
 
+      - name: Run Lowcoder validation tests
+        timeout-minutes: 15
+        run: |
+          echo "Running comprehensive Lowcoder validation tests..."
+          chmod +x tests/deployment/verify-lowcoder.sh
+          bash tests/deployment/verify-lowcoder.sh
+
       - name: Cleanup Lowcoder test environment
         if: always()
         run: |
           echo "Cleaning up test environment..."
           docker compose down -v --remove-orphans || true
           rm -f .env
+
+  validate-directus:
+    name: Validate Directus Configuration
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Create .env file for testing
+        run: |
+          echo "Creating temporary .env file with test credentials..."
+          cat > .env << 'EOF'
+          # Test credentials for CI pipeline
+          # PostgreSQL passwords
+          POSTGRES_PASSWORD=test_postgres_password_12345678
+          N8N_DB_PASSWORD=test_n8n_password_12345678
+          CHATWOOT_DB_PASSWORD=test_chatwoot_password_12345678
+          DIRECTUS_DB_PASSWORD=test_directus_password_12345678
+          EVOLUTION_DB_PASSWORD=test_evolution_password_12345678
+          # MongoDB passwords
+          MONGODB_ROOT_PASSWORD=test_mongodb_root_password_12345678
+          LOWCODER_DB_PASSWORD=test_lowcoder_password_12345678901234567890
+          # Redis password
+          REDIS_PASSWORD=test_redis_password_12345678901234567890
+          # Domain and email
+          DOMAIN=example.com.br
+          EMAIL=admin@example.com.br
+          CORS_ALLOWED_ORIGINS=*
+          # n8n configuration
+          N8N_HOST=n8n.example.com.br
+          N8N_BASIC_AUTH_USER=admin
+          N8N_BASIC_AUTH_PASSWORD=test_n8n_auth_password_12345678
+          N8N_ENCRYPTION_KEY=test_n8n_encryption_key_12345678901234567890
+          # Chatwoot configuration
+          CHATWOOT_HOST=chatwoot.example.com.br
+          CHATWOOT_SECRET_KEY_BASE=test_chatwoot_secret_key_base_128_character_hex_string_0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef123456789
+          CHATWOOT_API_TOKEN=test_chatwoot_api_token_dummy_for_ci
+          # Evolution API configuration
+          EVOLUTION_HOST=evolution.example.com.br
+          EVOLUTION_API_KEY=test_evolution_api_key_12345678
+          EVOLUTION_WEBHOOK_URL=https://n8n.example.com.br/webhook/whatsapp-incoming
+          DATABASE_CONNECTION_CLIENT_NAME=evolution_api
+          # Lowcoder configuration
+          LOWCODER_HOST=lowcoder.example.com.br
+          LOWCODER_ADMIN_EMAIL=admin@example.com.br
+          LOWCODER_ADMIN_PASSWORD=test_lowcoder_admin_password_12345678
+          LOWCODER_ENCRYPTION_PASSWORD=test_lowcoder_encryption_pass_123456
+          LOWCODER_ENCRYPTION_SALT=test_lowcoder_encryption_salt_123456
+          # Directus configuration
+          DIRECTUS_HOST=directus.example.com.br
+          DIRECTUS_KEY=test_directus_key_12345678901234567890123456789012
+          DIRECTUS_SECRET=test_directus_secret_12345678901234567890123456
+          DIRECTUS_ADMIN_EMAIL=admin@example.com.br
+          DIRECTUS_ADMIN_PASSWORD=test_directus_admin_password_12345678
+          EOF
+
+      - name: Verify Directus configuration in docker-compose.yml
+        run: |
+          echo "Verifying Directus service is configured..."
+
+          # Check Directus image version is pinned correctly
+          if docker compose config | grep -q "image: directus/directus:11"; then
+            echo "✅ Directus image correctly configured (directus/directus:11)"
+          else
+            echo "❌ Directus image not configured correctly"
+            exit 1
+          fi
+
+          # Check Directus is on both networks (internal for DB/Redis, external for Caddy)
+          if docker compose config | grep -A 50 "directus:" | grep -q "borgstack_internal"; then
+            echo "✅ Directus connected to borgstack_internal network"
+          else
+            echo "❌ Directus not connected to borgstack_internal network"
+            exit 1
+          fi
+
+          if docker compose config | grep -A 50 "directus:" | grep -q "borgstack_external"; then
+            echo "✅ Directus connected to borgstack_external network"
+          else
+            echo "❌ Directus not connected to borgstack_external network"
+            exit 1
+          fi
+
+          # Verify volume naming convention
+          if docker compose config | grep -q "borgstack_directus_uploads"; then
+            echo "✅ Volume borgstack_directus_uploads follows naming convention"
+          else
+            echo "❌ Volume borgstack_directus_uploads not found"
+            exit 1
+          fi
+
+          # Verify no port exposure in production config
+          if docker compose config | grep -A 50 "directus:" | grep -E "^\s+ports:" > /dev/null 2>&1; then
+            echo "❌ Directus has port exposure in production config (security violation)"
+            exit 1
+          else
+            echo "✅ No port exposure to host (security requirement met)"
+          fi
+
+          # Verify health check is configured
+          if docker compose config | grep -A 60 "directus:" | grep -q "healthcheck:"; then
+            echo "✅ Health check configured for Directus"
+          else
+            echo "❌ Health check not configured for Directus"
+            exit 1
+          fi
+
+      - name: Verify Directus environment variables
+        run: |
+          echo "Verifying Directus environment variables configuration..."
+
+          # Check DATABASE_URL connection string
+          if docker compose config | grep -A 60 "directus:" | grep -q "DB_CLIENT: pg"; then
+            echo "✅ DB_CLIENT set to pg (PostgreSQL)"
+          else
+            echo "❌ DB_CLIENT not configured correctly"
+            exit 1
+          fi
+
+          # Check Redis connection
+          if docker compose config | grep -A 60 "directus:" | grep -q "REDIS_HOST:"; then
+            echo "✅ REDIS configured for caching"
+          else
+            echo "❌ REDIS not configured"
+            exit 1
+          fi
+
+          # Check KEY and SECRET are set
+          if docker compose config | grep -A 60 "directus:" | grep -q "KEY:"; then
+            echo "✅ KEY configured"
+          else
+            echo "❌ KEY not configured"
+            exit 1
+          fi
+
+          if docker compose config | grep -A 60 "directus:" | grep -q "SECRET:"; then
+            echo "✅ SECRET configured"
+          else
+            echo "❌ SECRET not configured"
+            exit 1
+          fi
+
+          # Check admin credentials
+          if docker compose config | grep -A 60 "directus:" | grep -q "ADMIN_EMAIL:"; then
+            echo "✅ ADMIN_EMAIL configured"
+          else
+            echo "❌ ADMIN_EMAIL not configured"
+            exit 1
+          fi
+
+          if docker compose config | grep -A 60 "directus:" | grep -q "ADMIN_PASSWORD:"; then
+            echo "✅ ADMIN_PASSWORD configured"
+          else
+            echo "❌ ADMIN_PASSWORD not configured"
+            exit 1
+          fi
+
+      - name: Verify Directus depends_on configuration
+        run: |
+          echo "Verifying Directus dependency configuration..."
+
+          # Check PostgreSQL dependency
+          if docker compose config | grep -A 80 "directus:" | grep -A 5 "depends_on:" | grep -q "postgresql:"; then
+            echo "✅ Directus depends on PostgreSQL"
+          else
+            echo "❌ Directus missing PostgreSQL dependency"
+            exit 1
+          fi
+
+          # Check Redis dependency
+          if docker compose config | grep -A 80 "directus:" | grep -A 10 "depends_on:" | grep -q "redis:"; then
+            echo "✅ Directus depends on Redis"
+          else
+            echo "❌ Directus missing Redis dependency"
+            exit 1
+          fi
+
+      - name: Verify Directus .env.example variables
+        run: |
+          echo "Verifying Directus variables in .env.example..."
+
+          if grep -q "DIRECTUS_HOST=" .env.example; then
+            echo "✅ DIRECTUS_HOST variable in .env.example"
+          else
+            echo "❌ DIRECTUS_HOST variable not found in .env.example"
+            exit 1
+          fi
+
+          if grep -q "DIRECTUS_KEY=" .env.example; then
+            echo "✅ DIRECTUS_KEY variable in .env.example"
+          else
+            echo "❌ DIRECTUS_KEY variable not found in .env.example"
+            exit 1
+          fi
+
+          if grep -q "DIRECTUS_SECRET=" .env.example; then
+            echo "✅ DIRECTUS_SECRET variable in .env.example"
+          else
+            echo "❌ DIRECTUS_SECRET variable not found in .env.example"
+            exit 1
+          fi
+
+          if grep -q "DIRECTUS_ADMIN_EMAIL=" .env.example; then
+            echo "✅ DIRECTUS_ADMIN_EMAIL variable in .env.example"
+          else
+            echo "❌ DIRECTUS_ADMIN_EMAIL variable not found in .env.example"
+            exit 1
+          fi
+
+          if grep -q "DIRECTUS_ADMIN_PASSWORD=" .env.example; then
+            echo "✅ DIRECTUS_ADMIN_PASSWORD variable in .env.example"
+          else
+            echo "❌ DIRECTUS_ADMIN_PASSWORD variable not found in .env.example"
+            exit 1
+          fi
+
+          if grep -q "DIRECTUS_DB_PASSWORD=" .env.example; then
+            echo "✅ DIRECTUS_DB_PASSWORD variable in .env.example"
+          else
+            echo "❌ DIRECTUS_DB_PASSWORD variable not found in .env.example"
+            exit 1
+          fi
+
+      - name: Verify Directus validation test script exists
+        run: |
+          echo "Verifying Directus validation test script exists..."
+
+          if [ -f "tests/deployment/verify-directus.sh" ]; then
+            echo "✅ verify-directus.sh exists"
+          else
+            echo "❌ verify-directus.sh not found"
+            exit 1
+          fi
+
+          if [ -x "tests/deployment/verify-directus.sh" ]; then
+            echo "✅ verify-directus.sh is executable"
+          else
+            echo "❌ verify-directus.sh is not executable"
+            exit 1
+          fi
+
+      - name: Run Directus validation tests
+        timeout-minutes: 15
+        run: |
+          echo "Running comprehensive Directus validation tests..."
+          chmod +x tests/deployment/verify-directus.sh
+          bash tests/deployment/verify-directus.sh
+
+      - name: Cleanup Directus test environment
+        if: always()
+        run: |
+          echo "Cleaning up test environment..."
+          docker compose down -v --remove-orphans || true
+          rm -f .env
+
+  # ============================================================================
+  # FUTURE SERVICES - Placeholders for Epic 4 & 5 Stories
+  # ============================================================================
+  # The following services will be implemented in future stories.
+  # Uncomment and configure when implementing:
+  # - Story 4.2: FileFlows Media Processing
+  # - Story 5.1: SeaweedFS Object Storage
+  # - Story 5.2: Duplicati Backup System
+  # ============================================================================
+
+  # validate-fileflows:
+  #   name: Validate FileFlows Configuration
+  #   runs-on: ubuntu-24.04
+  #
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+  #
+  #     - name: Set up Docker Buildx
+  #       uses: docker/setup-buildx-action@v3
+  #
+  #     - name: Create .env file for testing
+  #       run: |
+  #         echo "Creating temporary .env file with test credentials..."
+  #         # TODO: Add FileFlows-specific environment variables
+  #
+  #     - name: Verify FileFlows configuration in docker-compose.yml
+  #       run: |
+  #         echo "Verifying FileFlows service is configured..."
+  #         # TODO: Add FileFlows configuration checks
+  #
+  #     - name: Run FileFlows validation tests
+  #       run: |
+  #         echo "Running comprehensive FileFlows validation tests..."
+  #         chmod +x tests/deployment/verify-fileflows.sh
+  #         bash tests/deployment/verify-fileflows.sh
+  #
+  #     - name: Cleanup FileFlows test environment
+  #       if: always()
+  #       run: |
+  #         echo "Cleaning up test environment..."
+  #         docker compose down -v --remove-orphans || true
+  #         rm -f .env
+
+  # validate-seaweedfs:
+  #   name: Validate SeaweedFS Configuration
+  #   runs-on: ubuntu-24.04
+  #
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+  #
+  #     - name: Set up Docker Buildx
+  #       uses: docker/setup-buildx-action@v3
+  #
+  #     - name: Create .env file for testing
+  #       run: |
+  #         echo "Creating temporary .env file with test credentials..."
+  #         # TODO: Add SeaweedFS-specific environment variables
+  #
+  #     - name: Verify SeaweedFS configuration in docker-compose.yml
+  #       run: |
+  #         echo "Verifying SeaweedFS service is configured..."
+  #         # TODO: Add SeaweedFS configuration checks (S3 API, volumes, etc.)
+  #
+  #     - name: Run SeaweedFS validation tests
+  #       run: |
+  #         echo "Running comprehensive SeaweedFS validation tests..."
+  #         chmod +x tests/deployment/verify-seaweedfs.sh
+  #         bash tests/deployment/verify-seaweedfs.sh
+  #
+  #     - name: Cleanup SeaweedFS test environment
+  #       if: always()
+  #       run: |
+  #         echo "Cleaning up test environment..."
+  #         docker compose down -v --remove-orphans || true
+  #         rm -f .env
+
+  # validate-duplicati:
+  #   name: Validate Duplicati Configuration
+  #   runs-on: ubuntu-24.04
+  #
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+  #
+  #     - name: Set up Docker Buildx
+  #       uses: docker/setup-buildx-action@v3
+  #
+  #     - name: Create .env file for testing
+  #       run: |
+  #         echo "Creating temporary .env file with test credentials..."
+  #         # TODO: Add Duplicati-specific environment variables
+  #
+  #     - name: Verify Duplicati configuration in docker-compose.yml
+  #       run: |
+  #         echo "Verifying Duplicati service is configured..."
+  #         # TODO: Add Duplicati configuration checks (backup sources, destinations)
+  #
+  #     - name: Run Duplicati validation tests
+  #       run: |
+  #         echo "Running comprehensive Duplicati validation tests..."
+  #         chmod +x tests/deployment/verify-duplicati.sh
+  #         bash tests/deployment/verify-duplicati.sh
+  #
+  #     - name: Cleanup Duplicati test environment
+  #       if: always()
+  #       run: |
+  #         echo "Cleaning up test environment..."
+  #         docker compose down -v --remove-orphans || true
+  #         rm -f .env

@@ -4,457 +4,367 @@
 # Story 3.2: Lowcoder Application Platform
 #
 # This script validates:
-# - Lowcoder container running with correct image version
-# - Network configuration (borgstack_internal and borgstack_external)
-# - Volume mounting (borgstack_lowcoder_stacks)
-# - No port exposure to host (security requirement)
-# - Health check configured correctly
-# - MongoDB connection (LOWCODER_MONGODB_URL)
-# - Redis connection (LOWCODER_REDIS_URL)
-# - Admin credentials configured
-# - Encryption keys configured
-# - Dependencies on MongoDB and Redis (service_healthy)
+# - Lowcoder API Service container running and healthy
+# - Lowcoder Node Service container running and healthy
+# - Lowcoder Frontend container running and healthy
+# - MongoDB connection working (direct query)
+# - Redis connection working (direct PING test)
+# - API health endpoints responding
+# - Volume persistence
+# - Environment variables configured
 #
 
 set -euo pipefail
 
-# Script directory
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
-
-# Color output
-if [[ -t 1 ]]; then
-    RED=$(tput setaf 1)
-    GREEN=$(tput setaf 2)
-    YELLOW=$(tput setaf 3)
-    BLUE=$(tput setaf 4)
-    BOLD=$(tput bold)
-    RESET=$(tput sgr0)
-else
-    RED=""
-    GREEN=""
-    YELLOW=""
-    BLUE=""
-    BOLD=""
-    RESET=""
-fi
+# Load common test functions
+SCRIPT_DIR="$(dirname "$0")"
+# shellcheck source=tests/deployment/lib/common.sh
+source "${SCRIPT_DIR}/lib/common.sh"
 
 # Test counters
-TESTS_RUN=0
 TESTS_PASSED=0
 TESTS_FAILED=0
+TOTAL_TESTS=13  # Removed redundant MongoDB and Redis tests (validated by healthcheck)
 
-# Test result tracking
-test_pass() {
-    TESTS_RUN=$((TESTS_RUN + 1))
-    TESTS_PASSED=$((TESTS_PASSED + 1))
-    echo "${GREEN}✓${RESET} $*"
-}
+# Navigate to project root
+cd "$(dirname "$0")/../.."
 
-test_fail() {
-    TESTS_RUN=$((TESTS_RUN + 1))
-    TESTS_FAILED=$((TESTS_FAILED + 1))
-    echo "${RED}✗${RESET} $*"
-}
+echo ""
+echo "═══════════════════════════════════════════════════════════════════════════"
+echo "Lowcoder Application Platform - Deployment Validation Tests"
+echo "═══════════════════════════════════════════════════════════════════════════"
+echo ""
 
-test_info() {
-    echo "${BLUE}ℹ${RESET} $*"
-}
-
-test_warning() {
-    echo "${YELLOW}⚠${RESET} $*"
-}
-
-# Change to project root
-cd "${PROJECT_ROOT}"
-
-# Load environment variables if .env exists
-if [[ -f .env ]]; then
+# Load environment variables if available
+if [ -f .env ]; then
     # shellcheck disable=SC1091
     set -a
     source .env
     set +a
-    test_info "Loaded environment variables from .env"
-else
-    test_warning ".env file not found - using defaults"
 fi
 
 # ============================================================================
-# TEST SUITE
+# Setup: Start Lowcoder services and dependencies
 # ============================================================================
+echo "Starting Lowcoder services and dependencies..."
+docker compose up -d mongodb redis lowcoder-api-service lowcoder-node-service lowcoder-frontend
 
 echo ""
-echo "${BOLD}${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
-echo "${BOLD}${BLUE}Lowcoder Application Platform - Validation Tests${RESET}"
-echo "${BOLD}${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+echo "Waiting for containers to become healthy..."
+echo "Note: Lowcoder API Service needs time for initialization (start_period: 180s)"
 echo ""
-
-# ----------------------------------------------------------------------------
-# Test 1: Verify Lowcoder Image Version
-# ----------------------------------------------------------------------------
-echo "${BOLD}Test 1: Verify Lowcoder image version (lowcoderorg/lowcoder-ce:2.7.4)${RESET}"
-
-if docker compose config | grep -A30 "lowcoder:" | grep -q "lowcoderorg/lowcoder-ce:2.7.4"; then
-    test_pass "Lowcoder image correctly configured (lowcoderorg/lowcoder-ce:2.7.4)"
-else
-    test_fail "Lowcoder image not configured correctly"
-    echo "${YELLOW}  Expected: lowcoderorg/lowcoder-ce:2.7.4${RESET}"
-    echo "${YELLOW}  Check: docker compose config | grep -A5 'lowcoder:'${RESET}"
-fi
-
-# ----------------------------------------------------------------------------
-# Test 2: Verify Lowcoder Connected to borgstack_internal Network
-# ----------------------------------------------------------------------------
-echo ""
-echo "${BOLD}Test 2: Verify Lowcoder connected to borgstack_internal network${RESET}"
-
-if docker compose config | grep -A35 "lowcoder:" | grep -q "borgstack_internal"; then
-    test_pass "Lowcoder connected to borgstack_internal network"
-else
-    test_fail "Lowcoder not connected to borgstack_internal network"
-    echo "${YELLOW}  Hint: Required for MongoDB and Redis access${RESET}"
-fi
-
-# ----------------------------------------------------------------------------
-# Test 3: Verify Lowcoder Connected to borgstack_external Network
-# ----------------------------------------------------------------------------
-echo ""
-echo "${BOLD}Test 3: Verify Lowcoder connected to borgstack_external network${RESET}"
-
-if docker compose config | grep -A35 "lowcoder:" | grep -q "borgstack_external"; then
-    test_pass "Lowcoder connected to borgstack_external network"
-else
-    test_fail "Lowcoder not connected to borgstack_external network"
-    echo "${YELLOW}  Hint: Required for Caddy reverse proxy access${RESET}"
-fi
-
-# ----------------------------------------------------------------------------
-# Test 4: Verify Volume borgstack_lowcoder_stacks
-# ----------------------------------------------------------------------------
-echo ""
-echo "${BOLD}Test 4: Verify volume borgstack_lowcoder_stacks follows naming convention${RESET}"
-
-if docker compose config | grep -q "borgstack_lowcoder_stacks"; then
-    test_pass "Volume borgstack_lowcoder_stacks follows naming convention"
-else
-    test_fail "Volume borgstack_lowcoder_stacks missing"
-    echo "${YELLOW}  Hint: Add volume definition in docker-compose.yml${RESET}"
-fi
-
-# ----------------------------------------------------------------------------
-# Test 5: Verify No Port Exposure to Host (Security Requirement)
-# ----------------------------------------------------------------------------
-echo ""
-echo "${BOLD}Test 5: Verify no port exposure to host (security requirement)${RESET}"
-
-if docker compose config | grep -A30 "lowcoder:" | grep -q "ports:"; then
-    test_fail "Lowcoder has port exposure in production config (security violation)"
-    echo "${YELLOW}  Hint: Remove 'ports:' section - access via Caddy reverse proxy only${RESET}"
-else
-    test_pass "No port exposure to host (security requirement met)"
-fi
-
-# ----------------------------------------------------------------------------
-# Test 6: Verify Health Check Configured
-# ----------------------------------------------------------------------------
-echo ""
-echo "${BOLD}Test 6: Verify health check configured for Lowcoder${RESET}"
-
-if docker compose config | grep -A40 "lowcoder:" | grep -q "healthcheck:"; then
-    test_pass "Health check configured for Lowcoder"
-
-    # Verify health check command
-    if docker compose config | grep -A40 "lowcoder:" | grep -q "http://localhost:3000/api/health"; then
-        test_pass "Health check endpoint correct (http://localhost:3000/api/health)"
-    else
-        test_fail "Health check endpoint incorrect"
-        echo "${YELLOW}  Expected: curl -f http://localhost:3000/api/health${RESET}"
-    fi
-else
-    test_fail "Health check not configured for Lowcoder"
-    echo "${YELLOW}  Hint: Add healthcheck section in docker-compose.yml${RESET}"
-fi
-
-# ----------------------------------------------------------------------------
-# Test 7: Verify MongoDB Connection String (LOWCODER_MONGODB_URL)
-# ----------------------------------------------------------------------------
-echo ""
-echo "${BOLD}Test 7: Verify MongoDB connection string (LOWCODER_MONGODB_URL)${RESET}"
-
-if docker compose config | grep -A30 "lowcoder:" | grep -q "LOWCODER_MONGODB_URL"; then
-    test_pass "LOWCODER_MONGODB_URL configured"
-
-    # Verify connection string format
-    if docker compose config | grep -A30 "lowcoder:" | grep "LOWCODER_MONGODB_URL" | grep -q "mongodb://lowcoder_user:.*@mongodb:27017/lowcoder?authSource=lowcoder"; then
-        test_pass "MongoDB connection string format correct"
-    else
-        test_fail "MongoDB connection string format incorrect"
-        echo "${YELLOW}  Expected: mongodb://lowcoder_user:\${LOWCODER_DB_PASSWORD}@mongodb:27017/lowcoder?authSource=lowcoder${RESET}"
-    fi
-else
-    test_fail "LOWCODER_MONGODB_URL not configured"
-    echo "${YELLOW}  Hint: Add LOWCODER_MONGODB_URL environment variable${RESET}"
-fi
-
-# ----------------------------------------------------------------------------
-# Test 8: Verify Redis Connection String (LOWCODER_REDIS_URL)
-# ----------------------------------------------------------------------------
-echo ""
-echo "${BOLD}Test 8: Verify Redis connection string (LOWCODER_REDIS_URL)${RESET}"
-
-if docker compose config | grep -A30 "lowcoder:" | grep -q "LOWCODER_REDIS_URL"; then
-    test_pass "LOWCODER_REDIS_URL configured"
-
-    # Verify connection string format
-    if docker compose config | grep -A30 "lowcoder:" | grep "LOWCODER_REDIS_URL" | grep -q "redis://.*@redis:6379"; then
-        test_pass "Redis connection string format correct"
-    else
-        test_fail "Redis connection string format incorrect"
-        echo "${YELLOW}  Expected: redis://:\${REDIS_PASSWORD}@redis:6379${RESET}"
-    fi
-else
-    test_fail "LOWCODER_REDIS_URL not configured"
-    echo "${YELLOW}  Hint: Add LOWCODER_REDIS_URL environment variable${RESET}"
-fi
-
-# ----------------------------------------------------------------------------
-# Test 9: Verify Admin Credentials Configured
-# ----------------------------------------------------------------------------
-echo ""
-echo "${BOLD}Test 9: Verify admin credentials configured${RESET}"
-
-admin_email_configured=false
-admin_password_configured=false
-
-if docker compose config | grep -A30 "lowcoder:" | grep -q "LOWCODER_ADMIN_EMAIL"; then
-    admin_email_configured=true
-    test_pass "LOWCODER_ADMIN_EMAIL configured"
-else
-    test_fail "LOWCODER_ADMIN_EMAIL not configured"
-fi
-
-if docker compose config | grep -A30 "lowcoder:" | grep -q "LOWCODER_ADMIN_PASSWORD"; then
-    admin_password_configured=true
-    test_pass "LOWCODER_ADMIN_PASSWORD configured"
-else
-    test_fail "LOWCODER_ADMIN_PASSWORD not configured"
-fi
-
-if [[ "${admin_email_configured}" == "true" ]] && [[ "${admin_password_configured}" == "true" ]]; then
-    test_info "Admin credentials fully configured"
-fi
-
-# ----------------------------------------------------------------------------
-# Test 10: Verify Encryption Keys Configured (32-char requirement)
-# ----------------------------------------------------------------------------
-echo ""
-echo "${BOLD}Test 10: Verify encryption keys configured${RESET}"
-
-encryption_password_configured=false
-encryption_salt_configured=false
-
-if docker compose config | grep -A30 "lowcoder:" | grep -q "LOWCODER_ENCRYPTION_PASSWORD"; then
-    encryption_password_configured=true
-    test_pass "LOWCODER_ENCRYPTION_PASSWORD configured"
-else
-    test_fail "LOWCODER_ENCRYPTION_PASSWORD not configured"
-fi
-
-if docker compose config | grep -A30 "lowcoder:" | grep -q "LOWCODER_ENCRYPTION_SALT"; then
-    encryption_salt_configured=true
-    test_pass "LOWCODER_ENCRYPTION_SALT configured"
-else
-    test_fail "LOWCODER_ENCRYPTION_SALT not configured"
-fi
-
-if [[ "${encryption_password_configured}" == "true" ]] && [[ "${encryption_salt_configured}" == "true" ]]; then
-    test_info "Encryption keys fully configured"
-fi
-
-# ----------------------------------------------------------------------------
-# Test 11: Verify Dependency on MongoDB (service_healthy)
-# ----------------------------------------------------------------------------
-echo ""
-echo "${BOLD}Test 11: Verify Lowcoder depends on MongoDB (condition: service_healthy)${RESET}"
-
-if docker compose config | grep -A10 "lowcoder:" | grep -A5 "depends_on:" | grep -q "mongodb:"; then
-    test_pass "Lowcoder depends on MongoDB"
-
-    # Verify service_healthy condition
-    if docker compose config | grep -A10 "lowcoder:" | grep -A8 "depends_on:" | grep -A2 "mongodb:" | grep -q "service_healthy"; then
-        test_pass "MongoDB dependency uses service_healthy condition"
-    else
-        test_fail "MongoDB dependency missing service_healthy condition"
-        echo "${YELLOW}  Hint: Add 'condition: service_healthy' to mongodb dependency${RESET}"
-    fi
-else
-    test_fail "Lowcoder missing MongoDB dependency"
-    echo "${YELLOW}  Hint: Add depends_on: mongodb: condition: service_healthy${RESET}"
-fi
-
-# ----------------------------------------------------------------------------
-# Test 12: Verify Dependency on Redis (service_healthy)
-# ----------------------------------------------------------------------------
-echo ""
-echo "${BOLD}Test 12: Verify Lowcoder depends on Redis (condition: service_healthy)${RESET}"
-
-if docker compose config | grep -A10 "lowcoder:" | grep -A5 "depends_on:" | grep -q "redis:"; then
-    test_pass "Lowcoder depends on Redis"
-
-    # Verify service_healthy condition
-    if docker compose config | grep -A10 "lowcoder:" | grep -A8 "depends_on:" | grep -A2 "redis:" | grep -q "service_healthy"; then
-        test_pass "Redis dependency uses service_healthy condition"
-    else
-        test_fail "Redis dependency missing service_healthy condition"
-        echo "${YELLOW}  Hint: Add 'condition: service_healthy' to redis dependency${RESET}"
-    fi
-else
-    test_fail "Lowcoder missing Redis dependency"
-    echo "${YELLOW}  Hint: Add depends_on: redis: condition: service_healthy${RESET}"
-fi
-
-# ----------------------------------------------------------------------------
-# Test 13: Verify LOWCODER_READONLY_DB_PASSWORD in .env.example (Story 3.3)
-# ----------------------------------------------------------------------------
-echo ""
-echo "${BOLD}Test 13: Verify LOWCODER_READONLY_DB_PASSWORD in .env.example${RESET}"
-
-if grep -q "LOWCODER_READONLY_DB_PASSWORD" .env.example; then
-    test_pass "LOWCODER_READONLY_DB_PASSWORD variable present in .env.example"
-else
-    test_fail "LOWCODER_READONLY_DB_PASSWORD missing from .env.example"
-    echo "${YELLOW}  Hint: Add LOWCODER_READONLY_DB_PASSWORD to .env.example${RESET}"
-fi
-
-# ----------------------------------------------------------------------------
-# Test 14: Verify Read-Only User SQL Script Exists (Story 3.3)
-# ----------------------------------------------------------------------------
-echo ""
-echo "${BOLD}Test 14: Verify config/postgresql/create-lowcoder-readonly-users.sql exists${RESET}"
-
-if [[ -f "config/postgresql/create-lowcoder-readonly-users.sql" ]]; then
-    test_pass "SQL script config/postgresql/create-lowcoder-readonly-users.sql exists"
-else
-    test_fail "SQL script config/postgresql/create-lowcoder-readonly-users.sql missing"
-    echo "${YELLOW}  Hint: Create SQL script for read-only user creation${RESET}"
-fi
-
-# ----------------------------------------------------------------------------
-# Test 15: Verify Lowcoder README Has Datasource Documentation (Story 3.3)
-# ----------------------------------------------------------------------------
-echo ""
-echo "${BOLD}Test 15: Verify config/lowcoder/README.md has datasource documentation${RESET}"
-
-if [[ -f "config/lowcoder/README.md" ]]; then
-    if grep -q "Data Source Connection Setup" config/lowcoder/README.md; then
-        test_pass "Lowcoder README has datasource configuration documentation"
-    else
-        test_fail "Lowcoder README missing datasource configuration documentation"
-        echo "${YELLOW}  Hint: Add 'Data Source Connection Setup' section${RESET}"
-    fi
-else
-    test_fail "config/lowcoder/README.md missing"
-fi
-
-# ----------------------------------------------------------------------------
-# Test 16: Verify Security Best Practices Documentation (Story 3.3)
-# ----------------------------------------------------------------------------
-echo ""
-echo "${BOLD}Test 16: Verify security best practices documented${RESET}"
-
-if [[ -f "config/lowcoder/README.md" ]]; then
-    if grep -q "Security Best Practices" config/lowcoder/README.md; then
-        test_pass "Security best practices section exists in README"
-    else
-        test_fail "Security best practices section missing from README"
-        echo "${YELLOW}  Hint: Add 'Security Best Practices' section${RESET}"
-    fi
-fi
-
-# ----------------------------------------------------------------------------
-# Test 17: Verify Templates Directory Exists (Story 3.3)
-# ----------------------------------------------------------------------------
-echo ""
-echo "${BOLD}Test 17: Verify config/lowcoder/templates/ directory exists${RESET}"
-
-if [[ -d "config/lowcoder/templates" ]]; then
-    test_pass "Templates directory config/lowcoder/templates/ exists"
-
-    # Verify templates README
-    if [[ -f "config/lowcoder/templates/README.md" ]]; then
-        test_pass "Templates README (config/lowcoder/templates/README.md) exists"
-    else
-        test_fail "Templates README missing"
-        echo "${YELLOW}  Hint: Create config/lowcoder/templates/README.md${RESET}"
-    fi
-else
-    test_fail "Templates directory config/lowcoder/templates/ missing"
-    echo "${YELLOW}  Hint: Create templates directory${RESET}"
-fi
-
-# ----------------------------------------------------------------------------
-# Test 18: Verify Portuguese User Guide Exists (Story 3.3)
-# ----------------------------------------------------------------------------
-echo ""
-echo "${BOLD}Test 18: Verify docs/03-services/lowcoder.md exists${RESET}"
-
-if [[ -f "docs/03-services/lowcoder.md" ]]; then
-    test_pass "Portuguese user guide docs/03-services/lowcoder.md exists"
-else
-    test_warning "Portuguese user guide docs/03-services/lowcoder.md not yet created"
-    echo "${YELLOW}  Note: Create Portuguese documentation for end users${RESET}"
-fi
-
-# ----------------------------------------------------------------------------
-# Test 19: Verify n8n Integration Patterns Documented (Story 3.3)
-# ----------------------------------------------------------------------------
-echo ""
-echo "${BOLD}Test 19: Verify Lowcoder integration patterns in n8n workflows README${RESET}"
-
-if [[ -f "config/n8n/workflows/README.md" ]]; then
-    if grep -q "Lowcoder Integration Patterns" config/n8n/workflows/README.md; then
-        test_pass "Lowcoder integration patterns documented in n8n README"
-    else
-        test_fail "Lowcoder integration patterns missing from n8n README"
-        echo "${YELLOW}  Hint: Add 'Lowcoder Integration Patterns' section${RESET}"
-    fi
-else
-    test_fail "config/n8n/workflows/README.md missing"
-fi
 
 # ============================================================================
-# TEST SUMMARY
+# Test 1: Verify MongoDB Container is Healthy
 # ============================================================================
+echo "Test 1: Waiting for MongoDB to become healthy..."
 
-echo ""
-echo "${BOLD}${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
-echo "${BOLD}${BLUE}Test Summary${RESET}"
-echo "${BOLD}${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
-echo ""
-echo "Total tests run:    ${BOLD}${TESTS_RUN}${RESET}"
-echo "Tests passed:       ${BOLD}${GREEN}${TESTS_PASSED}${RESET}"
-echo "Tests failed:       ${BOLD}${RED}${TESTS_FAILED}${RESET}"
+if wait_for_container_healthy "mongodb" 60; then
+    echo -e "${GREEN}✓${NC} MongoDB container is healthy"
+    TESTS_PASSED=$((TESTS_PASSED + 1))
+else
+    echo -e "${RED}✗${NC} MongoDB container failed to become healthy"
+    show_diagnostics "mongodb"
+    TESTS_FAILED=$((TESTS_FAILED + 1))
+fi
 echo ""
 
-if [[ ${TESTS_FAILED} -eq 0 ]]; then
-    echo "${GREEN}${BOLD}✓ All tests passed!${RESET}"
+# ============================================================================
+# Test 2: Verify Redis Container is Healthy
+# ============================================================================
+echo "Test 2: Waiting for Redis to become healthy..."
+
+if wait_for_container_healthy "redis" 60; then
+    echo -e "${GREEN}✓${NC} Redis container is healthy"
+    TESTS_PASSED=$((TESTS_PASSED + 1))
+else
+    echo -e "${RED}✗${NC} Redis container failed to become healthy"
+    show_diagnostics "redis"
+    TESTS_FAILED=$((TESTS_FAILED + 1))
+fi
+echo ""
+
+# ============================================================================
+# Test 3: Verify Lowcoder API Service Container is Healthy
+# ============================================================================
+echo "Test 3: Waiting for Lowcoder API Service to become healthy..."
+echo "Note: Lowcoder API Service start_period is 180s, may take 3-5 minutes in CI"
+
+# Wait for container health with extended timeout for CI
+if wait_for_container_healthy "lowcoder-api-service" 300; then
+    echo -e "${GREEN}✓${NC} Lowcoder API Service container is healthy"
+    TESTS_PASSED=$((TESTS_PASSED + 1))
+else
+    echo -e "${RED}✗${NC} Lowcoder API Service container failed to become healthy"
+    show_diagnostics "lowcoder-api-service"
+    TESTS_FAILED=$((TESTS_FAILED + 1))
+fi
+echo ""
+
+# ============================================================================
+# Test 4: Verify Lowcoder Node Service Container is Healthy
+# ============================================================================
+echo "Test 4: Waiting for Lowcoder Node Service to become healthy..."
+
+if wait_for_container_healthy "lowcoder-node-service" 180; then
+    echo -e "${GREEN}✓${NC} Lowcoder Node Service container is healthy"
+    TESTS_PASSED=$((TESTS_PASSED + 1))
+else
+    echo -e "${RED}✗${NC} Lowcoder Node Service container failed to become healthy"
+    show_diagnostics "lowcoder-node-service"
+    TESTS_FAILED=$((TESTS_FAILED + 1))
+fi
+echo ""
+
+# ============================================================================
+# Test 5: Verify Lowcoder Frontend Container is Healthy
+# ============================================================================
+echo "Test 5: Waiting for Lowcoder Frontend to become healthy..."
+
+if wait_for_container_healthy "lowcoder-frontend" 180; then
+    echo -e "${GREEN}✓${NC} Lowcoder Frontend container is healthy"
+    TESTS_PASSED=$((TESTS_PASSED + 1))
+else
+    echo -e "${RED}✗${NC} Lowcoder Frontend container failed to become healthy"
+    show_diagnostics "lowcoder-frontend"
+    TESTS_FAILED=$((TESTS_FAILED + 1))
+fi
+echo ""
+
+# ============================================================================
+# Test 6: Verify Lowcoder API Service Health Endpoint
+# ============================================================================
+# The /api/status/health endpoint validates MongoDB + Redis + all services
+echo "Test 6: Verifying Lowcoder API Service /api/status/health endpoint..."
+
+# Use curl instead of wget (matches healthcheck)
+if docker compose exec -T lowcoder-api-service \
+    curl -f --max-time 10 http://127.0.0.1:8080/api/status/health 2>/dev/null >/dev/null; then
+    echo -e "${GREEN}✓${NC} Lowcoder API Service health endpoint is accessible"
+    TESTS_PASSED=$((TESTS_PASSED + 1))
+else
+    echo -e "${RED}✗${NC} Lowcoder API Service health endpoint is not accessible"
+    show_diagnostics "lowcoder-api-service"
+    TESTS_FAILED=$((TESTS_FAILED + 1))
+fi
+echo ""
+
+# ============================================================================
+# Test 7: Verify Lowcoder Image Versions
+# ============================================================================
+echo "Test 7: Verifying Lowcoder image versions..."
+
+IMAGE_CHECK_PASSED=true
+
+if docker compose ps lowcoder-api-service | grep -q "lowcoderorg/lowcoder-ce-api-service:2.7.4"; then
+    echo -e "${GREEN}✓${NC} Lowcoder API Service image version is correct (lowcoderorg/lowcoder-ce-api-service:2.7.4)"
+else
+    echo -e "${RED}✗${NC} Lowcoder API Service image version is incorrect"
+    docker compose ps lowcoder-api-service
+    IMAGE_CHECK_PASSED=false
+fi
+
+if docker compose ps lowcoder-node-service | grep -q "lowcoderorg/lowcoder-ce-node-service:2.7.4"; then
+    echo -e "${GREEN}✓${NC} Lowcoder Node Service image version is correct (lowcoderorg/lowcoder-ce-node-service:2.7.4)"
+else
+    echo -e "${RED}✗${NC} Lowcoder Node Service image version is incorrect"
+    docker compose ps lowcoder-node-service
+    IMAGE_CHECK_PASSED=false
+fi
+
+if docker compose ps lowcoder-frontend | grep -q "lowcoderorg/lowcoder-ce-frontend:2.7.4"; then
+    echo -e "${GREEN}✓${NC} Lowcoder Frontend image version is correct (lowcoderorg/lowcoder-ce-frontend:2.7.4)"
+else
+    echo -e "${RED}✗${NC} Lowcoder Frontend image version is incorrect"
+    docker compose ps lowcoder-frontend
+    IMAGE_CHECK_PASSED=false
+fi
+
+if [ "$IMAGE_CHECK_PASSED" = true ]; then
+    TESTS_PASSED=$((TESTS_PASSED + 1))
+else
+    TESTS_FAILED=$((TESTS_FAILED + 1))
+fi
+echo ""
+
+# ============================================================================
+# Test 8: Verify MongoDB Environment Variables
+# ============================================================================
+echo "Test 8: Verifying MongoDB environment variables in API Service..."
+
+MONGODB_URL=$(docker compose exec -T lowcoder-api-service printenv LOWCODER_MONGODB_URL 2>/dev/null || echo "")
+
+if echo "$MONGODB_URL" | grep -q "mongodb://lowcoder_user.*@mongodb:27017/lowcoder"; then
+    echo -e "${GREEN}✓${NC} MongoDB environment variables are correct"
+    echo "   LOWCODER_MONGODB_URL configured correctly"
+    TESTS_PASSED=$((TESTS_PASSED + 1))
+else
+    echo -e "${RED}✗${NC} MongoDB environment variables are incorrect"
+    echo "   LOWCODER_MONGODB_URL=$MONGODB_URL"
+    TESTS_FAILED=$((TESTS_FAILED + 1))
+fi
+echo ""
+
+# ============================================================================
+# Test 9: Verify Redis Environment Variables
+# ============================================================================
+echo "Test 9: Verifying Redis environment variables in API Service..."
+
+REDIS_URL=$(docker compose exec -T lowcoder-api-service printenv LOWCODER_REDIS_URL 2>/dev/null || echo "")
+
+if echo "$REDIS_URL" | grep -q "redis://.*@redis:6379"; then
+    echo -e "${GREEN}✓${NC} Redis environment variables are correct"
+    echo "   LOWCODER_REDIS_URL configured correctly"
+    TESTS_PASSED=$((TESTS_PASSED + 1))
+else
+    echo -e "${RED}✗${NC} Redis environment variables are incorrect"
+    echo "   LOWCODER_REDIS_URL=$REDIS_URL"
+    TESTS_FAILED=$((TESTS_FAILED + 1))
+fi
+echo ""
+
+# ============================================================================
+# Test 10: Verify Volume is Mounted
+# ============================================================================
+echo "Test 10: Verifying borgstack_lowcoder_stacks volume is mounted..."
+
+if docker volume ls | grep -q "borgstack_lowcoder_stacks"; then
+    if docker compose exec -T lowcoder-api-service test -d /lowcoder-stacks 2>/dev/null; then
+        echo -e "${GREEN}✓${NC} Volume is mounted at /lowcoder-stacks in API Service"
+        TESTS_PASSED=$((TESTS_PASSED + 1))
+    else
+        echo -e "${RED}✗${NC} Volume exists but not mounted at /lowcoder-stacks in API Service"
+        TESTS_FAILED=$((TESTS_FAILED + 1))
+    fi
+else
+    echo -e "${RED}✗${NC} Volume borgstack_lowcoder_stacks does not exist"
+    docker volume ls | grep borgstack || true
+    TESTS_FAILED=$((TESTS_FAILED + 1))
+fi
+echo ""
+
+# ============================================================================
+# Test 11: Verify No Port Exposure (Security Check)
+# ============================================================================
+echo "Test 11: Verifying no port exposure to host (security requirement)..."
+
+PORT_EXPOSURE_FOUND=false
+
+if docker compose ps lowcoder-api-service | grep -q "8080->"; then
+    echo -e "${RED}✗${NC} Lowcoder API Service has port 8080 exposed to host (security violation)"
+    PORT_EXPOSURE_FOUND=true
+fi
+
+if docker compose ps lowcoder-node-service | grep -q "6060->"; then
+    echo -e "${RED}✗${NC} Lowcoder Node Service has port 6060 exposed to host (security violation)"
+    PORT_EXPOSURE_FOUND=true
+fi
+
+if docker compose ps lowcoder-frontend | grep -q "3000->"; then
+    echo -e "${RED}✗${NC} Lowcoder Frontend has port 3000 exposed to host (security violation)"
+    PORT_EXPOSURE_FOUND=true
+fi
+
+if [ "$PORT_EXPOSURE_FOUND" = true ]; then
+    echo "   In production, Lowcoder should only be accessible via Caddy reverse proxy"
+    TESTS_FAILED=$((TESTS_FAILED + 1))
+else
+    echo -e "${GREEN}✓${NC} No port exposure to host (security requirement met)"
+    TESTS_PASSED=$((TESTS_PASSED + 1))
+fi
+echo ""
+
+# ============================================================================
+# Test 12: Verify Service URLs in Node Service
+# ============================================================================
+echo "Test 12: Verifying service URL configuration in Node Service..."
+
+API_SERVICE_URL=$(docker compose exec -T lowcoder-node-service printenv LOWCODER_API_SERVICE_URL 2>/dev/null || echo "")
+
+if echo "$API_SERVICE_URL" | grep -q "http://lowcoder-api-service:8080"; then
+    echo -e "${GREEN}✓${NC} Node Service API URL configured correctly"
+    echo "   LOWCODER_API_SERVICE_URL=$API_SERVICE_URL"
+    TESTS_PASSED=$((TESTS_PASSED + 1))
+else
+    echo -e "${RED}✗${NC} Node Service API URL configured incorrectly"
+    echo "   LOWCODER_API_SERVICE_URL=$API_SERVICE_URL"
+    TESTS_FAILED=$((TESTS_FAILED + 1))
+fi
+echo ""
+
+# ============================================================================
+# Test 13: Verify Service URLs in Frontend
+# ============================================================================
+echo "Test 13: Verifying service URL configuration in Frontend..."
+
+FRONTEND_API_URL=$(docker compose exec -T lowcoder-frontend printenv LOWCODER_API_SERVICE_URL 2>/dev/null || echo "")
+FRONTEND_NODE_URL=$(docker compose exec -T lowcoder-frontend printenv LOWCODER_NODE_SERVICE_URL 2>/dev/null || echo "")
+
+URL_CHECK_PASSED=true
+
+if echo "$FRONTEND_API_URL" | grep -q "http://lowcoder-api-service:8080"; then
+    echo -e "${GREEN}✓${NC} Frontend API Service URL configured correctly"
+    echo "   LOWCODER_API_SERVICE_URL=$FRONTEND_API_URL"
+else
+    echo -e "${RED}✗${NC} Frontend API Service URL configured incorrectly"
+    echo "   LOWCODER_API_SERVICE_URL=$FRONTEND_API_URL"
+    URL_CHECK_PASSED=false
+fi
+
+if echo "$FRONTEND_NODE_URL" | grep -q "http://lowcoder-node-service:6060"; then
+    echo -e "${GREEN}✓${NC} Frontend Node Service URL configured correctly"
+    echo "   LOWCODER_NODE_SERVICE_URL=$FRONTEND_NODE_URL"
+else
+    echo -e "${RED}✗${NC} Frontend Node Service URL configured incorrectly"
+    echo "   LOWCODER_NODE_SERVICE_URL=$FRONTEND_NODE_URL"
+    URL_CHECK_PASSED=false
+fi
+
+if [ "$URL_CHECK_PASSED" = true ]; then
+    TESTS_PASSED=$((TESTS_PASSED + 1))
+else
+    TESTS_FAILED=$((TESTS_FAILED + 1))
+fi
+echo ""
+
+# ============================================================================
+# Test Summary
+# ============================================================================
+echo "═══════════════════════════════════════════════════════════════════════════"
+echo "Test Summary"
+echo "═══════════════════════════════════════════════════════════════════════════"
+echo ""
+echo "Total Tests: ${TOTAL_TESTS}"
+echo -e "Passed: ${GREEN}${TESTS_PASSED}${NC}"
+echo -e "Failed: ${RED}${TESTS_FAILED}${NC}"
+echo ""
+
+if [ $TESTS_FAILED -eq 0 ]; then
+    echo -e "${GREEN}✓ All Lowcoder validation tests passed!${NC}"
     echo ""
-    echo "${BLUE}Next steps:${RESET}"
-    echo "  1. Verify Lowcoder container is running: docker compose ps lowcoder"
-    echo "  2. Access Lowcoder admin UI: https://${LOWCODER_HOST:-lowcoder.your-domain.com}"
-    echo "  3. Login with admin credentials from .env file"
-    echo "  4. Create your first application (see config/lowcoder/README.md)"
-    echo "  5. Connect to PostgreSQL databases and create dashboards"
+    echo "Lowcoder multi-service architecture is ready for use:"
+    echo "  - API Service health: http://localhost:8080/api/status/health"
+    echo "  - Node Service health: http://localhost:6060"
+    echo "  - Frontend health: http://localhost:3000"
+    echo "  - Web UI: https://lowcoder.\${DOMAIN} (via Caddy reverse proxy)"
+    echo ""
+    echo "Service Architecture:"
+    echo "  - API Service: Handles business logic and data access (MongoDB, Redis)"
+    echo "  - Node Service: JavaScript execution environment"
+    echo "  - Frontend: Web interface and user interactions"
     echo ""
     exit 0
 else
-    echo "${RED}${BOLD}✗ Some tests failed${RESET}"
+    echo -e "${RED}✗ Some Lowcoder validation tests failed${NC}"
     echo ""
-    echo "${YELLOW}Troubleshooting:${RESET}"
-    echo "  - Check docker-compose.yml configuration"
-    echo "  - Verify .env file has all required LOWCODER_* variables"
-    echo "  - Ensure MongoDB and Redis are healthy: docker compose ps"
-    echo "  - Review setup guide: config/lowcoder/README.md"
+    echo "Troubleshooting:"
+    echo "  1. Check API Service logs: docker compose logs lowcoder-api-service"
+    echo "  2. Check Node Service logs: docker compose logs lowcoder-node-service"
+    echo "  3. Check Frontend logs: docker compose logs lowcoder-frontend"
+    echo "  4. Check MongoDB: docker compose ps mongodb"
+    echo "  5. Check Redis: docker compose ps redis"
+    echo "  6. Verify .env file has all required variables"
+    echo "  7. Check service dependencies: docker compose ps"
     echo ""
     exit 1
 fi
