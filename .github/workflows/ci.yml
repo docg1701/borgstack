@@ -671,7 +671,7 @@ jobs:
           N8N_ENCRYPTION_KEY=test_n8n_encryption_key_12345678901234567890
           # Chatwoot configuration
           CHATWOOT_HOST=chatwoot.example.com.br
-          CHATWOOT_SECRET_KEY_BASE=test_chatwoot_secret_key_base_128_character_hex_string_0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          CHATWOOT_SECRET_KEY_BASE=test_chatwoot_secret_key_base_128_character_hex_string_0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef123456789
           CHATWOOT_API_TOKEN=test_chatwoot_api_token_dummy_for_ci
           # Evolution API configuration
           EVOLUTION_HOST=evolution.example.com.br
@@ -939,7 +939,7 @@ jobs:
           N8N_ENCRYPTION_KEY=test_n8n_encryption_key_12345678901234567890
           # Chatwoot configuration
           CHATWOOT_HOST=chatwoot.example.com.br
-          CHATWOOT_SECRET_KEY_BASE=test_chatwoot_secret_key_base_128_character_hex_string_0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          CHATWOOT_SECRET_KEY_BASE=test_chatwoot_secret_key_base_128_character_hex_string_0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef123456789
           CHATWOOT_API_TOKEN=test_chatwoot_api_token_dummy_for_ci
           # Evolution API configuration
           EVOLUTION_HOST=evolution.example.com.br
@@ -1180,7 +1180,7 @@ jobs:
           N8N_ENCRYPTION_KEY=test_n8n_encryption_key_12345678901234567890
           # Chatwoot configuration
           CHATWOOT_HOST=chatwoot.example.com.br
-          CHATWOOT_SECRET_KEY_BASE=test_chatwoot_secret_key_base_128_character_hex_string_0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          CHATWOOT_SECRET_KEY_BASE=test_chatwoot_secret_key_base_128_character_hex_string_0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef123456789
           CHATWOOT_API_TOKEN=test_chatwoot_api_token_dummy_for_ci
           # Evolution API configuration
           EVOLUTION_HOST=evolution.example.com.br
@@ -1404,7 +1404,7 @@ jobs:
           N8N_ENCRYPTION_KEY=test_n8n_encryption_key_12345678901234567890
           # Chatwoot configuration
           CHATWOOT_HOST=chatwoot.example.com.br
-          CHATWOOT_SECRET_KEY_BASE=test_chatwoot_secret_key_base_128_character_hex_string_0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          CHATWOOT_SECRET_KEY_BASE=test_chatwoot_secret_key_base_128_character_hex_string_0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef123456789
           CHATWOOT_API_TOKEN=test_chatwoot_api_token_dummy_for_ci
           # Evolution API configuration
           EVOLUTION_HOST=evolution.example.com.br
@@ -1767,7 +1767,7 @@ jobs:
           N8N_ENCRYPTION_KEY=test_n8n_encryption_key_12345678901234567890
           # Chatwoot configuration
           CHATWOOT_HOST=chatwoot.example.com.br
-          CHATWOOT_SECRET_KEY_BASE=test_chatwoot_secret_key_base_128_character_hex_string_0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          CHATWOOT_SECRET_KEY_BASE=test_chatwoot_secret_key_base_128_character_hex_string_0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef123456789
           CHATWOOT_API_TOKEN=test_chatwoot_api_token_dummy_for_ci
           # Evolution API configuration
           EVOLUTION_HOST=evolution.example.com.br

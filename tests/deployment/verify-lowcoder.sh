@@ -172,7 +172,9 @@ echo ""
 # ============================================================================
 echo "Test 8: Verifying Lowcoder API Service /api/status/health endpoint..."
 
-if retry_with_backoff 5 wait_for_http_endpoint "lowcoder-api-service" "8080" "/api/status/health" 180; then
+# Use curl instead of wget (matches healthcheck)
+if docker compose exec -T lowcoder-api-service \
+    curl -f --max-time 10 http://127.0.0.1:8080/api/status/health 2>/dev/null >/dev/null; then
     echo -e "${GREEN}✓${NC} Lowcoder API Service health endpoint is accessible"
     TESTS_PASSED=$((TESTS_PASSED + 1))
 else
