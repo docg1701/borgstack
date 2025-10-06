@@ -2441,11 +2441,17 @@ jobs:
             exit 1
           fi
 
-          # Verify unified server mode command
-          if docker compose config | grep -A 50 "seaweedfs:" | grep -q "server -filer -s3"; then
+          # Verify unified server mode command (checks for YAML list format: - server, - -filer, - -s3)
+          SEAWEEDFS_CONFIG=$(docker compose config | grep -A 50 "seaweedfs:")
+          if echo "$SEAWEEDFS_CONFIG" | grep -A 5 "command:" | grep -q "server" && \
+             echo "$SEAWEEDFS_CONFIG" | grep -A 5 "command:" | grep -q "\-filer" && \
+             echo "$SEAWEEDFS_CONFIG" | grep -A 5 "command:" | grep -q "\-s3"; then
             echo "✅ SeaweedFS configured in unified server mode (master + volume + filer + S3)"
           else
             echo "❌ SeaweedFS command not configured correctly"
+            echo "Expected command with: server, -filer, -s3"
+            echo "Actual command section:"
+            echo "$SEAWEEDFS_CONFIG" | grep -A 5 "command:"
             exit 1
           fi
 
