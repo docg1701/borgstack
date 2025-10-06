@@ -1002,6 +1002,12 @@ services:
       - borgstack_seaweedfs_filer:/data/filer
     environment:
       # ======================================================================
+      # Network Binding Configuration
+      # ======================================================================
+      # Bind to all network interfaces (required for localhost health checks)
+      IP_BIND: 0.0.0.0
+
+      # ======================================================================
       # Volume Server Configuration
       # ======================================================================
       # Maximum size per volume (10GB default, balances distribution and performance)
@@ -1031,7 +1037,7 @@ services:
       # Pre-allocate volume files for consistent performance (optional)
       WEED_VOLUME_PREALLOCATE: ${SEAWEEDFS_VOLUME_PREALLOCATE:-false}
     healthcheck:
-      test: ["CMD", "sh", "-c", "curl -f http://localhost:9333/cluster/status || exit 1"]
+      test: ["CMD", "sh", "-c", "wget --quiet --tries=1 --spider http://127.0.0.1:9333/cluster/status || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
