@@ -2192,22 +2192,11 @@ jobs:
 
       - name: Create .env file for testing
         run: |
-          echo "Creating temporary .env file with test credentials..."
-          cat > .env << 'EOF'
-          # Test credentials for CI pipeline
-          DOMAIN=example.com.br
-          EMAIL=admin@example.com.br
-          # Directus configuration
-          DIRECTUS_HOST=directus.example.com.br
-          DIRECTUS_API_TOKEN=test_directus_api_token_for_ci_validation
-          DIRECTUS_WEBHOOK_SECRET=test_webhook_secret_32chars_min
-          # FileFlows configuration
-          FILEFLOWS_HOST=fileflows.example.com.br
-          FILEFLOWS_DELETE_ORIGINALS=false
-          DIRECTUS_MEDIA_RETENTION_DAYS=30
-          # n8n configuration
-          N8N_HOST=n8n.example.com.br
-          EOF
+          echo "Creating .env from .env.example with test values..."
+          cp .env.example .env
+          # Set test values for required variables
+          sed -i 's|DOMAIN=.*|DOMAIN=example.com.br|' .env
+          sed -i 's|EMAIL=.*|EMAIL=admin@example.com.br|' .env
 
       - name: Verify n8n workflow files exist
         run: |
