@@ -985,7 +985,7 @@ services:
   # ==========================================================================
   seaweedfs:
     image: chrislusf/seaweedfs:3.97
-    container_name: seaweedfs
+    container_name: borgstack_seaweedfs
     restart: unless-stopped
     networks:
       - borgstack_internal
