@@ -2396,7 +2396,10 @@ jobs:
           fi
 
           # Verify SeaweedFS is NOT on borgstack_external (internal only for security)
-          if docker compose config | grep -A 50 "seaweedfs:" | grep -q "borgstack_external"; then
+          # Check only the networks section of the seaweedfs service (not global networks definition)
+          # Match service-level networks (4-space indentation) to avoid matching global networks section
+          SEAWEEDFS_NETWORKS=$(docker compose config | sed -n '/^  seaweedfs:/,/^  [a-z-]*:$/p' | grep -A 3 "^    networks:")
+          if echo "$SEAWEEDFS_NETWORKS" | grep -q "borgstack_external"; then
             echo "❌ SeaweedFS connected to borgstack_external (security violation - should be internal only)"
             exit 1
           else

@@ -231,7 +231,7 @@ echo ""
 # ============================================================================
 echo "Test 10: Verifying network isolation (borgstack_internal only)..."
 
-NETWORK_INFO=$(docker inspect seaweedfs --format '{{range $net,$v := .NetworkSettings.Networks}}{{$net}} {{end}}' 2>/dev/null || echo "")
+NETWORK_INFO=$(docker inspect borgstack_seaweedfs --format '{{range $net,$v := .NetworkSettings.Networks}}{{$net}} {{end}}' 2>/dev/null || echo "")
 
 if echo "$NETWORK_INFO" | grep -q "borgstack_internal"; then
     echo -e "${GREEN}✓${NC} SeaweedFS is connected to borgstack_internal network"
