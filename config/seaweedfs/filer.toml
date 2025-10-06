@@ -1,0 +1,76 @@
+# SeaweedFS Filer Configuration
+# This configuration file defines the filer metadata store and directory quotas
+#
+# Reference: https://github.com/seaweedfs/seaweedfs/wiki/Filer-Stores
+#
+# The filer is responsible for:
+#   - Mapping S3 paths to volume chunks
+#   - Maintaining directory structure
+#   - Managing file metadata
+#   - Enforcing directory quotas
+
+# =============================================================================
+# Metadata Store Configuration
+# =============================================================================
+# LevelDB is used for single-server deployments (default)
+# For production multi-server setups, consider:
+#   - PostgreSQL (requires external DB)
+#   - MySQL (requires external DB)
+#   - Redis (for distributed caching)
+
+[leveldb2]
+# LevelDB storage location
+# Default: /data/filer/leveldb2
+enabled = true
+dir = "/data/filer/leveldb2"
+
+# =============================================================================
+# Directory Quota Configuration (Optional)
+# =============================================================================
+# Enable directory quotas to limit storage per bucket or subdirectory
+# Useful for preventing single services from consuming all storage
+
+# Example: Limit /buckets/borgstack/ to 900GB total
+# [quota.buckets.borgstack]
+# max_mb = 921600
+
+# Example per-service quotas:
+# [quota.buckets.borgstack.directus]
+# max_mb = 307200  # 300GB for Directus CMS assets
+#
+# [quota.buckets.borgstack.fileflows]
+# max_mb = 512000  # 500GB for FileFlows processed media
+#
+# [quota.buckets.borgstack.chatwoot]
+# max_mb = 51200   # 50GB for Chatwoot conversation files
+
+# =============================================================================
+# Connection Pool Configuration
+# =============================================================================
+# Maximum number of concurrent filer connections
+# Increase if you have many concurrent S3 operations
+
+[connection_pool]
+# Maximum connections (default: 10)
+max_idle_connections = 10
+
+# Connection timeout (seconds)
+timeout = 30
+
+# =============================================================================
+# Advanced Options
+# =============================================================================
+
+# S3 API compatibility mode
+[s3]
+# Enable S3 virtual host style requests (bucket.domain.com vs domain.com/bucket)
+# Default: false (path-style)
+enable_virtual_host = false
+
+# S3 API endpoint port
+# Default: 8333 (configured in docker-compose.yml)
+# port = 8333
+
+# Disable directory listing for S3 API (security)
+# Set to true to prevent bucket enumeration
+disable_directory_listing = false

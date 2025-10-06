@@ -922,7 +922,133 @@ services:
       start_period: 60s
       # Start period allows application initialization (Node.js startup, FFmpeg verification)
 
-#   (Additional services: seaweedfs, duplicati)
+  # ==========================================================================
+  # SeaweedFS S3-Compatible Object Storage
+  # ==========================================================================
+  # Distributed object storage with S3-compatible API for file-heavy services
+  # Image: chrislusf/seaweedfs:3.97 (unified server mode with master + volume + filer + S3)
+  #
+  # Deployment Architecture (Single-Server Mode):
+  #   - Master server (port 9333): Volume allocation and topology management
+  #   - Volume server (port 8080): Actual file storage and retrieval operations
+  #   - Filer (port 8888): File system abstraction layer with directory structure
+  #   - S3 API (port 8333): S3-compatible HTTP interface for applications
+  #
+  # Storage Organization:
+  #   Main bucket: borgstack
+  #   Subdirectories:
+  #     /borgstack/n8n/              - n8n workflow attachments
+  #     /borgstack/chatwoot/         - Chatwoot conversation files
+  #     /borgstack/directus/         - Directus CMS assets (migrated in Story 5.3)
+  #     /borgstack/fileflows/        - FileFlows processed media (migrated in Story 5.3)
+  #     /borgstack/lowcoder/         - Lowcoder app assets
+  #     /borgstack/duplicati/        - Backup staging area
+  #
+  # Service Integration (Story 5.3):
+  #   - Directus: S3-compatible storage backend (replaces borgstack_directus_uploads)
+  #   - FileFlows: n8n-orchestrated S3 download/upload workflows
+  #   - Chatwoot: S3-compatible attachment storage
+  #   - n8n: HTTP Request nodes with AWS SDK for S3 operations
+  #
+  # S3 Endpoints:
+  #   Internal (services): http://seaweedfs:8333
+  #   External (optional): https://s3.${BORGSTACK_DOMAIN} (via Caddy - see Task 9)
+  #
+  # Replication Strategy:
+  #   Current: 000 (no replication - single server mode)
+  #   Future: 001 (1 copy on different server when scaling horizontally)
+  #   Format: XYZ = X datacenter copies, Y rack copies, Z server copies
+  #
+  # Volume Management:
+  #   - Volume size limit: 10GB per volume (SEAWEEDFS_VOLUME_SIZE_LIMIT_MB=10240)
+  #   - Auto-growth: New volumes created automatically when existing fill up
+  #   - Manual pre-allocation: curl "http://localhost:9333/vol/grow?count=4&replication=000"
+  #   - Check cluster status: curl http://localhost:9333/cluster/status
+  #
+  # Performance Considerations:
+  #   - Use SSD storage for borgstack_seaweedfs_volume for optimal I/O
+  #   - Expected throughput: >100 MB/s sequential read/write
+  #   - S3 API response time: p95 <200ms
+  #   - Concurrent upload capacity: >50 simultaneous connections
+  #
+  # Security:
+  #   - AWS Signature v4 authentication (access key + secret key)
+  #   - Network isolation: borgstack_internal only (no host exposure)
+  #   - Credentials in .env with 600 permissions
+  #   - Optional HTTPS via Caddy reverse proxy for external access
+  #
+  # Backup Strategy:
+  #   - Automated: Duplicati (Story 5.2) backs up all three volumes
+  #   - Master volume: Cluster topology and volume metadata
+  #   - Volume data: Actual file content stored in chunks
+  #   - Filer metadata: Directory structure and file metadata
+  # ==========================================================================
+  seaweedfs:
+    image: chrislusf/seaweedfs:3.97
+    container_name: borgstack_seaweedfs
+    restart: unless-stopped
+    networks:
+      - borgstack_internal
+    # ⚠️  NO ports section in production - S3 API accessible only via internal network
+    # ℹ️  For external S3 access, configure Caddy reverse proxy (Task 9 - optional)
+    # ℹ️  For local development testing, add port mappings in docker-compose.override.yml:
+    #     - "9333:9333"  # Master API
+    #     - "8080:8080"  # Volume server
+    #     - "8888:8888"  # Filer API
+    #     - "8333:8333"  # S3 API
+    volumes:
+      - borgstack_seaweedfs_master:/data/master
+      - borgstack_seaweedfs_volume:/data/volume
+      - borgstack_seaweedfs_filer:/data/filer
+    environment:
+      # ======================================================================
+      # Network Binding Configuration
+      # ======================================================================
+      # Bind to all network interfaces (required for localhost health checks)
+      IP_BIND: 0.0.0.0
+
+      # ======================================================================
+      # Volume Server Configuration
+      # ======================================================================
+      # Maximum size per volume (10GB default, balances distribution and performance)
+      WEED_MASTER_VOLUME_SIZE_LIMIT_MB: ${SEAWEEDFS_VOLUME_SIZE_LIMIT_MB:-10240}
+
+      # Replication strategy: 000 = no replication (single server mode)
+      # Change to 001 or higher when adding additional servers for redundancy
+      WEED_MASTER_DEFAULT_REPLICATION: ${SEAWEEDFS_REPLICATION:-000}
+
+      # ======================================================================
+      # S3 API Authentication
+      # ======================================================================
+      # AWS-compatible access credentials (generate random 32+ chars for access key, 64+ chars for secret)
+      # Generation: openssl rand -base64 24 (access key), openssl rand -base64 48 (secret key)
+      AWS_ACCESS_KEY_ID: ${SEAWEEDFS_ACCESS_KEY}
+      AWS_SECRET_ACCESS_KEY: ${SEAWEEDFS_SECRET_KEY}
+
+      # ======================================================================
+      # Filer Configuration
+      # ======================================================================
+      # Filer replication matches master default (000 for single server)
+      WEED_FILER_OPTIONS: -defaultReplicaPlacement=${SEAWEEDFS_REPLICATION:-000}
+
+      # ======================================================================
+      # Performance Optimization
+      # ======================================================================
+      # Pre-allocate volume files for consistent performance (optional)
+      WEED_VOLUME_PREALLOCATE: ${SEAWEEDFS_VOLUME_PREALLOCATE:-false}
+    healthcheck:
+      test: ["CMD", "sh", "-c", "wget --quiet --tries=1 --spider http://127.0.0.1:9333/cluster/status || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+      # Start period allows cluster initialization (master election, volume registration, filer startup)
+    # Unified server mode command: starts master + volume + filer + S3 in single container
+    # Suitable for single-server deployments; separate for multi-server scaling
+    # Format: weed server -s3 -filer (entrypoint script adds 'weed' automatically)
+    command: server -s3 -filer
+
+#   (Additional services: duplicati)
 
 networks:
   borgstack_internal:
@@ -1097,6 +1223,28 @@ volumes:
     # MIGRATION: Will be replaced with SeaweedFS S3 storage in Story 5.1
     # Manual backup: docker compose exec -T fileflows tar czf - /output > fileflows-output-backup-$(date +%Y%m%d).tar.gz
 
+  borgstack_seaweedfs_master:
+    # SeaweedFS master server metadata directory
+    # Contains: Volume topology, server status, data center/rack configuration, volume allocation metadata
+    # Backed up by Duplicati (Story 5.2)
+    # CRITICAL: Master metadata required for cluster recovery and volume location mapping
+    # Manual backup: docker compose exec -T seaweedfs tar czf - /data/master > seaweedfs-master-backup-$(date +%Y%m%d).tar.gz
+
+  borgstack_seaweedfs_volume:
+    # SeaweedFS volume server data directory
+    # Contains: Actual file content stored in volume chunks (.dat and .idx files)
+    # Backed up by Duplicati (Story 5.2)
+    # CRITICAL: Contains all S3 object data - largest volume in SeaweedFS deployment
+    # Disk requirements: Plan for 10GB × SEAWEEDFS_MAX_VOLUMES (default: 1TB total capacity)
+    # Performance: SSD highly recommended for optimal I/O throughput (>100 MB/s)
+    # Manual backup: docker compose exec -T seaweedfs tar czf - /data/volume > seaweedfs-volume-backup-$(date +%Y%m%d).tar.gz
+
+  borgstack_seaweedfs_filer:
+    # SeaweedFS filer metadata directory
+    # Contains: Directory structure, file metadata, bucket organization, LevelDB filer store
+    # Backed up by Duplicati (Story 5.2)
+    # CRITICAL: Filer metadata maps S3 paths to volume chunks - required for S3 API functionality
+    # Manual backup: docker compose exec -T seaweedfs tar czf - /data/filer > seaweedfs-filer-backup-$(date +%Y%m%d).tar.gz
+
 # Additional volumes (to be added in future stories):
-#   borgstack_seaweedfs_data:
 #   borgstack_duplicati_data:
