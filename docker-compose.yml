@@ -1039,7 +1039,8 @@ services:
       # Start period allows cluster initialization (master election, volume registration, filer startup)
     # Unified server mode command: starts master + volume + filer + S3 in single container
     # Suitable for single-server deployments; separate for multi-server scaling
-    command: server -filer -s3
+    # Format: weed server -s3 -filer (entrypoint script adds 'weed' automatically)
+    command: server -s3 -filer
 
 #   (Additional services: duplicati)
 
