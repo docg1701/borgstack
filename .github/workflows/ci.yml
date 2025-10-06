@@ -2300,47 +2300,167 @@ jobs:
           rm -f .env
 
   # ============================================================================
-  # FUTURE SERVICES - Placeholders for Epic 5 Stories
+  # Epic 5 Services - Object Storage and Backup
   # ============================================================================
-  # The following services will be implemented in future stories.
-  # Uncomment and configure when implementing:
-  # - Story 5.1: SeaweedFS Object Storage
-  # - Story 5.2: Duplicati Backup System
+  # - Story 5.1: SeaweedFS Object Storage (IMPLEMENTED)
+  # - Story 5.2: Duplicati Backup System (FUTURE)
   # ============================================================================
 
-  # validate-seaweedfs:
-  #   name: Validate SeaweedFS Configuration
-  #   runs-on: ubuntu-24.04
-  #
-  #   steps:
-  #     - name: Checkout repository
-  #       uses: actions/checkout@v4
-  #
-  #     - name: Set up Docker Buildx
-  #       uses: docker/setup-buildx-action@v3
-  #
-  #     - name: Create .env file for testing
-  #       run: |
-  #         echo "Creating temporary .env file with test credentials..."
-  #         # TODO: Add SeaweedFS-specific environment variables
-  #
-  #     - name: Verify SeaweedFS configuration in docker-compose.yml
-  #       run: |
-  #         echo "Verifying SeaweedFS service is configured..."
-  #         # TODO: Add SeaweedFS configuration checks (S3 API, volumes, etc.)
-  #
-  #     - name: Run SeaweedFS validation tests
-  #       run: |
-  #         echo "Running comprehensive SeaweedFS validation tests..."
-  #         chmod +x tests/deployment/verify-seaweedfs.sh
-  #         bash tests/deployment/verify-seaweedfs.sh
-  #
-  #     - name: Cleanup SeaweedFS test environment
-  #       if: always()
-  #       run: |
-  #         echo "Cleaning up test environment..."
-  #         docker compose down -v --remove-orphans || true
-  #         rm -f .env
+  validate-seaweedfs:
+    name: Validate SeaweedFS Configuration
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Create .env file for testing
+        run: |
+          echo "Creating temporary .env file with test credentials..."
+          cat > .env << 'EOF'
+          # Test credentials for CI pipeline
+          # PostgreSQL passwords
+          POSTGRES_PASSWORD=test_postgres_password_12345678
+          N8N_DB_PASSWORD=test_n8n_password_12345678
+          CHATWOOT_DB_PASSWORD=test_chatwoot_password_12345678
+          DIRECTUS_DB_PASSWORD=test_directus_password_12345678
+          EVOLUTION_DB_PASSWORD=test_evolution_password_12345678
+          # MongoDB passwords
+          MONGODB_ROOT_PASSWORD=test_mongodb_root_password_12345678
+          LOWCODER_DB_PASSWORD=test_lowcoder_password_12345678901234567890
+          # Redis password
+          REDIS_PASSWORD=test_redis_password_12345678901234567890
+          # Domain and email
+          DOMAIN=example.com.br
+          EMAIL=admin@example.com.br
+          CORS_ALLOWED_ORIGINS=*
+          # n8n configuration
+          N8N_HOST=n8n.example.com.br
+          N8N_BASIC_AUTH_USER=admin
+          N8N_BASIC_AUTH_PASSWORD=test_n8n_auth_password_12345678
+          N8N_ENCRYPTION_KEY=test_n8n_encryption_key_12345678901234567890
+          # Chatwoot configuration
+          CHATWOOT_HOST=chatwoot.example.com.br
+          CHATWOOT_SECRET_KEY_BASE=test_chatwoot_secret_key_base_128_character_hex_string_0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef123456789
+          CHATWOOT_API_TOKEN=test_chatwoot_api_token_dummy_for_ci
+          # Evolution API configuration
+          EVOLUTION_HOST=evolution.example.com.br
+          EVOLUTION_API_KEY=test_evolution_api_key_12345678
+          EVOLUTION_WEBHOOK_URL=https://n8n.example.com.br/webhook/whatsapp-incoming
+          DATABASE_CONNECTION_CLIENT_NAME=evolution_api
+          # Lowcoder configuration
+          LOWCODER_HOST=lowcoder.example.com.br
+          LOWCODER_ADMIN_EMAIL=admin@example.com.br
+          LOWCODER_ADMIN_PASSWORD=test_lowcoder_admin_password_12345678
+          LOWCODER_ENCRYPTION_PASSWORD=test_lowcoder_encryption_pass_123456
+          LOWCODER_ENCRYPTION_SALT=test_lowcoder_encryption_salt_123456
+          # Directus configuration
+          DIRECTUS_HOST=directus.example.com.br
+          DIRECTUS_KEY=test_directus_key_12345678901234567890123456789012
+          DIRECTUS_SECRET=test_directus_secret_12345678901234567890123456
+          DIRECTUS_ADMIN_EMAIL=admin@example.com.br
+          DIRECTUS_ADMIN_PASSWORD=test_directus_admin_password_12345678
+          # FileFlows configuration
+          FILEFLOWS_HOST=fileflows.example.com.br
+          FILEFLOWS_LOG_LEVEL=Information
+          # SeaweedFS S3-Compatible Object Storage configuration (Story 5.1)
+          SEAWEEDFS_ACCESS_KEY=test_seaweedfs_access_key_123456789012
+          SEAWEEDFS_SECRET_KEY=test_seaweedfs_secret_key_12345678901234567890123456789012345678901234
+          SEAWEEDFS_VOLUME_SIZE_LIMIT_MB=10240
+          SEAWEEDFS_REPLICATION=000
+          SEAWEEDFS_MAX_VOLUMES=100
+          SEAWEEDFS_VOLUME_PREALLOCATE=false
+          EOF
+
+      - name: Verify SeaweedFS configuration in docker-compose.yml
+        run: |
+          echo "Verifying SeaweedFS service is configured..."
+
+          # Check SeaweedFS image version is pinned correctly
+          if docker compose config | grep -q "image: chrislusf/seaweedfs:3.97"; then
+            echo "✅ SeaweedFS image correctly configured (chrislusf/seaweedfs:3.97)"
+          else
+            echo "❌ SeaweedFS image not configured correctly"
+            exit 1
+          fi
+
+          # Check SeaweedFS is on borgstack_internal network only (security requirement)
+          if docker compose config | grep -A 50 "seaweedfs:" | grep -q "borgstack_internal"; then
+            echo "✅ SeaweedFS connected to borgstack_internal network"
+          else
+            echo "❌ SeaweedFS not connected to borgstack_internal network"
+            exit 1
+          fi
+
+          # Verify SeaweedFS is NOT on borgstack_external (internal only for security)
+          if docker compose config | grep -A 50 "seaweedfs:" | grep -q "borgstack_external"; then
+            echo "❌ SeaweedFS connected to borgstack_external (security violation - should be internal only)"
+            exit 1
+          else
+            echo "✅ SeaweedFS NOT on borgstack_external (security requirement met)"
+          fi
+
+          # Verify volume naming conventions (master, volume, filer)
+          if docker compose config | grep -q "borgstack_seaweedfs_master"; then
+            echo "✅ Volume borgstack_seaweedfs_master follows naming convention"
+          else
+            echo "❌ Volume borgstack_seaweedfs_master not found"
+            exit 1
+          fi
+
+          if docker compose config | grep -q "borgstack_seaweedfs_volume"; then
+            echo "✅ Volume borgstack_seaweedfs_volume follows naming convention"
+          else
+            echo "❌ Volume borgstack_seaweedfs_volume not found"
+            exit 1
+          fi
+
+          if docker compose config | grep -q "borgstack_seaweedfs_filer"; then
+            echo "✅ Volume borgstack_seaweedfs_filer follows naming convention"
+          else
+            echo "❌ Volume borgstack_seaweedfs_filer not found"
+            exit 1
+          fi
+
+          # Verify no port exposure in production config (security requirement)
+          if docker compose config | grep -A 50 "seaweedfs:" | grep -E "^\s+ports:" > /dev/null 2>&1; then
+            echo "❌ SeaweedFS has port exposure in production config (security violation)"
+            exit 1
+          else
+            echo "✅ No port exposure to host (security requirement met)"
+          fi
+
+          # Verify health check is configured
+          if docker compose config | grep -A 50 "seaweedfs:" | grep -q "healthcheck:"; then
+            echo "✅ Health check configured for SeaweedFS"
+          else
+            echo "❌ Health check not configured for SeaweedFS"
+            exit 1
+          fi
+
+          # Verify unified server mode command
+          if docker compose config | grep -A 50 "seaweedfs:" | grep -q "server -filer -s3"; then
+            echo "✅ SeaweedFS configured in unified server mode (master + volume + filer + S3)"
+          else
+            echo "❌ SeaweedFS command not configured correctly"
+            exit 1
+          fi
+
+      - name: Run SeaweedFS validation tests
+        run: |
+          echo "Running comprehensive SeaweedFS validation tests..."
+          chmod +x tests/deployment/verify-seaweedfs.sh
+          bash tests/deployment/verify-seaweedfs.sh
+
+      - name: Cleanup SeaweedFS test environment
+        if: always()
+        run: |
+          echo "Cleaning up test environment..."
+          docker compose down -v --remove-orphans || true
+          rm -f .env
 
   # validate-duplicati:
   #   name: Validate Duplicati Configuration
