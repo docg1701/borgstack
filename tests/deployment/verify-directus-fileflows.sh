@@ -58,10 +58,10 @@ done
 
 if [ "$ALL_FOUND" = true ]; then
   echo -e "${GREEN}✓${NC} All 5 workflow files exist"
-  ((TESTS_PASSED++))
+  TESTS_PASSED=$((TESTS_PASSED + 1))
 else
   echo -e "${RED}✗${NC} Missing workflow files"
-  ((TESTS_FAILED++))
+  TESTS_FAILED=$((TESTS_FAILED + 1))
 fi
 echo ""
 
@@ -69,10 +69,10 @@ echo ""
 echo "Test 2: Verifying integration documentation..."
 if [ -f "docs/04-integrations/directus-fileflows.md" ] && [ -f "docs/MANUAL_TASKS_4.3.md" ]; then
   echo -e "${GREEN}✓${NC} Integration documentation exists"
-  ((TESTS_PASSED++))
+  TESTS_PASSED=$((TESTS_PASSED + 1))
 else
   echo -e "${RED}✗${NC} Documentation missing"
-  ((TESTS_FAILED++))
+  TESTS_FAILED=$((TESTS_FAILED + 1))
 fi
 echo ""
 
@@ -94,9 +94,9 @@ fi
 
 if [ "$VARS_OK" = true ]; then
   echo -e "${GREEN}✓${NC} All required environment variables in .env.example"
-  ((TESTS_PASSED++))
+  TESTS_PASSED=$((TESTS_PASSED + 1))
 else
-  ((TESTS_FAILED++))
+  TESTS_FAILED=$((TESTS_FAILED + 1))
 fi
 echo ""
 
@@ -116,9 +116,9 @@ fi
 
 if [ "$MOUNTS_OK" = true ]; then
   echo -e "${GREEN}✓${NC} n8n has correct volume mounts"
-  ((TESTS_PASSED++))
+  TESTS_PASSED=$((TESTS_PASSED + 1))
 else
-  ((TESTS_FAILED++))
+  TESTS_FAILED=$((TESTS_FAILED + 1))
 fi
 echo ""
 
@@ -128,10 +128,10 @@ if [ -f "config/n8n/workflows/README.md" ] && \
    grep -q "directus-fileflows-upload" config/n8n/workflows/README.md && \
    grep -q "missed-files-detector" config/n8n/workflows/README.md; then
   echo -e "${GREEN}✓${NC} Workflow documentation complete"
-  ((TESTS_PASSED++))
+  TESTS_PASSED=$((TESTS_PASSED + 1))
 else
   echo -e "${RED}✗${NC} Workflow documentation incomplete"
-  ((TESTS_FAILED++))
+  TESTS_FAILED=$((TESTS_FAILED + 1))
 fi
 echo ""
 
@@ -139,10 +139,10 @@ echo ""
 echo "Test 6: Verifying Directus configuration guide..."
 if [ -f "config/directus/README.md" ]; then
   echo -e "${GREEN}✓${NC} Directus configuration guide exists"
-  ((TESTS_PASSED++))
+  TESTS_PASSED=$((TESTS_PASSED + 1))
 else
   echo -e "${RED}✗${NC} Directus configuration guide missing"
-  ((TESTS_FAILED++))
+  TESTS_FAILED=$((TESTS_FAILED + 1))
 fi
 echo ""
 
@@ -150,10 +150,10 @@ echo ""
 echo "Test 7: Verifying FileFlows configuration guide..."
 if [ -f "config/fileflows/README.md" ]; then
   echo -e "${GREEN}✓${NC} FileFlows configuration guide exists"
-  ((TESTS_PASSED++))
+  TESTS_PASSED=$((TESTS_PASSED + 1))
 else
   echo -e "${RED}✗${NC} FileFlows configuration guide missing"
-  ((TESTS_FAILED++))
+  TESTS_FAILED=$((TESTS_FAILED + 1))
 fi
 echo ""
 
@@ -161,10 +161,10 @@ echo ""
 echo "Test 8: Verifying manual tasks documentation..."
 if [ -f "docs/MANUAL_TASKS_4.3.md" ] && grep -q "Task 9" docs/MANUAL_TASKS_4.3.md; then
   echo -e "${GREEN}✓${NC} Manual tasks documentation complete (9 tasks)"
-  ((TESTS_PASSED++))
+  TESTS_PASSED=$((TESTS_PASSED + 1))
 else
   echo -e "${RED}✗${NC} Manual tasks documentation incomplete"
-  ((TESTS_FAILED++))
+  TESTS_FAILED=$((TESTS_FAILED + 1))
 fi
 echo ""
 
@@ -172,10 +172,10 @@ echo ""
 echo "Test 9: Verifying CI workflow integration..."
 if grep -q "validate-directus-fileflows:" .github/workflows/ci.yml; then
   echo -e "${GREEN}✓${NC} CI workflow job exists"
-  ((TESTS_PASSED++))
+  TESTS_PASSED=$((TESTS_PASSED + 1))
 else
   echo -e "${RED}✗${NC} CI workflow job missing"
-  ((TESTS_FAILED++))
+  TESTS_FAILED=$((TESTS_FAILED + 1))
 fi
 echo ""
 
@@ -183,10 +183,10 @@ echo ""
 echo "Test 10: Verifying HMAC signature validation in upload workflow..."
 if grep -q "Validate HMAC Signature" config/n8n/workflows/directus-fileflows-upload.json; then
   echo -e "${GREEN}✓${NC} HMAC validation implemented"
-  ((TESTS_PASSED++))
+  TESTS_PASSED=$((TESTS_PASSED + 1))
 else
   echo -e "${RED}✗${NC} HMAC validation not found"
-  ((TESTS_FAILED++))
+  TESTS_FAILED=$((TESTS_FAILED + 1))
 fi
 echo ""
 
