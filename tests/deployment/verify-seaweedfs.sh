@@ -104,6 +104,13 @@ echo "Note: start_period is 60s for cluster initialization"
 
 if wait_for_container_healthy "seaweedfs" 120; then
     echo -e "${GREEN}✓${NC} SeaweedFS container is healthy"
+
+    # Additional wait for Filer and S3 services to fully initialize
+    # Master (9333) starts first and passes health check
+    # Filer (8888) and S3 (8333) need extra time to connect and initialize
+    echo "Waiting additional 15s for Filer and S3 services to initialize..."
+    sleep 15
+
     TESTS_PASSED=$((TESTS_PASSED + 1))
 else
     echo -e "${RED}✗${NC} SeaweedFS health check failed"
