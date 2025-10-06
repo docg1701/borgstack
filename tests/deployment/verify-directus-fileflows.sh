@@ -103,13 +103,13 @@ echo ""
 # Test 4: n8n volume mounts
 echo "Test 4: Verifying n8n volume mounts in docker-compose.yml..."
 MOUNTS_OK=true
-N8N_CONFIG=$(docker compose config 2>&1 | grep -A 40 "container_name: borgstack_n8n")
 
-if ! echo "$N8N_CONFIG" | grep -q "borgstack_directus_uploads"; then
+# Check directly in docker-compose.yml for volume mounts (n8n service is ~50 lines long)
+if ! grep -A 50 "^  n8n:" docker-compose.yml | grep -q "borgstack_directus_uploads:/directus/uploads:ro"; then
   echo -e "${RED}✗${NC} n8n missing borgstack_directus_uploads mount"
   MOUNTS_OK=false
 fi
-if ! echo "$N8N_CONFIG" | grep -q "borgstack_fileflows_input"; then
+if ! grep -A 50 "^  n8n:" docker-compose.yml | grep -q "borgstack_fileflows_input:/fileflows/input:rw"; then
   echo -e "${RED}✗${NC} n8n missing borgstack_fileflows_input mount"
   MOUNTS_OK=false
 fi
