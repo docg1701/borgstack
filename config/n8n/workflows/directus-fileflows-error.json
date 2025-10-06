@@ -1,0 +1,196 @@
+{
+  "name": "FileFlows Error Handler",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "fileflows-error",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "webhook-fileflows-error",
+      "name": "Webhook: FileFlows Error",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "fileflows-error"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Parse error details and categorize\nconst data = $input.item.json;\n\nlet errorCategory = 'unknown';\nconst errorMessage = data.error_message || data.errorMessage || '';\n\n// Categorize errors\nif (errorMessage.includes('timeout') || errorMessage.includes('Timeout')) {\n  errorCategory = 'timeout';\n} else if (errorMessage.includes('format') || errorMessage.includes('codec')) {\n  errorCategory = 'invalid_format';\n} else if (errorMessage.includes('space') || errorMessage.includes('disk')) {\n  errorCategory = 'storage_failure';\n} else if (errorMessage.includes('memory') || errorMessage.includes('RAM')) {\n  errorCategory = 'memory_failure';\n}\n\nreturn {\n  json: {\n    original_filename: data.original_filename || data.originalFilename,\n    error_message: errorMessage,\n    error_category: errorCategory,\n    error_timestamp: new Date().toISOString(),\n    metadata: data.metadata || {}\n  }\n};"
+      },
+      "id": "parse-error",
+      "name": "Parse Error Details",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "url": "=https://{{$env.DIRECTUS_HOST}}/items/directus_files",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "directusApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "filter[filename_download][_eq]",
+              "value": "={{$json.original_filename}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "query-directus-file",
+      "name": "Query Directus File",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [680, 300],
+      "credentials": {
+        "directusApi": {
+          "id": "1",
+          "name": "Directus API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "// Prepare error update payload\nconst response = $input.item.json;\nconst fileData = response.data?.[0];\n\nif (!fileData) {\n  console.warn('File not found in Directus:', $json.original_filename);\n  return null;\n}\n\nreturn {\n  json: {\n    file_id: fileData.id,\n    processing_status: 'failed',\n    processing_metadata: {\n      error_message: $json.error_message,\n      error_category: $json.error_category,\n      error_timestamp: $json.error_timestamp,\n      ...$json.metadata\n    }\n  }\n};"
+      },
+      "id": "prepare-error-update",
+      "name": "Prepare Error Update",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "url": "=https://{{$env.DIRECTUS_HOST}}/items/directus_files/={{$json.file_id}}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "directusApi",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "processing_status",
+              "value": "failed"
+            },
+            {
+              "name": "processing_metadata",
+              "value": "={{JSON.stringify($json.processing_metadata)}}"
+            }
+          ]
+        },
+        "method": "PATCH",
+        "options": {}
+      },
+      "id": "update-directus-with-error",
+      "name": "Update Directus with Error",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1120, 300],
+      "credentials": {
+        "directusApi": {
+          "id": "1",
+          "name": "Directus API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "// Send alert email to admin\n// TODO: Configure email credentials in n8n\n// For now, log to console\n\nconsole.error('=== PROCESSING ERROR ===');\nconsole.error('File:', $json.original_filename);\nconsole.error('Category:', $json.error_category);\nconsole.error('Message:', $json.error_message);\nconsole.error('Timestamp:', $json.error_timestamp);\nconsole.error('=======================');\n\n// Prepare email notification payload\nreturn {\n  json: {\n    to: 'admin@' + process.env.DOMAIN,\n    subject: `[FileFlows Error] Processing failed: ${$json.error_category}`,\n    body: `\nFile: ${$json.original_filename}\nError Category: ${$json.error_category}\nError Message: ${$json.error_message}\nTimestamp: ${$json.error_timestamp}\n\nPlease check FileFlows logs for more details.\n    `.trim()\n  }\n};"
+      },
+      "id": "send-admin-alert",
+      "name": "Send Admin Alert",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1340, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Log error in n8n execution data\nconsole.log('Error logged and admin notified');\n\nreturn $input.all();"
+      },
+      "id": "log-completion",
+      "name": "Log Completion",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1560, 300]
+    }
+  ],
+  "connections": {
+    "Webhook: FileFlows Error": {
+      "main": [
+        [
+          {
+            "node": "Parse Error Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Error Details": {
+      "main": [
+        [
+          {
+            "node": "Query Directus File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Directus File": {
+      "main": [
+        [
+          {
+            "node": "Prepare Error Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Error Update": {
+      "main": [
+        [
+          {
+            "node": "Update Directus with Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Directus with Error": {
+      "main": [
+        [
+          {
+            "node": "Send Admin Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Admin Alert": {
+      "main": [
+        [
+          {
+            "node": "Log Completion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2025-10-05T00:00:00.000Z",
+  "versionId": "1"
+}

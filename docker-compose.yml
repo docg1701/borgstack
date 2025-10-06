@@ -295,6 +295,11 @@ services:
       QUEUE_HEALTH_CHECK_ACTIVE: "true"
     volumes:
       - borgstack_n8n_data:/home/node/.n8n
+      # Volume mounts for Directus-FileFlows integration (Story 4.3)
+      # Read-only access to Directus uploads for copying files to FileFlows
+      - borgstack_directus_uploads:/directus/uploads:ro
+      # Read-write access to FileFlows input for file processing trigger
+      - borgstack_fileflows_input:/fileflows/input:rw
     depends_on:
       postgresql:
         condition: service_healthy
