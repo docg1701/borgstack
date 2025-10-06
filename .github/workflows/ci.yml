@@ -2272,7 +2272,7 @@ jobs:
           echo "Verifying n8n has volume mounts for Directus and FileFlows..."
 
           # Check if n8n mounts directus_uploads volume (read-only)
-          if docker compose config | grep -A 20 "n8n:" | grep "borgstack_directus_uploads:/directus/uploads:ro"; then
+          if grep -A 50 "^  n8n:" docker-compose.yml | grep "borgstack_directus_uploads:/directus/uploads:ro"; then
             echo "✅ n8n mounts borgstack_directus_uploads (read-only)"
           else
             echo "❌ n8n missing borgstack_directus_uploads mount"
@@ -2280,7 +2280,7 @@ jobs:
           fi
 
           # Check if n8n mounts fileflows_input volume (read-write)
-          if docker compose config | grep -A 20 "n8n:" | grep "borgstack_fileflows_input:/fileflows/input:rw"; then
+          if grep -A 50 "^  n8n:" docker-compose.yml | grep "borgstack_fileflows_input:/fileflows/input:rw"; then
             echo "✅ n8n mounts borgstack_fileflows_input (read-write)"
           else
             echo "❌ n8n missing borgstack_fileflows_input mount"
