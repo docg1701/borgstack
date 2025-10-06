@@ -1,0 +1,392 @@
+{
+  "CreatedByVersion": "2.1.1.102",
+  "Backup": {
+    "ID": "1",
+    "Name": "BorgStack-Full-Backup",
+    "Description": "Backup automatizado de todos os dados críticos do BorgStack - Configurado para backups incrementais diários com retenção inteligente",
+    "Tags": [
+      "production",
+      "automated",
+      "encrypted",
+      "incremental"
+    ],
+    "TargetURL": "s3://s3.sa-east-1.amazonaws.com/CONFIGURE_YOUR_BUCKET_NAME?aws_access_key_id=CONFIGURE_YOUR_ACCESS_KEY&aws_secret_access_key=CONFIGURE_YOUR_SECRET_KEY",
+    "DBPath": null,
+    "Sources": [
+      "/source/postgresql",
+      "/source/mongodb",
+      "/source/redis",
+      "/source/seaweedfs_master",
+      "/source/seaweedfs_volume",
+      "/source/seaweedfs_filer",
+      "/source/n8n",
+      "/source/evolution",
+      "/source/chatwoot_storage",
+      "/source/lowcoder_stacks",
+      "/source/directus_uploads",
+      "/source/fileflows_data",
+      "/source/fileflows_logs",
+      "/source/fileflows_input",
+      "/source/fileflows_output",
+      "/source/caddy"
+    ],
+    "Settings": [
+      {
+        "Name": "encryption-module",
+        "Value": "aes",
+        "Filter": ""
+      },
+      {
+        "Name": "passphrase",
+        "Value": "CONFIGURE_DUPLICATI_PASSPHRASE_FROM_ENV_FILE",
+        "Filter": "",
+        "Argument": "CRITICAL: Use the exact value from DUPLICATI_PASSPHRASE in .env file!"
+      },
+      {
+        "Name": "compression-module",
+        "Value": "zstd",
+        "Filter": "",
+        "Argument": "zstd provides best balance of speed and compression ratio"
+      },
+      {
+        "Name": "dblock-size",
+        "Value": "50mb",
+        "Filter": "",
+        "Argument": "50MB chunks allow resume capability for large backups"
+      },
+      {
+        "Name": "retention-policy",
+        "Value": "7D:1D,4W:1W,12M:1M",
+        "Filter": "",
+        "Argument": "Keep: 7 daily (1 per day), 4 weekly (1 per week), 12 monthly (1 per month)"
+      },
+      {
+        "Name": "keep-versions",
+        "Value": "1",
+        "Filter": "",
+        "Argument": "Keep 1 version of deleted files for recovery"
+      },
+      {
+        "Name": "upload-verification-file",
+        "Value": "true",
+        "Filter": "",
+        "Argument": "Verify uploads to ensure data integrity"
+      },
+      {
+        "Name": "backup-test-samples",
+        "Value": "1",
+        "Filter": "",
+        "Argument": "Test 1 random file from backup for verification"
+      },
+      {
+        "Name": "auto-cleanup",
+        "Value": "true",
+        "Filter": "",
+        "Argument": "Automatically clean up old backups per retention policy"
+      },
+      {
+        "Name": "auto-vacuum",
+        "Value": "true",
+        "Filter": "",
+        "Argument": "Compact local database to save space"
+      },
+      {
+        "Name": "skip-metadata",
+        "Value": "false",
+        "Filter": "",
+        "Argument": "Include file metadata (permissions, timestamps)"
+      },
+      {
+        "Name": "usn-policy",
+        "Value": "auto",
+        "Filter": "",
+        "Argument": "Use USN journal for efficient change detection"
+      },
+      {
+        "Name": "symlink-policy",
+        "Value": "store",
+        "Filter": "",
+        "Argument": "Store symlinks (important for Docker volumes)"
+      },
+      {
+        "Name": "number-of-retries",
+        "Value": "5",
+        "Filter": "",
+        "Argument": "Retry failed operations up to 5 times"
+      },
+      {
+        "Name": "retry-delay",
+        "Value": "10s",
+        "Filter": "",
+        "Argument": "Wait 10 seconds between retries"
+      },
+      {
+        "Name": "asynchronous-upload-limit",
+        "Value": "4",
+        "Filter": "",
+        "Argument": "Upload 4 files in parallel for better performance"
+      },
+      {
+        "Name": "asynchronous-concurrent-upload-limit",
+        "Value": "4",
+        "Filter": "",
+        "Argument": "Maximum 4 concurrent upload connections"
+      },
+      {
+        "Name": "disable-filetime-check",
+        "Value": "false",
+        "Filter": "",
+        "Argument": "Use file modification time for change detection"
+      },
+      {
+        "Name": "check-filetime-only",
+        "Value": "false",
+        "Filter": "",
+        "Argument": "Also check file size and content for changes"
+      }
+    ],
+    "Filters": [
+      {
+        "Order": 0,
+        "Include": true,
+        "Expression": "*"
+      }
+    ],
+    "Schedule": {
+      "ID": "1",
+      "Tags": [
+        "daily-backup"
+      ],
+      "Time": "02:00",
+      "Repeat": "1D",
+      "AllowedDays": [
+        "mon",
+        "tue",
+        "wed",
+        "thu",
+        "fri",
+        "sat",
+        "sun"
+      ],
+      "Rule": "AllowedWeekDays=Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday"
+    },
+    "Metadata": {
+      "ApplicationVersion": "2.1.1.102",
+      "CreationDate": "2025-10-06",
+      "SourceDescription": "BorgStack critical data volumes",
+      "DestinationType": "AWS S3 São Paulo (sa-east-1)",
+      "EncryptionType": "AES-256",
+      "CompressionType": "zstd",
+      "BackupType": "Incremental (Full + Changed blocks)",
+      "Schedule": "Daily at 02:00 BRT (America/Sao_Paulo)",
+      "RetentionPolicy": "7 daily, 4 weekly, 12 monthly",
+      "EstimatedFirstBackupTime": "2-8 hours (varies by data size and internet speed)",
+      "EstimatedIncrementalTime": "15-60 minutes (only changed data)",
+      "DataSovereignty": "Brazil (LGPD compliant when using sa-east-1)",
+      "Notes": "CRITICAL: Store DUPLICATI_PASSPHRASE securely. Without it, backups cannot be restored!"
+    }
+  },
+  "DisplayNames": {
+    "/source/postgresql": "PostgreSQL Databases (n8n, Chatwoot, Directus, Evolution)",
+    "/source/mongodb": "MongoDB Database (Lowcoder)",
+    "/source/redis": "Redis Cache & Queue Data",
+    "/source/seaweedfs_master": "SeaweedFS Master Metadata",
+    "/source/seaweedfs_volume": "SeaweedFS Object Storage (Largest volume)",
+    "/source/seaweedfs_filer": "SeaweedFS Filer Metadata",
+    "/source/n8n": "n8n Workflows & Credentials (CRITICAL)",
+    "/source/evolution": "Evolution API WhatsApp Sessions (CRITICAL)",
+    "/source/chatwoot_storage": "Chatwoot File Uploads",
+    "/source/lowcoder_stacks": "Lowcoder Applications",
+    "/source/directus_uploads": "Directus CMS Media Files",
+    "/source/fileflows_data": "FileFlows Configurations",
+    "/source/fileflows_logs": "FileFlows Processing Logs",
+    "/source/fileflows_input": "FileFlows Input Media",
+    "/source/fileflows_output": "FileFlows Processed Media",
+    "/source/caddy": "Caddy SSL Certificates & Configuration"
+  },
+  "Instructions": {
+    "step-1-configure-destination": {
+      "description": "Configure backup destination",
+      "options": {
+        "aws-s3-sao-paulo": {
+          "url": "s3://s3.sa-east-1.amazonaws.com/YOUR_BUCKET_NAME?aws_access_key_id=YOUR_KEY&aws_secret_access_key=YOUR_SECRET",
+          "notes": "Recommended for Brazilian customers (LGPD compliant, data stays in Brazil)"
+        },
+        "backblaze-b2": {
+          "url": "b2://YOUR_BUCKET_NAME?auth-username=YOUR_KEY_ID&auth-password=YOUR_APPLICATION_KEY",
+          "notes": "Cost-effective (70% cheaper than S3), good for budget-conscious deployments"
+        },
+        "google-cloud-storage-sao-paulo": {
+          "url": "gcs://YOUR_BUCKET_NAME?auth-username=_json_key&auth-password=YOUR_SERVICE_ACCOUNT_JSON",
+          "notes": "Good if already using Google Cloud Platform"
+        },
+        "sftp-local": {
+          "url": "ssh://USERNAME@HOSTNAME:22/PATH/TO/BACKUPS?auth-password=YOUR_PASSWORD",
+          "notes": "For on-premises backups or existing NAS infrastructure"
+        }
+      }
+    },
+    "step-2-configure-passphrase": {
+      "description": "Set encryption passphrase",
+      "critical": "MUST use the exact value from DUPLICATI_PASSPHRASE in .env file",
+      "warning": "Without this passphrase, backups CANNOT be restored. Store in password manager!"
+    },
+    "step-3-test-connection": {
+      "description": "Test backup destination connection",
+      "steps": [
+        "Click 'Test connection' in Duplicati web UI",
+        "Verify connection succeeds",
+        "If fails, check credentials and network connectivity"
+      ]
+    },
+    "step-4-run-first-backup": {
+      "description": "Execute first backup (FULL backup)",
+      "expectedTime": "2-8 hours depending on data size",
+      "monitoring": "Monitor progress in Duplicati web UI or via: docker compose logs duplicati -f"
+    },
+    "step-5-test-restoration": {
+      "description": "Test restoration capability",
+      "critical": "ALWAYS test restoration after first successful backup",
+      "steps": [
+        "Select backup job",
+        "Click 'Restore'",
+        "Choose a small test file",
+        "Restore to /tmp/restore-test/",
+        "Verify file restored correctly",
+        "Delete test: docker compose exec duplicati rm -rf /tmp/restore-test/"
+      ]
+    },
+    "step-6-schedule-verification": {
+      "description": "Enable automatic backup verification",
+      "recommendation": "Run verification weekly to ensure backup integrity"
+    }
+  },
+  "DestinationExamples": {
+    "aws-s3-brazil": {
+      "provider": "Amazon S3",
+      "region": "sa-east-1 (São Paulo)",
+      "cost": "~$0.023/GB/month",
+      "dataSovereignty": "Brazil (LGPD compliant)",
+      "configuration": {
+        "TargetURL": "s3://s3.sa-east-1.amazonaws.com/borgstack-backups-clientname",
+        "required-credentials": [
+          "AWS Access Key ID",
+          "AWS Secret Access Key"
+        ],
+        "setup-steps": [
+          "Create S3 bucket in sa-east-1 region",
+          "Create IAM user with s3:PutObject, s3:GetObject, s3:ListBucket permissions",
+          "Generate access keys for IAM user",
+          "Configure bucket lifecycle policy for old version cleanup (optional)"
+        ]
+      }
+    },
+    "backblaze-b2": {
+      "provider": "Backblaze B2",
+      "region": "Select during bucket creation",
+      "cost": "~$0.005/GB/month (70% cheaper than S3)",
+      "dataSovereignty": "US/EU (data encrypted before upload)",
+      "freeTier": "10GB storage + 1GB daily download",
+      "configuration": {
+        "TargetURL": "b2://borgstack-backups-clientname",
+        "required-credentials": [
+          "Account ID",
+          "Application Key"
+        ],
+        "setup-steps": [
+          "Create Backblaze account",
+          "Create B2 bucket",
+          "Generate Application Key with read/write permissions",
+          "Note Account ID and Application Key"
+        ]
+      }
+    },
+    "sftp-nas": {
+      "provider": "On-premises SFTP",
+      "region": "Local network",
+      "cost": "Hardware + storage costs only",
+      "dataSovereignty": "Full control (data never leaves premises)",
+      "configuration": {
+        "TargetURL": "ssh://backup-user@nas.local.network:22/mnt/backups/borgstack",
+        "required-credentials": [
+          "SFTP username",
+          "SFTP password or SSH key"
+        ],
+        "setup-steps": [
+          "Configure SFTP server on NAS",
+          "Create dedicated backup user",
+          "Set up directory with appropriate permissions",
+          "Test SFTP connection from Duplicati container"
+        ]
+      }
+    }
+  },
+  "TroubleshootingGuide": {
+    "connection-failed": {
+      "error": "Cannot connect to backup destination",
+      "solutions": [
+        "Verify credentials are correct",
+        "Check internet connectivity from Duplicati container: docker compose exec duplicati curl -I https://s3.amazonaws.com",
+        "Verify firewall allows outbound HTTPS (port 443)",
+        "Test credentials using AWS CLI or provider's test tools"
+      ]
+    },
+    "wrong-passphrase": {
+      "error": "Restore fails with 'Wrong passphrase' or 'Decryption error'",
+      "solutions": [
+        "CRITICAL: There is NO recovery if passphrase is lost!",
+        "Verify DUPLICATI_PASSPHRASE in .env file matches what was used for backup",
+        "Check password manager for correct passphrase",
+        "Try copying passphrase directly (avoid typing to prevent typos)",
+        "If passphrase is truly lost, backups are unrecoverable - start new backup with new passphrase"
+      ]
+    },
+    "backup-slow": {
+      "error": "Backup takes too long or times out",
+      "solutions": [
+        "Check internet upload speed",
+        "Increase dblock-size to 100MB for faster uploads",
+        "Reduce asynchronous-upload-limit if network is unstable",
+        "Schedule backups during off-peak hours",
+        "Consider incremental backups more frequently (daily vs weekly)"
+      ]
+    },
+    "high-storage-usage": {
+      "error": "Backup destination using too much storage",
+      "solutions": [
+        "Review retention policy - may be too aggressive",
+        "Run 'Delete old backups' manually to apply retention policy",
+        "Check if deduplication is working (should reduce storage by 30-60%)",
+        "Verify keep-versions is not set too high",
+        "Consider adjusting retention: 3D:1D,4W:1W,6M:1M for more aggressive cleanup"
+      ]
+    }
+  },
+  "PerformanceExpectations": {
+    "firstBackup": {
+      "type": "FULL",
+      "estimatedTime": "2-8 hours (varies by data size and internet speed)",
+      "dataTransfer": "100% of source data uploaded",
+      "notes": "First backup is always full. Subsequent backups are incremental (much faster)."
+    },
+    "incrementalBackup": {
+      "type": "Incremental",
+      "estimatedTime": "15-60 minutes (only changed data)",
+      "dataTransfer": "Only modified files and new data blocks",
+      "expectedChange": "5-20% of total data for typical workloads",
+      "notes": "Daily backups typically complete in under 1 hour after initial full backup."
+    },
+    "restoration": {
+      "singleFile": "< 5 minutes",
+      "singleService": "30 minutes - 2 hours",
+      "singleDatabase": "1-3 hours",
+      "completeSystem": "4-8 hours",
+      "factors": [
+        "Download speed from backup destination",
+        "Data size",
+        "Encryption/decryption overhead",
+        "Disk I/O speed (SSD recommended)"
+      ]
+    }
+  }
+}

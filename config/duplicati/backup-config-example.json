@@ -1,0 +1,187 @@
+{
+  "backup": {
+    "name": "BorgStack-Full-Backup",
+    "description": "Automated backup of all BorgStack critical data volumes",
+    "tags": [
+      "production",
+      "automated",
+      "full-system"
+    ],
+    "target-url": "s3://s3.sa-east-1.amazonaws.com/borgstack-backups?aws_access_key_id=YOUR_AWS_ACCESS_KEY&aws_secret_access_key=YOUR_AWS_SECRET_KEY",
+    "dblock-size": "50mb",
+    "retention-policy": "7D:1D,4W:1W,12M:1M",
+    "schedule": {
+      "id": 1,
+      "tags": [
+        "daily-backup"
+      ],
+      "time": "02:00",
+      "repeat": "1D",
+      "last-run": null,
+      "rule": "AllowedWeekDays=Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday"
+    },
+    "sources": [
+      "/source/postgresql",
+      "/source/mongodb",
+      "/source/redis",
+      "/source/seaweedfs_master",
+      "/source/seaweedfs_volume",
+      "/source/seaweedfs_filer",
+      "/source/n8n",
+      "/source/evolution",
+      "/source/chatwoot_storage",
+      "/source/lowcoder_stacks",
+      "/source/directus_uploads",
+      "/source/fileflows_data",
+      "/source/fileflows_logs",
+      "/source/fileflows_input",
+      "/source/fileflows_output",
+      "/source/caddy"
+    ],
+    "filters": [],
+    "settings": [
+      {
+        "filter": "",
+        "name": "encryption-module",
+        "value": "aes"
+      },
+      {
+        "filter": "",
+        "name": "compression-module",
+        "value": "zstd"
+      },
+      {
+        "filter": "",
+        "name": "passphrase",
+        "value": "USE_DUPLICATI_PASSPHRASE_FROM_ENV_FILE"
+      },
+      {
+        "filter": "",
+        "name": "dblock-size",
+        "value": "50mb"
+      },
+      {
+        "filter": "",
+        "name": "retention-policy",
+        "value": "7D:1D,4W:1W,12M:1M"
+      },
+      {
+        "filter": "",
+        "name": "keep-versions",
+        "value": "1"
+      },
+      {
+        "filter": "",
+        "name": "upload-verification-file",
+        "value": "true"
+      },
+      {
+        "filter": "",
+        "name": "backup-test-samples",
+        "value": "1"
+      },
+      {
+        "filter": "",
+        "name": "skip-files-larger-than",
+        "value": ""
+      },
+      {
+        "filter": "",
+        "name": "auto-cleanup",
+        "value": "true"
+      },
+      {
+        "filter": "",
+        "name": "auto-vacuum",
+        "value": "true"
+      }
+    ],
+    "metadata": {
+      "CreatedByUser": "admin",
+      "CreatedDate": "2025-10-06",
+      "LastModifiedDate": "2025-10-06",
+      "SourcePaths": "All BorgStack critical data volumes",
+      "BackupDestination": "AWS S3 São Paulo (sa-east-1) - LGPD compliant",
+      "EncryptionType": "AES-256",
+      "CompressionType": "zstd",
+      "RetentionPolicy": "7 daily, 4 weekly, 12 monthly",
+      "EstimatedDataSize": "Varies by deployment",
+      "BackupFrequency": "Daily at 2:00 AM BRT"
+    }
+  },
+  "configuration-instructions": {
+    "step-1": "Replace target-url with your actual backup destination",
+    "step-2": "Update aws_access_key_id and aws_secret_access_key with your credentials",
+    "step-3": "Change passphrase value to your actual DUPLICATI_PASSPHRASE from .env file",
+    "step-4": "Adjust retention-policy if needed (format: 7D:1D = 7 days keeping 1 per day)",
+    "step-5": "Modify schedule.time to your preferred backup time (24-hour format)",
+    "step-6": "Test backup with 'Run now' before enabling schedule",
+    "step-7": "After first successful backup, test restoration to verify configuration"
+  },
+  "backup-destinations": {
+    "aws-s3-sao-paulo": {
+      "description": "AWS S3 São Paulo region (LGPD compliant)",
+      "target-url": "s3://s3.sa-east-1.amazonaws.com/YOUR_BUCKET_NAME?aws_access_key_id=YOUR_KEY&aws_secret_access_key=YOUR_SECRET",
+      "region": "sa-east-1",
+      "data-location": "Brazil"
+    },
+    "backblaze-b2": {
+      "description": "Backblaze B2 (cost-effective)",
+      "target-url": "b2://YOUR_BUCKET_NAME?auth-username=YOUR_KEY_ID&auth-password=YOUR_APPLICATION_KEY",
+      "notes": "70% cheaper than AWS S3, good for budget-conscious deployments"
+    },
+    "google-cloud-storage": {
+      "description": "Google Cloud Storage São Paulo",
+      "target-url": "gcs://YOUR_BUCKET_NAME?auth-username=_json_key&auth-password=YOUR_SERVICE_ACCOUNT_JSON",
+      "region": "southamerica-east1",
+      "data-location": "Brazil"
+    },
+    "azure-blob": {
+      "description": "Azure Blob Storage Brazil South",
+      "target-url": "azure://YOUR_ACCOUNT_NAME/YOUR_CONTAINER?auth-username=YOUR_ACCOUNT_NAME&auth-password=YOUR_ACCOUNT_KEY",
+      "region": "brazilsouth",
+      "data-location": "Brazil"
+    },
+    "sftp": {
+      "description": "SFTP server (on-premises or NAS)",
+      "target-url": "ssh://USERNAME@HOSTNAME:22/PATH/TO/BACKUPS?auth-password=YOUR_PASSWORD",
+      "notes": "Use for air-gapped backups or existing NAS infrastructure"
+    },
+    "webdav": {
+      "description": "WebDAV (Nextcloud/ownCloud)",
+      "target-url": "webdav://cloud.example.com/remote.php/dav/files/USERNAME/BorgStack-Backups?auth-username=USERNAME&auth-password=APP_PASSWORD",
+      "notes": "Self-hosted cloud storage for privacy-focused deployments"
+    },
+    "local-path": {
+      "description": "Local or network mounted drive",
+      "target-url": "file:///mnt/backup-drive/borgstack/",
+      "notes": "Ensure drive is mounted before backup starts"
+    }
+  },
+  "retention-policy-examples": {
+    "conservative": {
+      "description": "Keep more backups for critical systems",
+      "value": "14D:1D,8W:1W,24M:1M",
+      "storage-multiplier": "~5x data size"
+    },
+    "balanced": {
+      "description": "Recommended for most deployments",
+      "value": "7D:1D,4W:1W,12M:1M",
+      "storage-multiplier": "~3x data size"
+    },
+    "aggressive": {
+      "description": "Minimize storage costs",
+      "value": "3D:1D,4W:1W,6M:1M",
+      "storage-multiplier": "~2x data size"
+    }
+  },
+  "notes": {
+    "passphrase-security": "CRITICAL: Store passphrase in password manager. Without it, backups cannot be restored!",
+    "first-backup": "First backup will be FULL and may take several hours. Subsequent backups are incremental (much faster).",
+    "network-bandwidth": "Backup uploads consume internet bandwidth. Schedule during low-traffic hours.",
+    "restore-testing": "Test restoration monthly to ensure backup integrity and team familiarity with process.",
+    "encryption": "All data encrypted with AES-256 BEFORE upload. Backup provider cannot read your data.",
+    "deduplication": "Duplicati automatically deduplicates data blocks, reducing storage costs by 30-60%.",
+    "brazilian-lgpd": "Using AWS S3 São Paulo (sa-east-1) or Azure Brazil South ensures data stays in Brazil for LGPD compliance."
+  }
+}

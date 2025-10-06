@@ -1048,7 +1048,165 @@ services:
     # Format: weed server -s3 -filer (entrypoint script adds 'weed' automatically)
     command: server -s3 -filer
 
-#   (Additional services: duplicati)
+  # ==========================================================================
+  # Duplicati Backup System
+  # ==========================================================================
+  # Encrypted backup automation for all BorgStack data
+  # Image: duplicati/duplicati:2.1.1.102 (.NET + Nancy Framework)
+  #
+  # Purpose:
+  #   - Automated incremental backups of all critical data volumes
+  #   - AES-256 encryption before upload to external storage
+  #   - Support for multiple backup destinations (S3, FTP, WebDAV, local drives)
+  #   - Web UI for backup job configuration and monitoring
+  #
+  # Backup Sources (mounted read-only for safety):
+  #   - PostgreSQL databases (n8n, Chatwoot, Directus, Evolution API)
+  #   - MongoDB database (Lowcoder)
+  #   - Redis persistence files (RDB + AOF)
+  #   - SeaweedFS data (master metadata, volume data, filer metadata)
+  #   - n8n workflows and credentials
+  #   - Evolution API WhatsApp sessions
+  #   - Chatwoot file uploads and storage
+  #   - Lowcoder application stacks
+  #   - Directus uploads
+  #   - FileFlows data, logs, input, and output
+  #   - Caddy SSL certificates
+  #
+  # Backup Strategy:
+  #   - Incremental backups (only changed data after initial full backup)
+  #   - Retention policy: 7 daily + 4 weekly + 12 monthly (configurable)
+  #   - Schedule: Daily at 2 AM BRT (configurable via web UI)
+  #   - Compression: zstd for optimal speed/ratio
+  #   - Deduplication: Built-in chunk-level deduplication
+  #
+  # Security:
+  #   - NO port exposure to host (accessed via Caddy reverse proxy)
+  #   - AES-256 encryption with passphrase from DUPLICATI_PASSPHRASE
+  #   - Web UI password protection via DUPLICATI_PASSWORD
+  #   - All source volumes mounted read-only (:ro flag)
+  #   - Runs as root (PUID=0) to access Docker volume mount points (required)
+  #
+  # Backup Destinations (configured via web UI):
+  #   - AWS S3 / S3-compatible (recommended for Brazilian customers: São Paulo region)
+  #   - Backblaze B2 (cost-effective alternative)
+  #   - Google Cloud Storage
+  #   - Azure Blob Storage
+  #   - FTP/SFTP servers
+  #   - WebDAV (Nextcloud, ownCloud)
+  #   - Local/Network drives
+  #
+  # Web UI Access:
+  #   - Internal: http://duplicati:8200
+  #   - External: https://duplicati.${BORGSTACK_DOMAIN} (via Caddy)
+  #
+  # Configuration:
+  #   - Backup job definitions stored in borgstack_duplicati_config volume
+  #   - Setup instructions: config/duplicati/README.md
+  #   - Documentation: docs/03-services/duplicati.md (Portuguese)
+  #   - Restore procedures: docs/04-integrations/backup-strategy.md (Portuguese)
+  #
+  # Disaster Recovery:
+  #   - Full system restore: ./scripts/restore.sh (interactive script)
+  #   - Manual backup trigger: ./scripts/backup-now.sh
+  #   - Restore time benchmarks: docs/04-integrations/restore-benchmarks.md
+  #
+  # Dependencies:
+  #   - Requires PostgreSQL, MongoDB, Redis, SeaweedFS to be healthy before starting
+  #   - Ensures databases are ready before backup jobs can execute
+  #
+  # CRITICAL:
+  #   - DUPLICATI_PASSPHRASE must be stored securely (password manager)
+  #   - Without passphrase, backups CANNOT be restored!
+  #   - Backup the passphrase separately from the backup destination
+  # ==========================================================================
+  duplicati:
+    image: duplicati/duplicati:2.1.1.102
+    container_name: borgstack_duplicati
+    restart: unless-stopped
+    networks:
+      - borgstack_internal  # Access to all service volumes
+      - borgstack_external  # Caddy reverse proxy access to web UI
+    # ⚠️  NO ports section in production - web UI accessible only via Caddy reverse proxy
+    # ℹ️  For local development testing, add port mapping in docker-compose.override.yml:
+    #     - "8200:8200"  # Duplicati web UI
+    volumes:
+      # ======================================================================
+      # Duplicati Configuration Storage
+      # ======================================================================
+      - borgstack_duplicati_config:/config
+
+      # ======================================================================
+      # Backup Sources - All Critical Data Volumes (Read-Only for Safety)
+      # ======================================================================
+      # Database volumes
+      - /var/lib/docker/volumes/borgstack_borgstack_postgresql_data/_data:/source/postgresql:ro
+      - /var/lib/docker/volumes/borgstack_borgstack_mongodb_data/_data:/source/mongodb:ro
+      - /var/lib/docker/volumes/borgstack_borgstack_redis_data/_data:/source/redis:ro
+
+      # SeaweedFS object storage volumes
+      - /var/lib/docker/volumes/borgstack_borgstack_seaweedfs_master/_data:/source/seaweedfs_master:ro
+      - /var/lib/docker/volumes/borgstack_borgstack_seaweedfs_volume/_data:/source/seaweedfs_volume:ro
+      - /var/lib/docker/volumes/borgstack_borgstack_seaweedfs_filer/_data:/source/seaweedfs_filer:ro
+
+      # Application data volumes
+      - /var/lib/docker/volumes/borgstack_borgstack_n8n_data/_data:/source/n8n:ro
+      - /var/lib/docker/volumes/borgstack_borgstack_evolution_instances/_data:/source/evolution:ro
+      - /var/lib/docker/volumes/borgstack_borgstack_chatwoot_storage/_data:/source/chatwoot_storage:ro
+      - /var/lib/docker/volumes/borgstack_borgstack_lowcoder_stacks/_data:/source/lowcoder_stacks:ro
+      - /var/lib/docker/volumes/borgstack_borgstack_directus_uploads/_data:/source/directus_uploads:ro
+
+      # FileFlows media processing volumes
+      - /var/lib/docker/volumes/borgstack_borgstack_fileflows_data/_data:/source/fileflows_data:ro
+      - /var/lib/docker/volumes/borgstack_borgstack_fileflows_logs/_data:/source/fileflows_logs:ro
+      - /var/lib/docker/volumes/borgstack_borgstack_fileflows_input/_data:/source/fileflows_input:ro
+      - /var/lib/docker/volumes/borgstack_borgstack_fileflows_output/_data:/source/fileflows_output:ro
+
+      # SSL certificates and configuration
+      - /var/lib/docker/volumes/borgstack_borgstack_caddy_data/_data:/source/caddy:ro
+    environment:
+      # ======================================================================
+      # Web UI Authentication
+      # ======================================================================
+      DUPLICATI__WEBSERVICE_PASSWORD: ${DUPLICATI_PASSWORD}
+
+      # ======================================================================
+      # Backup Encryption
+      # ======================================================================
+      # Server-level encryption password (encrypts backup job configurations)
+      DUPLICATI__SERVER_ENCRYPTION_PASSWORD: ${DUPLICATI_ENCRYPTION_KEY}
+
+      # ======================================================================
+      # User and Group Configuration
+      # ======================================================================
+      # CRITICAL: Must run as root (PUID=0, PGID=0) to access Docker volume mount points
+      # Docker volumes are owned by root:root - Duplicati needs read access
+      PUID: "0"
+      PGID: "0"
+
+      # ======================================================================
+      # Timezone Configuration
+      # ======================================================================
+      # Brazilian timezone for backup schedules (e.g., daily at 2 AM BRT)
+      TZ: America/Sao_Paulo
+    healthcheck:
+      test: ["CMD-SHELL", "timeout 5 bash -c 'echo > /dev/tcp/127.0.0.1/8200' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+      # Start period allows Duplicati service initialization
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      seaweedfs:
+        condition: service_healthy
+      # Ensures all critical databases are ready before Duplicati starts
+      # Prevents backup job failures due to unavailable data sources
 
 networks:
   borgstack_internal:
@@ -1246,5 +1404,10 @@ volumes:
     # CRITICAL: Filer metadata maps S3 paths to volume chunks - required for S3 API functionality
     # Manual backup: docker compose exec -T seaweedfs tar czf - /data/filer > seaweedfs-filer-backup-$(date +%Y%m%d).tar.gz
 
-# Additional volumes (to be added in future stories):
-#   borgstack_duplicati_data:
+  borgstack_duplicati_config:
+    # Duplicati configuration and backup job definitions
+    # Contains: Backup job configurations, schedules, database (SQLite), UI settings
+    # NOT backed up by Duplicati itself (would be circular dependency)
+    # Manual backup: Export backup configurations via Duplicati web UI → Settings → Export
+    # CRITICAL: Contains encrypted backup job configurations - store backup separately
+    # Restore: Import configurations via Duplicati web UI → Settings → Import
