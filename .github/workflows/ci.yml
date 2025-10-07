@@ -86,12 +86,12 @@ jobs:
       - name: Verify volume naming conventions
         run: |
           echo "Verifying volume naming follows 'borgstack_' prefix convention..."
-          docker compose -f docker-compose.yml config 2>/dev/null | grep -A 1 "^volumes:" | grep -v "^volumes:" | grep -v "^--$" | grep -v "borgstack_" | grep -v "^$" && {
+          if docker compose -f docker-compose.yml config 2>/dev/null | awk '/^volumes:/,/^[^ ]/' | grep "name:" | grep -v "name: borgstack_"; then
             echo "❌ Found volume(s) not following 'borgstack_' prefix convention"
             exit 1
-          } || {
+          else
             echo "✅ Volume naming conventions verified"
-          }
+          fi
 
       - name: Verify network isolation configuration
         run: |
