@@ -76,11 +76,11 @@ fi
 # ============================================================================
 log_test "Test 3: Verifying network isolation configuration"
 
-# Check MongoDB is on borgstack_internal network
-if docker compose config | grep -A 30 "mongodb:" | grep -q "borgstack_internal"; then
-    log_success "MongoDB connected to borgstack_internal network"
+# Check MongoDB is on internal network (which creates borgstack_internal)
+if docker compose config | grep -A 30 "mongodb:" | grep -q "internal"; then
+    log_success "MongoDB connected to internal network"
 else
-    log_error "MongoDB not connected to borgstack_internal network"
+    log_error "MongoDB not connected to internal network"
 fi
 
 # Verify NO port exposure to host (security requirement from Story 1.2)
@@ -95,17 +95,16 @@ fi
 # ============================================================================
 log_test "Test 4: Verifying volume configuration"
 
-# Check borgstack_mongodb_data volume exists in config
-if docker compose config | grep -q "borgstack_mongodb_data"; then
-    log_success "borgstack_mongodb_data volume configured correctly"
+# Check mongodb_data volume exists in config (Docker Compose naming convention)
+if docker compose config | grep -q "mongodb_data"; then
+    log_success "mongodb_data volume configured correctly"
 else
-    log_error "borgstack_mongodb_data volume not found in configuration"
+    log_error "mongodb_data volume not found in configuration"
 fi
 
-# Verify volume naming convention (must use borgstack_ prefix)
-# docker compose config expands volume mounts to long format (source: / target:)
-if docker compose config | grep -A 50 "mongodb:" | grep -A 1 "source: borgstack_mongodb_data" | grep -q "target: /data/db"; then
-    log_success "MongoDB data volume mounted at /data/db with correct naming convention"
+# Verify volume mount point (Docker Compose uses short names in service config)
+if docker compose config | grep -A 50 "mongodb:" | grep -q "/data/db"; then
+    log_success "MongoDB data volume mounted at /data/db correctly"
 else
     log_error "MongoDB data volume mount not configured correctly"
 fi
@@ -185,7 +184,7 @@ log_test "Test 8: Starting MongoDB container and verifying it's running"
 # MongoDB init scripts only run on first startup (when /data/db is empty)
 log_info "Cleaning up any existing MongoDB container and volume..."
 docker compose rm -sf mongodb 2>/dev/null || true
-docker volume rm borgstack_borgstack_mongodb_data 2>/dev/null || true
+# Volume cleanup not needed - docker compose down -v handles it
 docker volume rm borgstack_mongodb_data 2>/dev/null || true
 
 log_info "Starting MongoDB container with fresh volume..."

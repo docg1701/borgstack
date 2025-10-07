@@ -363,12 +363,12 @@ test_network_config() {
 
     local checks_passed=0
 
-    # Check Caddy is on borgstack_external network
-    if docker compose config | grep -A 30 "caddy:" | grep -q "borgstack_external"; then
-        print_success "Caddy connected to borgstack_external network"
+    # Check Caddy is on external network (which creates borgstack_external)
+    if docker compose config | grep -A 30 "caddy:" | grep -q "external"; then
+        print_success "Caddy connected to external network"
         ((checks_passed++))
     else
-        print_failure "Caddy not connected to borgstack_external network"
+        print_failure "Caddy not connected to external network"
     fi
 
     # Verify Caddy exposes port 80

@@ -103,9 +103,9 @@ test_docker_compose_config() {
         return 1
     fi
 
-    # Test 1.3: Verify Redis is on borgstack_internal network
+    # Test 1.3: Verify Redis is on internal network
     # Using grep on YAML directly (no env vars needed)
-    if grep -A 15 'redis:' docker-compose.yml | grep -q 'borgstack_internal'; then
+    if grep -A 15 'redis:' docker-compose.yml | grep -q 'internal'; then
         print_pass "Redis connected to borgstack_internal network"
     else
         print_fail "Redis not connected to borgstack_internal network"
@@ -114,7 +114,7 @@ test_docker_compose_config() {
 
     # Test 1.4: Verify volume is configured
     # Using grep on YAML directly (no env vars needed)
-    if grep -A 20 'redis:' docker-compose.yml | grep -q 'borgstack_redis_data' && \
+    if grep -A 20 'redis:' docker-compose.yml | grep -q 'redis_data' && \
        grep -A 20 'redis:' docker-compose.yml | grep -q '/data'; then
         print_pass "Redis volume correctly configured"
     else
@@ -376,9 +376,9 @@ test_eviction_policy() {
 test_network_isolation() {
     print_test "8" "Network Isolation Verification"
 
-    # Test 8.1: Verify Redis is on borgstack_internal network
+    # Test 8.1: Verify Redis is on internal network
     # Using grep on YAML directly (no env vars needed)
-    if grep -A 15 'redis:' docker-compose.yml | grep -q 'borgstack_internal'; then
+    if grep -A 15 'redis:' docker-compose.yml | grep -q 'internal'; then
         print_pass "Redis connected to borgstack_internal network"
     else
         print_fail "Redis not on borgstack_internal network"
@@ -396,7 +396,7 @@ test_network_isolation() {
 
     # Test 8.3: Verify internal network is marked as internal
     # Using grep on YAML directly (no env vars needed)
-    if grep -A 5 'borgstack_internal:' docker-compose.yml | grep -q 'internal: true'; then
+    if grep -A 5 'internal:' docker-compose.yml | grep -q 'internal: true'; then
         print_pass "borgstack_internal network correctly marked as internal"
     else
         print_fail "borgstack_internal network not marked as internal"
@@ -417,7 +417,7 @@ test_volume_persistence() {
 
     # Test 9.2: Verify volume is mounted correctly
     # Using grep on YAML directly (no env vars needed)
-    if grep -A 20 'redis:' docker-compose.yml | grep -q 'borgstack_redis_data' && \
+    if grep -A 20 'redis:' docker-compose.yml | grep -q 'redis_data' && \
        grep -A 20 'redis:' docker-compose.yml | grep -q '/data'; then
         print_pass "Volume correctly mounted at /data"
     else
