@@ -2629,7 +2629,8 @@ jobs:
       - name: Verify Duplicati configuration volume
         run: |
           echo "Verifying Duplicati configuration volume is defined..."
-          if docker compose config | grep -A 200 "duplicati:" | grep -q "borgstack_duplicati_config:/config"; then
+          if docker compose config | grep -A 200 "duplicati:" | grep -q "borgstack_duplicati_config" && \
+             docker compose config | grep -A 200 "duplicati:" | grep -q "target: /config"; then
             echo "✅ Duplicati configuration volume correctly mapped"
           else
             echo "❌ Duplicati configuration volume not correctly mapped"
