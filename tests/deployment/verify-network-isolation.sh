@@ -60,31 +60,31 @@ fi
 # ════════════════════════════════════════════════════════════════════════════
 # TEST 2: Network Existence Verification (Configuration-Level)
 # ════════════════════════════════════════════════════════════════════════════
-print_test "Verifying borgstack_internal network exists in configuration"
+print_test "Verifying internal network exists with borgstack_internal name"
 
-if grep -q "borgstack_internal:" docker-compose.yml; then
-    print_pass "borgstack_internal network defined in docker-compose.yml"
+if grep -A 1 "^  internal:" docker-compose.yml | grep -q "name: borgstack_internal"; then
+    print_pass "internal network defined with name borgstack_internal"
 else
-    print_fail "borgstack_internal network not found in docker-compose.yml"
+    print_fail "internal network not found or incorrectly named in docker-compose.yml"
 fi
 
-print_test "Verifying borgstack_external network exists in configuration"
+print_test "Verifying external network exists with borgstack_external name"
 
-if grep -q "borgstack_external:" docker-compose.yml; then
-    print_pass "borgstack_external network defined in docker-compose.yml"
+if grep -A 1 "^  external:" docker-compose.yml | grep -q "name: borgstack_external"; then
+    print_pass "external network defined with name borgstack_external"
 else
-    print_fail "borgstack_external network not found in docker-compose.yml"
+    print_fail "external network not found or incorrectly named in docker-compose.yml"
 fi
 
 # ════════════════════════════════════════════════════════════════════════════
 # TEST 3: Internal Network Isolation Configuration
 # ════════════════════════════════════════════════════════════════════════════
-print_test "Verifying borgstack_internal has 'internal: true' setting"
+print_test "Verifying internal network has 'internal: true' setting"
 
-if grep -A 5 "borgstack_internal:" docker-compose.yml | grep -q "internal: true"; then
-    print_pass "borgstack_internal has internal: true (network isolation enabled)"
+if grep -A 5 "^  internal:" docker-compose.yml | grep -q "internal: true"; then
+    print_pass "internal network has internal: true (network isolation enabled)"
 else
-    print_fail "borgstack_internal missing 'internal: true' setting - SECURITY RISK"
+    print_fail "internal network missing 'internal: true' setting - SECURITY RISK"
 fi
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -92,16 +92,16 @@ fi
 # ════════════════════════════════════════════════════════════════════════════
 print_test "Verifying network driver configuration"
 
-if grep -A 5 "borgstack_internal:" docker-compose.yml | grep -q "driver: bridge"; then
-    print_pass "borgstack_internal uses bridge driver"
+if grep -A 5 "^  internal:" docker-compose.yml | grep -q "driver: bridge"; then
+    print_pass "internal network uses bridge driver"
 else
-    print_fail "borgstack_internal driver configuration incorrect"
+    print_fail "internal network driver configuration incorrect"
 fi
 
-if grep -A 5 "borgstack_external:" docker-compose.yml | grep -q "driver: bridge"; then
-    print_pass "borgstack_external uses bridge driver"
+if grep -A 5 "^  external:" docker-compose.yml | grep -q "driver: bridge"; then
+    print_pass "external network uses bridge driver"
 else
-    print_fail "borgstack_external driver configuration incorrect"
+    print_fail "external network driver configuration incorrect"
 fi
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -133,17 +133,18 @@ fi
 # ════════════════════════════════════════════════════════════════════════════
 # TEST 6: Network Naming Convention Compliance
 # ════════════════════════════════════════════════════════════════════════════
-print_test "Verifying network naming follows 'borgstack_' prefix convention"
+print_test "Verifying network naming follows Docker Compose best practices"
 
-# Extract network names from networks section and check for non-borgstack_ prefixes
-# Pattern: sed extracts from 'networks:' to next non-indented line, filters for network declarations
-INVALID_NETWORKS=$(sed -n '/^networks:/,/^[^ ]/{/^  [a-z_-]\+:/p}' docker-compose.yml | sed 's/:.*//; s/^  //' | grep -v "^borgstack_" || true)
+# Check that network keys are short names (internal/external) but 'name:' field has borgstack_ prefix
+# This is the industry standard: Docker Compose prepends project name automatically
+INTERNAL_NAME=$(grep -A 1 "^  internal:" docker-compose.yml | grep "name:" | awk '{print $2}' || echo "")
+EXTERNAL_NAME=$(grep -A 1 "^  external:" docker-compose.yml | grep "name:" | awk '{print $2}' || echo "")
 
-if [ -z "$INVALID_NETWORKS" ]; then
-    print_pass "All networks follow 'borgstack_' naming convention"
+if [ "$INTERNAL_NAME" = "borgstack_internal" ] && [ "$EXTERNAL_NAME" = "borgstack_external" ]; then
+    print_pass "Networks follow Docker Compose naming convention (short keys, full names in 'name:' field)"
 else
-    print_fail "Found networks not following 'borgstack_' prefix convention"
-    echo "$INVALID_NETWORKS"
+    print_fail "Network naming incorrect. Expected: internal->borgstack_internal, external->borgstack_external"
+    echo "  Found: internal->$INTERNAL_NAME, external->$EXTERNAL_NAME"
 fi
 
 # ════════════════════════════════════════════════════════════════════════════

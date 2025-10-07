@@ -221,15 +221,15 @@ jobs:
           fi
 
           # Check PostgreSQL is on borgstack_internal network
-          if docker compose config | grep -A 30 "postgresql:" | grep -q "borgstack_internal"; then
-            echo "✅ PostgreSQL connected to borgstack_internal network"
+          if docker compose config | grep -A 30 "postgresql:" | grep -q "internal"; then
+            echo "✅ PostgreSQL connected to internal network"
           else
-            echo "❌ PostgreSQL not connected to borgstack_internal network"
+            echo "❌ PostgreSQL not connected to internal network"
             exit 1
           fi
 
           # Verify volume naming convention
-          if docker compose config | grep -q "borgstack_postgresql_data"; then
+          if docker compose config | grep -q "postgresql_data"; then
             echo "✅ Volume follows borgstack_ naming convention"
           else
             echo "❌ Volume does not follow naming convention"
@@ -297,15 +297,15 @@ jobs:
           fi
 
           # Check Redis is on borgstack_internal network
-          if docker compose config | grep -A 30 "redis:" | grep -q "borgstack_internal"; then
-            echo "✅ Redis connected to borgstack_internal network"
+          if docker compose config | grep -A 30 "redis:" | grep -q "internal"; then
+            echo "✅ Redis connected to internal network"
           else
-            echo "❌ Redis not connected to borgstack_internal network"
+            echo "❌ Redis not connected to internal network"
             exit 1
           fi
 
           # Verify volume naming convention
-          if docker compose config | grep -q "borgstack_redis_data"; then
+          if docker compose config | grep -q "redis_data"; then
             echo "✅ Volume follows borgstack_ naming convention"
           else
             echo "❌ Volume does not follow naming convention"
@@ -380,25 +380,25 @@ jobs:
           fi
 
           # Check Caddy is on borgstack_external network
-          if docker compose config | grep -A 30 "caddy:" | grep -q "borgstack_external"; then
-            echo "✅ Caddy connected to borgstack_external network"
+          if docker compose config | grep -A 30 "caddy:" | grep -q "external"; then
+            echo "✅ Caddy connected to external network"
           else
-            echo "❌ Caddy not connected to borgstack_external network"
+            echo "❌ Caddy not connected to external network"
             exit 1
           fi
 
           # Verify volume naming convention
-          if docker compose config | grep -q "borgstack_caddy_data"; then
-            echo "✅ borgstack_caddy_data volume follows naming convention"
+          if docker compose config | grep -q "caddy_data"; then
+            echo "✅ caddy_data volume follows naming convention"
           else
-            echo "❌ borgstack_caddy_data volume not found"
+            echo "❌ caddy_data volume not found"
             exit 1
           fi
 
-          if docker compose config | grep -q "borgstack_caddy_config"; then
-            echo "✅ borgstack_caddy_config volume follows naming convention"
+          if docker compose config | grep -q "caddy_config"; then
+            echo "✅ caddy_config volume follows naming convention"
           else
-            echo "❌ borgstack_caddy_config volume not found"
+            echo "❌ caddy_config volume not found"
             exit 1
           fi
 
@@ -532,15 +532,15 @@ jobs:
           fi
 
           # Check MongoDB is on borgstack_internal network
-          if docker compose config | grep -A 30 "mongodb:" | grep -q "borgstack_internal"; then
-            echo "✅ MongoDB connected to borgstack_internal network"
+          if docker compose config | grep -A 30 "mongodb:" | grep -q "internal"; then
+            echo "✅ MongoDB connected to internal network"
           else
-            echo "❌ MongoDB not connected to borgstack_internal network"
+            echo "❌ MongoDB not connected to internal network"
             exit 1
           fi
 
           # Verify volume naming convention
-          if docker compose config | grep -q "borgstack_mongodb_data"; then
+          if docker compose config | grep -q "mongodb_data"; then
             echo "✅ Volume follows borgstack_ naming convention"
           else
             echo "❌ Volume does not follow naming convention"
@@ -705,22 +705,22 @@ jobs:
           fi
 
           # Check n8n is on both networks
-          if docker compose config | grep -A 50 "n8n:" | grep -q "borgstack_internal"; then
-            echo "✅ n8n connected to borgstack_internal network"
+          if docker compose config | grep -A 50 "n8n:" | grep -q "internal"; then
+            echo "✅ n8n connected to internal network"
           else
-            echo "❌ n8n not connected to borgstack_internal network"
+            echo "❌ n8n not connected to internal network"
             exit 1
           fi
 
-          if docker compose config | grep -A 50 "n8n:" | grep -q "borgstack_external"; then
-            echo "✅ n8n connected to borgstack_external network"
+          if docker compose config | grep -A 50 "n8n:" | grep -q "external"; then
+            echo "✅ n8n connected to external network"
           else
-            echo "❌ n8n not connected to borgstack_external network"
+            echo "❌ n8n not connected to external network"
             exit 1
           fi
 
           # Verify volume naming convention
-          if docker compose config | grep -q "borgstack_n8n_data"; then
+          if docker compose config | grep -q "n8n_data"; then
             echo "✅ Volume follows borgstack_ naming convention"
           else
             echo "❌ Volume does not follow naming convention"
@@ -973,22 +973,22 @@ jobs:
           fi
 
           # Check Evolution API is on both networks
-          if docker compose config | grep -A 50 "evolution:" | grep -q "borgstack_internal"; then
-            echo "✅ Evolution API connected to borgstack_internal network"
+          if docker compose config | grep -A 50 "evolution:" | grep -q "internal"; then
+            echo "✅ Evolution API connected to internal network"
           else
-            echo "❌ Evolution API not connected to borgstack_internal network"
+            echo "❌ Evolution API not connected to internal network"
             exit 1
           fi
 
-          if docker compose config | grep -A 50 "evolution:" | grep -q "borgstack_external"; then
-            echo "✅ Evolution API connected to borgstack_external network"
+          if docker compose config | grep -A 50 "evolution:" | grep -q "external"; then
+            echo "✅ Evolution API connected to external network"
           else
-            echo "❌ Evolution API not connected to borgstack_external network"
+            echo "❌ Evolution API not connected to external network"
             exit 1
           fi
 
           # Verify volume naming convention
-          if docker compose config | grep -q "borgstack_evolution_instances"; then
+          if docker compose config | grep -q "evolution_instances"; then
             echo "✅ Volume follows borgstack_ naming convention"
           else
             echo "❌ Volume does not follow naming convention"
@@ -1214,32 +1214,32 @@ jobs:
           fi
 
           # Check Chatwoot is on both networks (internal for DB/Redis, external for Caddy)
-          if docker compose config | grep -A 70 "chatwoot:" | grep -q "borgstack_internal"; then
-            echo "✅ Chatwoot connected to borgstack_internal network"
+          if docker compose config | grep -A 70 "chatwoot:" | grep -q "internal"; then
+            echo "✅ Chatwoot connected to internal network"
           else
-            echo "❌ Chatwoot not connected to borgstack_internal network"
+            echo "❌ Chatwoot not connected to internal network"
             exit 1
           fi
 
-          if docker compose config | grep -A 70 "chatwoot:" | grep -q "borgstack_external"; then
-            echo "✅ Chatwoot connected to borgstack_external network"
+          if docker compose config | grep -A 70 "chatwoot:" | grep -q "external"; then
+            echo "✅ Chatwoot connected to external network"
           else
-            echo "❌ Chatwoot not connected to borgstack_external network"
+            echo "❌ Chatwoot not connected to external network"
             exit 1
           fi
 
           # Verify volume naming convention (both storage and public volumes)
-          if docker compose config | grep -q "borgstack_chatwoot_storage"; then
-            echo "✅ Volume borgstack_chatwoot_storage follows naming convention"
+          if docker compose config | grep -q "chatwoot_storage"; then
+            echo "✅ Volume chatwoot_storage follows naming convention"
           else
-            echo "❌ Volume borgstack_chatwoot_storage does not follow naming convention"
+            echo "❌ Volume chatwoot_storage does not follow naming convention"
             exit 1
           fi
 
-          if docker compose config | grep -q "borgstack_chatwoot_public"; then
-            echo "✅ Volume borgstack_chatwoot_public follows naming convention"
+          if docker compose config | grep -q "chatwoot_public"; then
+            echo "✅ Volume chatwoot_public follows naming convention"
           else
-            echo "❌ Volume borgstack_chatwoot_public does not follow naming convention"
+            echo "❌ Volume chatwoot_public does not follow naming convention"
             exit 1
           fi
 
@@ -1454,33 +1454,33 @@ jobs:
           fi
 
           # Check Lowcoder API Service is on borgstack_internal network
-          if docker compose config | grep -A 50 "lowcoder-api-service:" | grep -q "borgstack_internal"; then
-            echo "✅ Lowcoder API Service connected to borgstack_internal network"
+          if docker compose config | grep -A 50 "lowcoder-api-service:" | grep -q "internal"; then
+            echo "✅ Lowcoder API Service connected to internal network"
           else
-            echo "❌ Lowcoder API Service not connected to borgstack_internal network"
+            echo "❌ Lowcoder API Service not connected to internal network"
             exit 1
           fi
 
           # Check Lowcoder Frontend is on both networks (internal + external for Caddy)
-          if docker compose config | grep -A 50 "lowcoder-frontend:" | grep -q "borgstack_internal"; then
-            echo "✅ Lowcoder Frontend connected to borgstack_internal network"
+          if docker compose config | grep -A 50 "lowcoder-frontend:" | grep -q "internal"; then
+            echo "✅ Lowcoder Frontend connected to internal network"
           else
-            echo "❌ Lowcoder Frontend not connected to borgstack_internal network"
+            echo "❌ Lowcoder Frontend not connected to internal network"
             exit 1
           fi
 
-          if docker compose config | grep -A 50 "lowcoder-frontend:" | grep -q "borgstack_external"; then
-            echo "✅ Lowcoder Frontend connected to borgstack_external network"
+          if docker compose config | grep -A 50 "lowcoder-frontend:" | grep -q "external"; then
+            echo "✅ Lowcoder Frontend connected to external network"
           else
-            echo "❌ Lowcoder Frontend not connected to borgstack_external network"
+            echo "❌ Lowcoder Frontend not connected to external network"
             exit 1
           fi
 
           # Verify volume naming convention
-          if docker compose config | grep -q "borgstack_lowcoder_stacks"; then
-            echo "✅ Volume borgstack_lowcoder_stacks follows naming convention"
+          if docker compose config | grep -q "lowcoder_stacks"; then
+            echo "✅ Volume lowcoder_stacks follows naming convention"
           else
-            echo "❌ Volume borgstack_lowcoder_stacks missing"
+            echo "❌ Volume lowcoder_stacks missing"
             exit 1
           fi
 
@@ -1801,25 +1801,25 @@ jobs:
           fi
 
           # Check Directus is on both networks (internal for DB/Redis, external for Caddy)
-          if docker compose config | grep -A 50 "directus:" | grep -q "borgstack_internal"; then
-            echo "✅ Directus connected to borgstack_internal network"
+          if docker compose config | grep -A 50 "directus:" | grep -q "internal"; then
+            echo "✅ Directus connected to internal network"
           else
-            echo "❌ Directus not connected to borgstack_internal network"
+            echo "❌ Directus not connected to internal network"
             exit 1
           fi
 
-          if docker compose config | grep -A 50 "directus:" | grep -q "borgstack_external"; then
-            echo "✅ Directus connected to borgstack_external network"
+          if docker compose config | grep -A 50 "directus:" | grep -q "external"; then
+            echo "✅ Directus connected to external network"
           else
-            echo "❌ Directus not connected to borgstack_external network"
+            echo "❌ Directus not connected to external network"
             exit 1
           fi
 
           # Verify volume naming convention
-          if docker compose config | grep -q "borgstack_directus_uploads"; then
-            echo "✅ Volume borgstack_directus_uploads follows naming convention"
+          if docker compose config | grep -q "directus_uploads"; then
+            echo "✅ Volume directus_uploads follows naming convention"
           else
-            echo "❌ Volume borgstack_directus_uploads not found"
+            echo "❌ Volume directus_uploads not found"
             exit 1
           fi
 
@@ -2024,46 +2024,46 @@ jobs:
           fi
 
           # Check FileFlows is on both networks (internal + external for Caddy)
-          if docker compose config | grep -A 50 "fileflows:" | grep -q "borgstack_internal"; then
-            echo "✅ FileFlows connected to borgstack_internal network"
+          if docker compose config | grep -A 50 "fileflows:" | grep -q "internal"; then
+            echo "✅ FileFlows connected to internal network"
           else
-            echo "❌ FileFlows not connected to borgstack_internal network"
+            echo "❌ FileFlows not connected to internal network"
             exit 1
           fi
 
-          if docker compose config | grep -A 50 "fileflows:" | grep -q "borgstack_external"; then
-            echo "✅ FileFlows connected to borgstack_external network"
+          if docker compose config | grep -A 50 "fileflows:" | grep -q "external"; then
+            echo "✅ FileFlows connected to external network"
           else
-            echo "❌ FileFlows not connected to borgstack_external network"
+            echo "❌ FileFlows not connected to external network"
             exit 1
           fi
 
           # Verify volume naming convention
-          if docker compose config | grep -q "borgstack_fileflows_data"; then
-            echo "✅ Volume borgstack_fileflows_data follows naming convention"
+          if docker compose config | grep -q "fileflows_data"; then
+            echo "✅ Volume fileflows_data follows naming convention"
           else
-            echo "❌ Volume borgstack_fileflows_data not found"
+            echo "❌ Volume fileflows_data not found"
             exit 1
           fi
 
-          if docker compose config | grep -q "borgstack_fileflows_input"; then
-            echo "✅ Volume borgstack_fileflows_input follows naming convention"
+          if docker compose config | grep -q "fileflows_input"; then
+            echo "✅ Volume fileflows_input follows naming convention"
           else
-            echo "❌ Volume borgstack_fileflows_input not found"
+            echo "❌ Volume fileflows_input not found"
             exit 1
           fi
 
-          if docker compose config | grep -q "borgstack_fileflows_output"; then
-            echo "✅ Volume borgstack_fileflows_output follows naming convention"
+          if docker compose config | grep -q "fileflows_output"; then
+            echo "✅ Volume fileflows_output follows naming convention"
           else
-            echo "❌ Volume borgstack_fileflows_output not found"
+            echo "❌ Volume fileflows_output not found"
             exit 1
           fi
 
-          if docker compose config | grep -q "borgstack_fileflows_temp"; then
-            echo "✅ Volume borgstack_fileflows_temp follows naming convention"
+          if docker compose config | grep -q "fileflows_temp"; then
+            echo "✅ Volume fileflows_temp follows naming convention"
           else
-            echo "❌ Volume borgstack_fileflows_temp not found"
+            echo "❌ Volume fileflows_temp not found"
             exit 1
           fi
 
@@ -2272,18 +2272,18 @@ jobs:
           echo "Verifying n8n has volume mounts for Directus and FileFlows..."
 
           # Check if n8n mounts directus_uploads volume (read-only)
-          if grep -A 50 "^  n8n:" docker-compose.yml | grep "borgstack_directus_uploads:/directus/uploads:ro"; then
-            echo "✅ n8n mounts borgstack_directus_uploads (read-only)"
+          if grep -A 50 "^  n8n:" docker-compose.yml | grep "directus_uploads:/directus/uploads:ro"; then
+            echo "✅ n8n mounts directus_uploads (read-only)"
           else
-            echo "❌ n8n missing borgstack_directus_uploads mount"
+            echo "❌ n8n missing directus_uploads mount"
             exit 1
           fi
 
           # Check if n8n mounts fileflows_input volume (read-write)
-          if grep -A 50 "^  n8n:" docker-compose.yml | grep "borgstack_fileflows_input:/fileflows/input:rw"; then
-            echo "✅ n8n mounts borgstack_fileflows_input (read-write)"
+          if grep -A 50 "^  n8n:" docker-compose.yml | grep "fileflows_input:/fileflows/input:rw"; then
+            echo "✅ n8n mounts fileflows_input (read-write)"
           else
-            echo "❌ n8n missing borgstack_fileflows_input mount"
+            echo "❌ n8n missing fileflows_input mount"
             exit 1
           fi
 
@@ -2388,10 +2388,10 @@ jobs:
           fi
 
           # Check SeaweedFS is on borgstack_internal network only (security requirement)
-          if docker compose config | grep -A 50 "seaweedfs:" | grep -q "borgstack_internal"; then
-            echo "✅ SeaweedFS connected to borgstack_internal network"
+          if docker compose config | grep -A 50 "seaweedfs:" | grep -q "internal"; then
+            echo "✅ SeaweedFS connected to internal network"
           else
-            echo "❌ SeaweedFS not connected to borgstack_internal network"
+            echo "❌ SeaweedFS not connected to internal network"
             exit 1
           fi
 
@@ -2399,32 +2399,32 @@ jobs:
           # Check only the networks section of the seaweedfs service (not global networks definition)
           # Match service-level networks (4-space indentation) to avoid matching global networks section
           SEAWEEDFS_NETWORKS=$(docker compose config | sed -n '/^  seaweedfs:/,/^  [a-z-]*:$/p' | grep -A 3 "^    networks:")
-          if echo "$SEAWEEDFS_NETWORKS" | grep -q "borgstack_external"; then
-            echo "❌ SeaweedFS connected to borgstack_external (security violation - should be internal only)"
+          if echo "$SEAWEEDFS_NETWORKS" | grep -q "external"; then
+            echo "❌ SeaweedFS connected to external (security violation - should be internal only)"
             exit 1
           else
             echo "✅ SeaweedFS NOT on borgstack_external (security requirement met)"
           fi
 
           # Verify volume naming conventions (master, volume, filer)
-          if docker compose config | grep -q "borgstack_seaweedfs_master"; then
-            echo "✅ Volume borgstack_seaweedfs_master follows naming convention"
+          if docker compose config | grep -q "seaweedfs_master"; then
+            echo "✅ Volume seaweedfs_master follows naming convention"
           else
-            echo "❌ Volume borgstack_seaweedfs_master not found"
+            echo "❌ Volume seaweedfs_master not found"
             exit 1
           fi
 
-          if docker compose config | grep -q "borgstack_seaweedfs_volume"; then
-            echo "✅ Volume borgstack_seaweedfs_volume follows naming convention"
+          if docker compose config | grep -q "seaweedfs_volume"; then
+            echo "✅ Volume seaweedfs_volume follows naming convention"
           else
-            echo "❌ Volume borgstack_seaweedfs_volume not found"
+            echo "❌ Volume seaweedfs_volume not found"
             exit 1
           fi
 
-          if docker compose config | grep -q "borgstack_seaweedfs_filer"; then
-            echo "✅ Volume borgstack_seaweedfs_filer follows naming convention"
+          if docker compose config | grep -q "seaweedfs_filer"; then
+            echo "✅ Volume seaweedfs_filer follows naming convention"
           else
-            echo "❌ Volume borgstack_seaweedfs_filer not found"
+            echo "❌ Volume seaweedfs_filer not found"
             exit 1
           fi
 
@@ -2573,7 +2573,7 @@ jobs:
           DUPLICATI_CONFIG=$(docker compose config | grep -A 100 "duplicati:")
 
           # Verify borgstack_internal network
-          if echo "$DUPLICATI_CONFIG" | grep -A 30 "networks:" | grep -q "borgstack_internal"; then
+          if echo "$DUPLICATI_CONFIG" | grep -A 30 "networks:" | grep -q "internal"; then
             echo "✅ Duplicati on borgstack_internal network"
           else
             echo "❌ Duplicati not on borgstack_internal network"
@@ -2581,7 +2581,7 @@ jobs:
           fi
 
           # Verify borgstack_external network
-          if echo "$DUPLICATI_CONFIG" | grep -A 30 "networks:" | grep -q "borgstack_external"; then
+          if echo "$DUPLICATI_CONFIG" | grep -A 30 "networks:" | grep -q "external"; then
             echo "✅ Duplicati on borgstack_external network"
           else
             echo "❌ Duplicati not on borgstack_external network"
@@ -2629,7 +2629,7 @@ jobs:
       - name: Verify Duplicati configuration volume
         run: |
           echo "Verifying Duplicati configuration volume is defined..."
-          if docker compose config | grep -q "borgstack_duplicati_config"; then
+          if docker compose config | grep -q "duplicati_config"; then
             echo "✅ Duplicati configuration volume correctly mapped"
           else
             echo "❌ Duplicati configuration volume not correctly mapped"

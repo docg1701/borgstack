@@ -76,11 +76,11 @@ fi
 # ============================================================================
 log_test "Test 3: Verifying network isolation configuration"
 
-# Check PostgreSQL is on borgstack_internal network
-if docker compose config | grep -A 30 "postgresql:" | grep -q "borgstack_internal"; then
-    log_success "PostgreSQL connected to borgstack_internal network"
+# Check PostgreSQL is on internal network (which creates borgstack_internal)
+if docker compose config | grep -A 30 "postgresql:" | grep -q "internal"; then
+    log_success "PostgreSQL connected to internal network"
 else
-    log_error "PostgreSQL not connected to borgstack_internal network"
+    log_error "PostgreSQL not connected to internal network"
 fi
 
 # Verify NO port exposure to host (security requirement from Story 1.2)
@@ -373,10 +373,11 @@ fi
 # ============================================================================
 log_test "Test 12: Verifying volume naming convention"
 
-if docker compose config | grep -q "borgstack_postgresql_data:"; then
-    log_success "Volume follows borgstack_ naming convention"
+# Check that volume key is short name (postgresql_data) - Docker Compose auto-prepends project name
+if docker compose config | grep -q "postgresql_data:"; then
+    log_success "Volume follows Docker Compose naming convention (short name, Docker prepends project)"
 else
-    log_error "Volume does not follow borgstack_ naming convention"
+    log_error "Volume does not follow naming convention (expected: postgresql_data)"
 fi
 
 # ============================================================================

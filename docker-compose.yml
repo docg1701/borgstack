@@ -51,11 +51,11 @@ services:
     container_name: borgstack_postgresql
     restart: unless-stopped
     networks:
-      - borgstack_internal
+      - internal
     # ⚠️  NO ports section in production - databases must not expose ports to host
     # ℹ️  For local development, add port mapping in docker-compose.override.yml
     volumes:
-      - borgstack_postgresql_data:/var/lib/postgresql/data
+      - postgresql_data:/var/lib/postgresql/data
       - ./config/postgresql/init-databases.sh:/docker-entrypoint-initdb.d/01-init-databases.sh:ro
       - ./config/postgresql/postgresql.conf:/etc/postgresql/postgresql.conf:ro
       - ./config/postgresql/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
@@ -124,11 +124,11 @@ services:
     container_name: borgstack_redis
     restart: unless-stopped
     networks:
-      - borgstack_internal
+      - internal
     # ⚠️  NO ports section in production - cache must not expose ports to host
     # ℹ️  For local development, add port mapping in docker-compose.override.yml
     volumes:
-      - borgstack_redis_data:/data
+      - redis_data:/data
       - ./config/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
     environment:
       # Redis password (used in health check and passed via command line)
@@ -197,7 +197,7 @@ services:
     container_name: borgstack_caddy
     restart: unless-stopped
     networks:
-      - borgstack_external
+      - external
     # ✅ ONLY service that exposes ports to host (single entry point architecture)
     ports:
       - "80:80"    # HTTP (automatically redirects to HTTPS)
@@ -206,9 +206,9 @@ services:
       # Caddyfile configuration (read-only for security)
       - ./config/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
       # Certificate storage (Let's Encrypt certificates and account data)
-      - borgstack_caddy_data:/data
+      - caddy_data:/data
       # Auto-saved JSON config (Caddy's internal representation)
-      - borgstack_caddy_config:/config
+      - caddy_config:/config
     environment:
       # Base domain for all services (e.g., example.com.br)
       # Subdomains will be: n8n.{DOMAIN}, chatwoot.{DOMAIN}, etc.
@@ -256,8 +256,8 @@ services:
     container_name: borgstack_n8n
     restart: unless-stopped
     networks:
-      - borgstack_internal
-      - borgstack_external
+      - internal
+      - external
     environment:
       # Database connection (PostgreSQL)
       DB_TYPE: postgresdb
@@ -294,12 +294,12 @@ services:
       N8N_METRICS: "true"
       QUEUE_HEALTH_CHECK_ACTIVE: "true"
     volumes:
-      - borgstack_n8n_data:/home/node/.n8n
+      - n8n_data:/home/node/.n8n
       # Volume mounts for Directus-FileFlows integration (Story 4.3)
       # Read-only access to Directus uploads for copying files to FileFlows
-      - borgstack_directus_uploads:/directus/uploads:ro
+      - directus_uploads:/directus/uploads:ro
       # Read-write access to FileFlows input for file processing trigger
-      - borgstack_fileflows_input:/fileflows/input:rw
+      - fileflows_input:/fileflows/input:rw
     depends_on:
       postgresql:
         condition: service_healthy
@@ -357,8 +357,8 @@ services:
     container_name: borgstack_evolution
     restart: unless-stopped
     networks:
-      - borgstack_internal
-      - borgstack_external
+      - internal
+      - external
     environment:
       # Database connection
       DATABASE_ENABLED: true
@@ -405,7 +405,7 @@ services:
       LOG_COLOR: true
 
     volumes:
-      - borgstack_evolution_instances:/evolution/instances
+      - evolution_instances:/evolution/instances
     depends_on:
       postgresql:
         condition: service_healthy
@@ -458,8 +458,8 @@ services:
     container_name: borgstack_chatwoot
     restart: unless-stopped
     networks:
-      - borgstack_internal
-      - borgstack_external
+      - internal
+      - external
     entrypoint: docker/entrypoints/rails.sh
     command: ['sh', '-c', 'bundle exec rails db:chatwoot_prepare && bundle exec rails s -p 3000 -b 0.0.0.0']
     environment:
@@ -478,8 +478,8 @@ services:
       FRONTEND_URL: https://${CHATWOOT_HOST}
       INSTALLATION_NAME: BorgStack Chatwoot
     volumes:
-      - borgstack_chatwoot_storage:/app/storage
-      - borgstack_chatwoot_public:/app/public
+      - chatwoot_storage:/app/storage
+      - chatwoot_public:/app/public
     depends_on:
       postgresql:
         condition: service_healthy
@@ -537,7 +537,7 @@ services:
     container_name: borgstack_mongodb
     restart: unless-stopped
     networks:
-      - borgstack_internal
+      - internal
     # ⚠️  NO ports section in production - databases must not expose ports to host
     # ℹ️  For local development, add port mapping in docker-compose.override.yml
     environment:
@@ -548,7 +548,7 @@ services:
       LOWCODER_DB_PASSWORD: ${LOWCODER_DB_PASSWORD}
     volumes:
       # MongoDB data directory (persistent storage for all databases)
-      - borgstack_mongodb_data:/data/db
+      - mongodb_data:/data/db
       # Initialization script (creates lowcoder database and user on first startup)
       - ./config/mongodb/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
     healthcheck:
@@ -609,9 +609,9 @@ services:
     container_name: borgstack_lowcoder_api_service
     restart: unless-stopped
     networks:
-      - borgstack_internal
+      - internal
     volumes:
-      - borgstack_lowcoder_stacks:/lowcoder-stacks
+      - lowcoder_stacks:/lowcoder-stacks
     environment:
       - LOWCODER_PUID=9001
       - LOWCODER_PGID=9001
@@ -643,7 +643,7 @@ services:
     container_name: borgstack_lowcoder_node_service
     restart: unless-stopped
     networks:
-      - borgstack_internal
+      - internal
     environment:
       - LOWCODER_PUID=9001
       - LOWCODER_PGID=9001
@@ -667,8 +667,8 @@ services:
     container_name: borgstack_lowcoder_frontend
     restart: unless-stopped
     networks:
-      - borgstack_internal
-      - borgstack_external
+      - internal
+      - external
     environment:
       - LOWCODER_PUID=9001
       - LOWCODER_PGID=9001
@@ -741,13 +741,13 @@ services:
     container_name: borgstack_directus
     restart: unless-stopped
     networks:
-      - borgstack_internal  # Access to PostgreSQL, Redis
-      - borgstack_external  # Access from Caddy reverse proxy
+      - internal  # Access to PostgreSQL, Redis
+      - external  # Access from Caddy reverse proxy
     # ⚠️  NO ports section in production - web UI accessed via Caddy reverse proxy
     # ℹ️  For local development, add port mapping in docker-compose.override.yml
     volumes:
       # File uploads directory (local storage - migrating to S3 in Story 5.1)
-      - borgstack_directus_uploads:/directus/uploads
+      - directus_uploads:/directus/uploads
     environment:
       # ======================================================================
       # Database Configuration (PostgreSQL)
@@ -868,23 +868,23 @@ services:
     container_name: borgstack_fileflows
     restart: unless-stopped
     networks:
-      - borgstack_internal  # For future SeaweedFS access (Story 5.1)
-      - borgstack_external  # Access from Caddy reverse proxy
+      - internal  # For future SeaweedFS access (Story 5.1)
+      - external  # Access from Caddy reverse proxy
     # ⚠️  NO ports section in production - web UI accessed via Caddy reverse proxy
     # ℹ️  For local development, add port mapping in docker-compose.override.yml
     volumes:
       # Application data and configuration
-      - borgstack_fileflows_data:/app/Data
+      - fileflows_data:/app/Data
       # Processing logs
-      - borgstack_fileflows_logs:/app/Logs
+      - fileflows_logs:/app/Logs
       # Temporary processing workspace (scratch space for FFmpeg)
-      - borgstack_fileflows_temp:/temp
+      - fileflows_temp:/temp
       # Media input directory (watch directory for new files)
       # MIGRATION: Switch to SeaweedFS S3 storage in Story 5.1
-      - borgstack_fileflows_input:/input
+      - fileflows_input:/input
       # Media output directory (processed files)
       # MIGRATION: Switch to SeaweedFS S3 storage in Story 5.1
-      - borgstack_fileflows_output:/output
+      - fileflows_output:/output
     environment:
       # ======================================================================
       # FileFlows Core Configuration
@@ -988,7 +988,7 @@ services:
     container_name: borgstack_seaweedfs
     restart: unless-stopped
     networks:
-      - borgstack_internal
+      - internal
     # ⚠️  NO ports section in production - S3 API accessible only via internal network
     # ℹ️  For external S3 access, configure Caddy reverse proxy (Task 9 - optional)
     # ℹ️  For local development testing, add port mappings in docker-compose.override.yml:
@@ -997,9 +997,9 @@ services:
     #     - "8888:8888"  # Filer API
     #     - "8333:8333"  # S3 API
     volumes:
-      - borgstack_seaweedfs_master:/data/master
-      - borgstack_seaweedfs_volume:/data/volume
-      - borgstack_seaweedfs_filer:/data/filer
+      - seaweedfs_master:/data/master
+      - seaweedfs_volume:/data/volume
+      - seaweedfs_filer:/data/filer
     environment:
       # ======================================================================
       # Network Binding Configuration
@@ -1125,8 +1125,8 @@ services:
     container_name: borgstack_duplicati
     restart: unless-stopped
     networks:
-      - borgstack_internal  # Access to all service volumes
-      - borgstack_external  # Caddy reverse proxy access to web UI
+      - internal  # Access to all service volumes
+      - external  # Caddy reverse proxy access to web UI
     # ⚠️  NO ports section in production - web UI accessible only via Caddy reverse proxy
     # ℹ️  For local development testing, add port mapping in docker-compose.override.yml:
     #     - "8200:8200"  # Duplicati web UI
@@ -1134,36 +1134,36 @@ services:
       # ======================================================================
       # Duplicati Configuration Storage
       # ======================================================================
-      - borgstack_duplicati_config:/config
+      - duplicati_config:/config
 
       # ======================================================================
       # Backup Sources - All Critical Data Volumes (Read-Only for Safety)
       # ======================================================================
       # Database volumes
-      - /var/lib/docker/volumes/borgstack_borgstack_postgresql_data/_data:/source/postgresql:ro
-      - /var/lib/docker/volumes/borgstack_borgstack_mongodb_data/_data:/source/mongodb:ro
-      - /var/lib/docker/volumes/borgstack_borgstack_redis_data/_data:/source/redis:ro
+      - /var/lib/docker/volumes/borgstack_postgresql_data/_data:/source/postgresql:ro
+      - /var/lib/docker/volumes/borgstack_mongodb_data/_data:/source/mongodb:ro
+      - /var/lib/docker/volumes/borgstack_redis_data/_data:/source/redis:ro
 
       # SeaweedFS object storage volumes
-      - /var/lib/docker/volumes/borgstack_borgstack_seaweedfs_master/_data:/source/seaweedfs_master:ro
-      - /var/lib/docker/volumes/borgstack_borgstack_seaweedfs_volume/_data:/source/seaweedfs_volume:ro
-      - /var/lib/docker/volumes/borgstack_borgstack_seaweedfs_filer/_data:/source/seaweedfs_filer:ro
+      - /var/lib/docker/volumes/borgstack_seaweedfs_master/_data:/source/seaweedfs_master:ro
+      - /var/lib/docker/volumes/borgstack_seaweedfs_volume/_data:/source/seaweedfs_volume:ro
+      - /var/lib/docker/volumes/borgstack_seaweedfs_filer/_data:/source/seaweedfs_filer:ro
 
       # Application data volumes
-      - /var/lib/docker/volumes/borgstack_borgstack_n8n_data/_data:/source/n8n:ro
-      - /var/lib/docker/volumes/borgstack_borgstack_evolution_instances/_data:/source/evolution:ro
-      - /var/lib/docker/volumes/borgstack_borgstack_chatwoot_storage/_data:/source/chatwoot_storage:ro
-      - /var/lib/docker/volumes/borgstack_borgstack_lowcoder_stacks/_data:/source/lowcoder_stacks:ro
-      - /var/lib/docker/volumes/borgstack_borgstack_directus_uploads/_data:/source/directus_uploads:ro
+      - /var/lib/docker/volumes/borgstack_n8n_data/_data:/source/n8n:ro
+      - /var/lib/docker/volumes/borgstack_evolution_instances/_data:/source/evolution:ro
+      - /var/lib/docker/volumes/borgstack_chatwoot_storage/_data:/source/chatwoot_storage:ro
+      - /var/lib/docker/volumes/borgstack_lowcoder_stacks/_data:/source/lowcoder_stacks:ro
+      - /var/lib/docker/volumes/borgstack_directus_uploads/_data:/source/directus_uploads:ro
 
       # FileFlows media processing volumes
-      - /var/lib/docker/volumes/borgstack_borgstack_fileflows_data/_data:/source/fileflows_data:ro
-      - /var/lib/docker/volumes/borgstack_borgstack_fileflows_logs/_data:/source/fileflows_logs:ro
-      - /var/lib/docker/volumes/borgstack_borgstack_fileflows_input/_data:/source/fileflows_input:ro
-      - /var/lib/docker/volumes/borgstack_borgstack_fileflows_output/_data:/source/fileflows_output:ro
+      - /var/lib/docker/volumes/borgstack_fileflows_data/_data:/source/fileflows_data:ro
+      - /var/lib/docker/volumes/borgstack_fileflows_logs/_data:/source/fileflows_logs:ro
+      - /var/lib/docker/volumes/borgstack_fileflows_input/_data:/source/fileflows_input:ro
+      - /var/lib/docker/volumes/borgstack_fileflows_output/_data:/source/fileflows_output:ro
 
       # SSL certificates and configuration
-      - /var/lib/docker/volumes/borgstack_borgstack_caddy_data/_data:/source/caddy:ro
+      - /var/lib/docker/volumes/borgstack_caddy_data/_data:/source/caddy:ro
     environment:
       # ======================================================================
       # Web UI Authentication
@@ -1209,7 +1209,7 @@ services:
       # Prevents backup job failures due to unavailable data sources
 
 networks:
-  borgstack_internal:
+  internal:
     name: borgstack_internal
     driver: bridge
     internal: true
@@ -1244,7 +1244,7 @@ networks:
     #   ❌ Never expose database ports to host: prevents unauthorized direct access
     #   ℹ️  Dev port mappings allowed in docker-compose.override.yml for debugging
 
-  borgstack_external:
+  external:
     name: borgstack_external
     driver: bridge
     # ════════════════════════════════════════════════════════════════════════════
@@ -1271,124 +1271,124 @@ networks:
     #   ℹ️  Dev environment: docker-compose.override.yml may expose additional ports for debugging
 
 # Volumes will be added as services are implemented
-# All volumes must use the borgstack_ prefix
+# Volume naming: Docker Compose automatically prepends project name (borgstack_)
 volumes:
-  borgstack_postgresql_data:
+  postgresql_data:
     # PostgreSQL data directory
     # Contains all databases: n8n_db, chatwoot_db, directus_db, evolution_db
     # Backed up by Duplicati (Story 5.2)
     # Manual backup: docker compose exec postgresql pg_dumpall -U postgres > backup.sql
 
-  borgstack_redis_data:
+  redis_data:
     # Redis data directory
     # Contains: RDB snapshots (dump.rdb) and AOF file (appendonly.aof)
     # Persistence strategy: RDB for fast restarts + AOF for durability (max 1 sec data loss)
     # Backed up by Duplicati (Story 5.2)
     # Manual backup: docker compose exec redis redis-cli -a ${REDIS_PASSWORD} SAVE
 
-  borgstack_caddy_data:
+  caddy_data:
     # Caddy data directory
     # Contains: SSL/TLS certificates from Let's Encrypt, ACME account data
     # Certificate auto-renewal: 30 days before expiration (no manual intervention)
     # Backed up by Duplicati (Story 5.2) - critical for certificate continuity
     # View certificates: docker compose exec caddy ls -lah /data/caddy/certificates/
 
-  borgstack_caddy_config:
+  caddy_config:
     # Caddy auto-saved configuration directory
     # Contains: Caddy's internal JSON representation of Caddyfile
     # Auto-generated on startup and config reload
     # Not critical for backups (regenerated from Caddyfile on restart)
 
-  borgstack_mongodb_data:
+  mongodb_data:
     # MongoDB data directory
     # Contains: Lowcoder database collections and indexes
     # Backed up by Duplicati (Story 5.2)
     # Manual backup: docker compose exec -T mongodb mongodump --username admin --password ${MONGODB_ROOT_PASSWORD} --authenticationDatabase admin --out /backup/$(date +%Y%m%d_%H%M%S)
     # Manual restore: docker compose exec -T mongodb mongorestore --username admin --password ${MONGODB_ROOT_PASSWORD} --authenticationDatabase admin /backup/BACKUP_FOLDER_NAME
 
-  borgstack_n8n_data:
+  n8n_data:
     # n8n workflow automation data directory
     # Contains: Workflow definitions, credentials (encrypted), custom nodes, executions history
     # Backed up by Duplicati (Story 5.2)
     # CRITICAL: Contains encrypted credentials - backup N8N_ENCRYPTION_KEY separately
     # Manual backup: docker compose exec -T n8n tar czf - /home/node/.n8n > n8n-backup-$(date +%Y%m%d).tar.gz
 
-  borgstack_evolution_instances:
+  evolution_instances:
     # Evolution API WhatsApp instance data directory
     # Contains: WhatsApp session data, QR codes, instance configurations, authentication tokens
     # Backed up by Duplicati (Story 5.2)
     # CRITICAL: Contains WhatsApp session credentials - loss requires re-authentication via QR code
     # Manual backup: docker compose exec -T evolution tar czf - /evolution/instances > evolution-backup-$(date +%Y%m%d).tar.gz
 
-  borgstack_chatwoot_storage:
+  chatwoot_storage:
     # Chatwoot storage directory
     # Contains: File uploads, attachments, agent avatars, customer profile images
     # Backed up by Duplicati (Story 5.2)
     # Manual backup: docker compose exec -T chatwoot tar czf - /app/storage > chatwoot-storage-backup-$(date +%Y%m%d).tar.gz
 
-  borgstack_chatwoot_public:
+  chatwoot_public:
     # Chatwoot public assets directory
     # Contains: Rails compiled assets, webpacker bundles, JavaScript/CSS files
     # Auto-regenerated on container restart (asset precompilation)
     # Not critical for backups (can be regenerated from image)
 
-  borgstack_lowcoder_stacks:
+  lowcoder_stacks:
     # Lowcoder application stacks directory
     # Contains: Custom application definitions, custom components, query configurations, assets
     # Backed up by Duplicati (Story 5.2)
     # CRITICAL: Contains all custom applications and datasource connections
     # Manual backup: docker compose exec -T lowcoder tar czf - /lowcoder-stacks > lowcoder-backup-$(date +%Y%m%d).tar.gz
 
-  borgstack_directus_uploads:
+  directus_uploads:
     # Directus file uploads directory
     # Contains: Uploaded media files, assets, and documents
     # Backed up by Duplicati (Story 5.2)
     # MIGRATION: Will be replaced with SeaweedFS S3 storage in Story 5.1
     # Manual backup: docker compose exec -T directus tar czf - /directus/uploads > directus-uploads-backup-$(date +%Y%m%d).tar.gz
 
-  borgstack_fileflows_data:
+  fileflows_data:
     # FileFlows application data and configuration directory
     # Contains: Flow definitions, processing node configurations, application settings
     # Backed up by Duplicati (Story 5.2)
     # CRITICAL: Contains all processing workflows and configurations
     # Manual backup: docker compose exec -T fileflows tar czf - /app/Data > fileflows-data-backup-$(date +%Y%m%d).tar.gz
 
-  borgstack_fileflows_logs:
+  fileflows_logs:
     # FileFlows processing logs directory
     # Contains: Processing history, error logs, job execution records
     # Backed up by Duplicati (Story 5.2)
     # Useful for troubleshooting failed processing jobs
     # Manual backup: docker compose exec -T fileflows tar czf - /app/Logs > fileflows-logs-backup-$(date +%Y%m%d).tar.gz
 
-  borgstack_fileflows_temp:
+  fileflows_temp:
     # FileFlows temporary processing workspace
     # Contains: Scratch files during active FFmpeg transcoding
     # NOT backed up (temporary workspace, auto-cleaned)
     # Auto-cleanup: FileFlows cleans up temp files after job completion
     # Disk space: Ensure adequate space for largest media file × concurrent jobs
 
-  borgstack_fileflows_input:
+  fileflows_input:
     # FileFlows media input directory (watch directory)
     # Contains: Media files awaiting processing (user uploads, Directus uploads)
     # Backed up by Duplicati (Story 5.2)
     # MIGRATION: Will be replaced with SeaweedFS S3 storage in Story 5.1
     # Manual backup: docker compose exec -T fileflows tar czf - /input > fileflows-input-backup-$(date +%Y%m%d).tar.gz
 
-  borgstack_fileflows_output:
+  fileflows_output:
     # FileFlows processed media output directory
     # Contains: Transcoded/optimized media files ready for delivery
     # Backed up by Duplicati (Story 5.2)
     # MIGRATION: Will be replaced with SeaweedFS S3 storage in Story 5.1
     # Manual backup: docker compose exec -T fileflows tar czf - /output > fileflows-output-backup-$(date +%Y%m%d).tar.gz
 
-  borgstack_seaweedfs_master:
+  seaweedfs_master:
     # SeaweedFS master server metadata directory
     # Contains: Volume topology, server status, data center/rack configuration, volume allocation metadata
     # Backed up by Duplicati (Story 5.2)
     # CRITICAL: Master metadata required for cluster recovery and volume location mapping
     # Manual backup: docker compose exec -T seaweedfs tar czf - /data/master > seaweedfs-master-backup-$(date +%Y%m%d).tar.gz
 
-  borgstack_seaweedfs_volume:
+  seaweedfs_volume:
     # SeaweedFS volume server data directory
     # Contains: Actual file content stored in volume chunks (.dat and .idx files)
     # Backed up by Duplicati (Story 5.2)
@@ -1397,14 +1397,14 @@ volumes:
     # Performance: SSD highly recommended for optimal I/O throughput (>100 MB/s)
     # Manual backup: docker compose exec -T seaweedfs tar czf - /data/volume > seaweedfs-volume-backup-$(date +%Y%m%d).tar.gz
 
-  borgstack_seaweedfs_filer:
+  seaweedfs_filer:
     # SeaweedFS filer metadata directory
     # Contains: Directory structure, file metadata, bucket organization, LevelDB filer store
     # Backed up by Duplicati (Story 5.2)
     # CRITICAL: Filer metadata maps S3 paths to volume chunks - required for S3 API functionality
     # Manual backup: docker compose exec -T seaweedfs tar czf - /data/filer > seaweedfs-filer-backup-$(date +%Y%m%d).tar.gz
 
-  borgstack_duplicati_config:
+  duplicati_config:
     # Duplicati configuration and backup job definitions
     # Contains: Backup job configurations, schedules, database (SQLite), UI settings
     # NOT backed up by Duplicati itself (would be circular dependency)
