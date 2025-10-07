@@ -2275,7 +2275,8 @@ jobs:
           echo "Verifying n8n has volume mounts for Directus and FileFlows..."
 
           # Check if n8n mounts directus_uploads volume (read-only)
-          if grep -A 50 "^  n8n:" docker-compose.yml | grep "directus_uploads:/directus/uploads:ro"; then
+          # Using -A 70 to ensure we capture the entire n8n service section
+          if grep -A 70 "^  n8n:" docker-compose.yml | grep "directus_uploads:/directus/uploads:ro"; then
             echo "✅ n8n mounts directus_uploads (read-only)"
           else
             echo "❌ n8n missing directus_uploads mount"
@@ -2283,7 +2284,7 @@ jobs:
           fi
 
           # Check if n8n mounts fileflows_input volume (read-write)
-          if grep -A 50 "^  n8n:" docker-compose.yml | grep "fileflows_input:/fileflows/input:rw"; then
+          if grep -A 70 "^  n8n:" docker-compose.yml | grep "fileflows_input:/fileflows/input:rw"; then
             echo "✅ n8n mounts fileflows_input (read-write)"
           else
             echo "❌ n8n missing fileflows_input mount"
@@ -2381,9 +2382,10 @@ jobs:
       - name: Verify SeaweedFS configuration in docker-compose.yml
         run: |
           echo "Verifying SeaweedFS service is configured..."
+          echo "Note: Validating production config (docker-compose.yml only, not override)"
 
           # Check SeaweedFS image version is pinned correctly
-          if docker compose config | grep -q "image: chrislusf/seaweedfs:3.97"; then
+          if docker compose -f docker-compose.yml config | grep -q "image: chrislusf/seaweedfs:3.97"; then
             echo "✅ SeaweedFS image correctly configured (chrislusf/seaweedfs:3.97)"
           else
             echo "❌ SeaweedFS image not configured correctly"
@@ -2391,7 +2393,7 @@ jobs:
           fi
 
           # Check SeaweedFS is on borgstack_internal network only (security requirement)
-          if docker compose config | grep -A 50 "seaweedfs:" | grep -q "internal"; then
+          if docker compose -f docker-compose.yml config | grep -A 50 "seaweedfs:" | grep -q "internal"; then
             echo "✅ SeaweedFS connected to internal network"
           else
             echo "❌ SeaweedFS not connected to internal network"
@@ -2401,7 +2403,8 @@ jobs:
           # Verify SeaweedFS is NOT on borgstack_external (internal only for security)
           # Check only the networks section of the seaweedfs service (not global networks definition)
           # Match service-level networks (4-space indentation) to avoid matching global networks section
-          SEAWEEDFS_NETWORKS=$(docker compose config | sed -n '/^  seaweedfs:/,/^  [a-z-]*:$/p' | grep -A 3 "^    networks:")
+          # IMPORTANT: Use -f docker-compose.yml to validate production config (not override)
+          SEAWEEDFS_NETWORKS=$(docker compose -f docker-compose.yml config | sed -n '/^  seaweedfs:/,/^  [a-z-]*:$/p' | grep -A 3 "^    networks:")
           if echo "$SEAWEEDFS_NETWORKS" | grep -q "external"; then
             echo "❌ SeaweedFS connected to external (security violation - should be internal only)"
             exit 1
