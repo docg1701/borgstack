@@ -80,6 +80,42 @@ warn() {
 }
 
 #===============================================================================
+# Setup: Start Duplicati and Dependencies
+#===============================================================================
+
+print_header "Duplicati Deployment Verification"
+echo "Testing Duplicati backup system deployment..."
+echo "Date: $(date)"
+echo ""
+
+# Start Duplicati and all dependencies
+echo "Starting Duplicati and dependencies..."
+docker compose up -d duplicati
+
+echo ""
+echo "Waiting for Duplicati to initialize and become healthy..."
+echo "Note: Duplicati depends on PostgreSQL, MongoDB, Redis, and SeaweedFS"
+echo "Health check start_period is 30s"
+echo ""
+
+# Wait for Duplicati to become healthy (max 2 minutes)
+TIMEOUT=120
+ELAPSED=0
+while [ $ELAPSED -lt $TIMEOUT ]; do
+    if docker compose ps duplicati | grep -q "healthy"; then
+        echo "✅ Duplicati is healthy (after ${ELAPSED}s)"
+        break
+    fi
+    sleep 5
+    ELAPSED=$((ELAPSED + 5))
+    if [ $((ELAPSED % 15)) -eq 0 ]; then
+        echo "  Waiting for Duplicati health check... (${ELAPSED}s/${TIMEOUT}s)"
+    fi
+done
+
+echo ""
+
+#===============================================================================
 # Test Functions
 #===============================================================================
 
@@ -330,6 +366,15 @@ main() {
     test_10_restore_time_benchmark || true
     test_11_encryption_enabled || true
     test_12_compression_working || true
+
+    #===========================================================================
+    # Cleanup
+    #===========================================================================
+    echo ""
+    echo "Cleaning up test environment..."
+    docker compose down -v --remove-orphans || true
+    echo "✅ Cleanup complete"
+    echo ""
 
     # Print summary
     print_header "Test Summary"
