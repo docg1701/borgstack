@@ -69,15 +69,18 @@ jobs:
 
       - name: Verify network naming conventions
         run: |
-          echo "Verifying network naming follows 'borgstack_' prefix convention..."
-          # Extract network names from docker-compose.yml and verify naming convention
-          INVALID_NETWORKS=$(sed -n '/^networks:/,/^[^ ]/{/^  [a-z_-]\+:/p}' docker-compose.yml | sed 's/:.*//; s/^  //' | grep -v "^borgstack_" || true)
-          if [ -n "$INVALID_NETWORKS" ]; then
-            echo "❌ Found network(s) not following 'borgstack_' prefix convention:"
-            echo "$INVALID_NETWORKS"
-            exit 1
+          echo "Verifying network naming follows Docker Compose best practices..."
+          # Check that network keys are short names (internal/external) but 'name:' field has borgstack_ prefix
+          # This is the industry standard: Docker Compose prepends project name automatically
+          INTERNAL_NAME=$(grep -A 1 "^  internal:" docker-compose.yml | grep "name:" | awk '{print $2}' || echo "")
+          EXTERNAL_NAME=$(grep -A 1 "^  external:" docker-compose.yml | grep "name:" | awk '{print $2}' || echo "")
+
+          if [ "$INTERNAL_NAME" = "borgstack_internal" ] && [ "$EXTERNAL_NAME" = "borgstack_external" ]; then
+            echo "✅ Network naming conventions verified (short keys, full names in 'name:' field)"
           else
-            echo "✅ Network naming conventions verified"
+            echo "❌ Network naming incorrect. Expected: internal->borgstack_internal, external->borgstack_external"
+            echo "  Found: internal->$INTERNAL_NAME, external->$EXTERNAL_NAME"
+            exit 1
           fi
 
       - name: Verify volume naming conventions
