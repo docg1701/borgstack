@@ -2413,21 +2413,21 @@ jobs:
           fi
 
           # Verify volume naming conventions (master, volume, filer)
-          if docker compose config | grep -q "seaweedfs_master"; then
+          if docker compose -f docker-compose.yml config | grep -q "seaweedfs_master"; then
             echo "✅ Volume seaweedfs_master follows naming convention"
           else
             echo "❌ Volume seaweedfs_master not found"
             exit 1
           fi
 
-          if docker compose config | grep -q "seaweedfs_volume"; then
+          if docker compose -f docker-compose.yml config | grep -q "seaweedfs_volume"; then
             echo "✅ Volume seaweedfs_volume follows naming convention"
           else
             echo "❌ Volume seaweedfs_volume not found"
             exit 1
           fi
 
-          if docker compose config | grep -q "seaweedfs_filer"; then
+          if docker compose -f docker-compose.yml config | grep -q "seaweedfs_filer"; then
             echo "✅ Volume seaweedfs_filer follows naming convention"
           else
             echo "❌ Volume seaweedfs_filer not found"
@@ -2435,7 +2435,7 @@ jobs:
           fi
 
           # Verify no port exposure in production config (security requirement)
-          if docker compose config | grep -A 50 "seaweedfs:" | grep -E "^\s+ports:" > /dev/null 2>&1; then
+          if docker compose -f docker-compose.yml config | grep -A 50 "seaweedfs:" | grep -E "^\s+ports:" > /dev/null 2>&1; then
             echo "❌ SeaweedFS has port exposure in production config (security violation)"
             exit 1
           else
@@ -2443,7 +2443,7 @@ jobs:
           fi
 
           # Verify health check is configured
-          if docker compose config | grep -A 50 "seaweedfs:" | grep -q "healthcheck:"; then
+          if docker compose -f docker-compose.yml config | grep -A 50 "seaweedfs:" | grep -q "healthcheck:"; then
             echo "✅ Health check configured for SeaweedFS"
           else
             echo "❌ Health check not configured for SeaweedFS"
@@ -2451,7 +2451,7 @@ jobs:
           fi
 
           # Verify unified server mode command (checks for YAML list format: - server, - -filer, - -s3)
-          SEAWEEDFS_CONFIG=$(docker compose config | grep -A 50 "seaweedfs:")
+          SEAWEEDFS_CONFIG=$(docker compose -f docker-compose.yml config | grep -A 50 "seaweedfs:")
           if echo "$SEAWEEDFS_CONFIG" | grep -A 5 "command:" | grep -q "server" && \
              echo "$SEAWEEDFS_CONFIG" | grep -A 5 "command:" | grep -q "\-filer" && \
              echo "$SEAWEEDFS_CONFIG" | grep -A 5 "command:" | grep -q "\-s3"; then
