@@ -293,6 +293,14 @@ services:
       # Health check and metrics
       N8N_METRICS: "true"
       QUEUE_HEALTH_CHECK_ACTIVE: "true"
+
+      # ======================================================================
+      # Storage Configuration (Story 5.3)
+      # ======================================================================
+      # Using default filesystem storage (100% free, no Enterprise license)
+      # Workflows can access SeaweedFS via HTTP Request node to Filer API
+      # Filer API: http://seaweedfs:8888/ (internal network)
+      # See: docs/04-integrations/seaweedfs-filer-api-n8n.md
     volumes:
       - n8n_data:/home/node/.n8n
       # Volume mounts for Directus-FileFlows integration (Story 4.3)
@@ -785,11 +793,10 @@ services:
       WEBSOCKETS_ENABLED: "true"
 
       # ======================================================================
-      # File Storage Configuration
+      # File Storage Configuration (Story 5.3)
       # ======================================================================
-      # MIGRATION: Switch to SeaweedFS S3 storage in Story 5.1
-      # Current: Local volume storage
-      # Future: S3-compatible storage (see config/directus/s3-storage.env.example)
+      # Using local filesystem storage (default, 100% free)
+      # Assets stored in volume: borgstack_directus_uploads
       STORAGE_LOCATIONS: local
     depends_on:
       postgresql:

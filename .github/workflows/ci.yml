@@ -2744,3 +2744,183 @@ jobs:
           echo "Cleaning up test environment..."
           docker compose down -v --remove-orphans || true
           rm -f .env
+
+  validate-storage-integration:
+    name: Validate Storage Integration Configuration
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Create .env file for testing
+        run: |
+          echo "Creating temporary .env file with test credentials..."
+          cat > .env << 'EOF'
+          # Test credentials for CI pipeline
+          # PostgreSQL passwords
+          POSTGRES_PASSWORD=test_postgres_password_12345678
+          N8N_DB_PASSWORD=test_n8n_password_12345678
+          CHATWOOT_DB_PASSWORD=test_chatwoot_password_12345678
+          DIRECTUS_DB_PASSWORD=test_directus_password_12345678
+          EVOLUTION_DB_PASSWORD=test_evolution_password_12345678
+          # MongoDB passwords
+          MONGODB_ROOT_PASSWORD=test_mongodb_root_password_12345678
+          LOWCODER_DB_PASSWORD=test_lowcoder_password_12345678901234567890
+          # Redis password
+          REDIS_PASSWORD=test_redis_password_12345678901234567890
+          # Domain and email
+          DOMAIN=example.com.br
+          EMAIL=admin@example.com.br
+          CORS_ALLOWED_ORIGINS=*
+          # n8n configuration
+          N8N_HOST=n8n.example.com.br
+          N8N_BASIC_AUTH_USER=admin
+          N8N_BASIC_AUTH_PASSWORD=test_n8n_auth_password_12345678
+          N8N_ENCRYPTION_KEY=test_n8n_encryption_key_12345678901234567890
+          # Chatwoot configuration
+          CHATWOOT_HOST=chatwoot.example.com.br
+          CHATWOOT_SECRET_KEY_BASE=test_chatwoot_secret_key_base_128_character_hex_string_0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef123456789
+          CHATWOOT_API_TOKEN=test_chatwoot_api_token_dummy_for_ci
+          # Evolution API configuration
+          EVOLUTION_HOST=evolution.example.com.br
+          EVOLUTION_API_KEY=test_evolution_api_key_12345678
+          EVOLUTION_WEBHOOK_URL=https://n8n.example.com.br/webhook/whatsapp-incoming
+          DATABASE_CONNECTION_CLIENT_NAME=evolution_api
+          # Lowcoder configuration
+          LOWCODER_HOST=lowcoder.example.com.br
+          LOWCODER_ADMIN_EMAIL=admin@example.com.br
+          LOWCODER_ADMIN_PASSWORD=test_lowcoder_admin_password_12345678
+          LOWCODER_ENCRYPTION_PASSWORD=test_lowcoder_encryption_pass_123456
+          LOWCODER_ENCRYPTION_SALT=test_lowcoder_encryption_salt_123456
+          # Directus configuration
+          DIRECTUS_HOST=directus.example.com.br
+          DIRECTUS_KEY=test_directus_key_12345678901234567890123456789012
+          DIRECTUS_SECRET=test_directus_secret_12345678901234567890123456
+          DIRECTUS_ADMIN_EMAIL=admin@example.com.br
+          DIRECTUS_ADMIN_PASSWORD=test_directus_admin_password_12345678
+          # FileFlows configuration
+          FILEFLOWS_HOST=fileflows.example.com.br
+          FILEFLOWS_LOG_LEVEL=Information
+          # SeaweedFS S3-Compatible Object Storage configuration (Story 5.1)
+          SEAWEEDFS_ACCESS_KEY=test_seaweedfs_access_key_123456789012
+          SEAWEEDFS_SECRET_KEY=test_seaweedfs_secret_key_12345678901234567890123456789012345678901234
+          SEAWEEDFS_VOLUME_SIZE_LIMIT_MB=10240
+          SEAWEEDFS_REPLICATION=000
+          SEAWEEDFS_MAX_VOLUMES=100
+          SEAWEEDFS_VOLUME_PREALLOCATE=false
+          # Duplicati Backup System (Story 5.2)
+          DUPLICATI_PASSWORD=test_password_123456789012345678901234
+          DUPLICATI_ENCRYPTION_KEY=test_encryption_key_1234567890123456789012345678901234567890123456789012
+          DUPLICATI_PASSPHRASE=test_passphrase_1234567890123456789012345678901234567890
+          EOF
+
+      - name: Verify n8n storage configuration (filesystem)
+        run: |
+          echo "Verifying n8n uses filesystem storage (not S3)..."
+          N8N_CONFIG=$(docker compose config | grep -A 30 "n8n:")
+
+          # n8n should NOT have S3 external storage configured (requires Enterprise license)
+          if echo "$N8N_CONFIG" | grep -q "N8N_EXTERNAL_STORAGE_S3"; then
+            echo "❌ n8n has S3 external storage configured (requires Enterprise license)"
+            exit 1
+          else
+            echo "✅ n8n using filesystem storage (free, correct configuration)"
+          fi
+
+      - name: Verify Directus storage configuration (local)
+        run: |
+          echo "Verifying Directus uses local storage..."
+          DIRECTUS_CONFIG=$(docker compose config | grep -A 30 "directus:")
+
+          # Directus should use STORAGE_LOCATIONS=local (default)
+          if echo "$DIRECTUS_CONFIG" | grep "STORAGE_LOCATIONS" | grep -q "s3"; then
+            echo "❌ Directus has S3 storage configured (incompatible with SeaweedFS)"
+            exit 1
+          else
+            echo "✅ Directus using local storage (correct configuration)"
+          fi
+
+      - name: Verify FileFlows volume mounts
+        run: |
+          echo "Verifying FileFlows has volume mounts configured..."
+          FILEFLOWS_CONFIG=$(docker compose config | grep -A 50 "fileflows:")
+
+          if echo "$FILEFLOWS_CONFIG" | grep -q "volumes:"; then
+            echo "✅ FileFlows has volume mounts configured"
+          else
+            echo "❌ FileFlows missing volume configuration"
+            exit 1
+          fi
+
+      - name: Verify integration test script exists
+        run: |
+          echo "Verifying integration test script exists..."
+          if [ -f "tests/integration/test-storage-integration.sh" ]; then
+            echo "✅ Integration test script exists"
+            chmod +x tests/integration/test-storage-integration.sh
+          else
+            echo "❌ Integration test script not found at tests/integration/test-storage-integration.sh"
+            exit 1
+          fi
+
+      - name: Verify monitoring script exists
+        run: |
+          echo "Verifying storage monitoring script exists..."
+          if [ -f "scripts/check-storage-capacity.sh" ]; then
+            echo "✅ Monitoring script exists"
+            chmod +x scripts/check-storage-capacity.sh
+          else
+            echo "❌ Monitoring script not found at scripts/check-storage-capacity.sh"
+            exit 1
+          fi
+
+      - name: Validate integration test script syntax
+        run: |
+          echo "Validating integration test script syntax..."
+          bash -n tests/integration/test-storage-integration.sh
+          if [ $? -eq 0 ]; then
+            echo "✅ Integration test script syntax is valid"
+          else
+            echo "❌ Integration test script has syntax errors"
+            exit 1
+          fi
+
+      - name: Validate monitoring script syntax
+        run: |
+          echo "Validating monitoring script syntax..."
+          bash -n scripts/check-storage-capacity.sh
+          if [ $? -eq 0 ]; then
+            echo "✅ Monitoring script syntax is valid"
+          else
+            echo "❌ Monitoring script has syntax errors"
+            exit 1
+          fi
+
+      - name: Verify storage integration documentation exists
+        run: |
+          echo "Verifying storage integration documentation..."
+
+          if [ -f "docs/04-integrations/seaweedfs-filer-api-n8n.md" ]; then
+            echo "✅ n8n Filer API documentation exists"
+          else
+            echo "❌ n8n Filer API documentation missing"
+            exit 1
+          fi
+
+          if [ -f "docs/04-integrations/seaweedfs-filer-api-testing.md" ]; then
+            echo "✅ Filer API testing documentation exists"
+          else
+            echo "❌ Filer API testing documentation missing"
+            exit 1
+          fi
+
+      - name: Cleanup test environment
+        if: always()
+        run: |
+          echo "Cleaning up test environment..."
+          docker compose down -v --remove-orphans || true
+          rm -f .env
