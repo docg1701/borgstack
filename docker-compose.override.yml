@@ -69,12 +69,20 @@
 #     # Expose FileFlows web UI
 #     ports:
 #       - "5000:5000"
-#
-#   seaweedfs:
-#     # Expose SeaweedFS S3 API and admin UI
-#     ports:
-#       - "8333:8333"  # Filer
-#       - "9333:9333"  # Master
+
+services:
+  seaweedfs:
+    # Expose SeaweedFS S3 API and admin UI for local development
+    # Note: Production should NOT expose these ports (only internal network access)
+    ports:
+      - "8333:8333"  # S3 API
+      - "9333:9333"  # Master
+      - "8888:8888"  # Filer
+      - "8080:8080"  # Volume
+    # Add to external network to allow port publishing (internal networks block host ports)
+    networks:
+      - internal
+      - external
 #
 #   duplicati:
 #     # Expose Duplicati web UI
