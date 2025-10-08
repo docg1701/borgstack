@@ -112,15 +112,15 @@ DEPLOY_TOTAL=0
 
 for script in tests/deployment/verify-*.sh; do
     if [ -f "$script" ]; then
-        ((DEPLOY_TOTAL++))
+        ((++DEPLOY_TOTAL))
         script_name=$(basename "$script" .sh)
         echo "  Running: $script_name..."
 
         if "$script" > /dev/null 2>&1; then
-            ((DEPLOY_PASSED++))
+            ((++DEPLOY_PASSED))
             echo -e "    ${GREEN}✓ PASS${NC}"
         else
-            ((DEPLOY_FAILED++))
+            ((++DEPLOY_FAILED))
             echo -e "    ${RED}✗ FAIL${NC}"
         fi
     fi
