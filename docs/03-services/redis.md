@@ -1117,6 +1117,31 @@ docker compose exec redis redis-cli -a senha MEMORY DOCTOR
 
 ---
 
+## 8. Dicas e Melhores Práticas
+
+### 8.1 Configuração Otimizada
+Consulte [docs/02-configuracao.md](../02-configuracao.md) para variáveis de ambiente específicas deste serviço.
+
+### 8.2 Performance
+- Eviction policy: allkeys-lru (prod) ou volatile-lru
+- Max memory: 25% RAM total do servidor
+- Persistence: RDB para backup, AOF para durabilidade
+
+### 8.3 Segurança
+- requirepass com senha forte
+- Desabilitar comandos perigosos: FLUSHALL, FLUSHDB
+- Bind apenas rede interna
+
+### 8.4 Monitoramento
+- Uso de memória
+- Hit rate (target: > 90%)
+- Conexões ativas
+
+### 8.5 Casos de Uso
+Ver workflows de exemplo em [docs/09-workflows-exemplo.md](../09-workflows-exemplo.md)
+
+---
+
 ## Recursos Adicionais
 
 ### Documentação Oficial

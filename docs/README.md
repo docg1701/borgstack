@@ -10,6 +10,23 @@ Bem-vindo à documentação completa do BorgStack! Esta documentação cobre des
 
 ### 1. Introdução e Setup
 
+#### 🚀 [00 - Início Rápido](00-inicio-rapido.md)
+**Primeiros 30 Minutos com BorgStack**
+
+Guia prático para começar rapidamente. Ideal para novos usuários.
+
+**Conteúdo:**
+- O que é BorgStack? (14 serviços, arquitetura)
+- Pré-requisitos (hardware, software, DNS)
+- Instalação rápida via bootstrap
+- Primeiros logins (n8n, Chatwoot, Evolution API)
+- Seu primeiro workflow (WhatsApp → Chatwoot)
+- Próximos passos e caminhos de aprendizado
+
+**Começar aqui se:** Você quer entender e testar o BorgStack em 30 minutos.
+
+---
+
 #### 📖 [01 - Guia de Instalação](01-instalacao.md)
 Instalação completa do BorgStack passo a passo.
 
@@ -185,6 +202,24 @@ Guia de integração do n8n com PostgreSQL, Redis, Directus, SeaweedFS, FileFlow
 6. **n8n → Lowcoder:** Trigger de workflows via apps
 
 **Resultado:** Automações avançadas conectando todos os serviços.
+
+---
+
+#### 🎯 [09 - Workflows de Exemplo](09-workflows-exemplo.md)
+**Guia Prático de Automações**
+
+5 workflows prontos para implementar em 15-30 minutos cada.
+
+**Conteúdo:**
+- Workflow 1: Atendimento WhatsApp Automatizado (Evolution + Chatwoot + n8n)
+- Workflow 2: Backup Automático de Banco de Dados (PostgreSQL + Duplicati)
+- Workflow 3: Processamento Automático de Mídia (Directus + FileFlows)
+- Workflow 4: Integração com CRM Externo (Chatwoot + APIs)
+- Workflow 5: Relatório Semanal Automatizado (PostgreSQL + Email)
+- 5 ideias rápidas de workflows adicionais
+- Troubleshooting e customização
+
+**Começar aqui se:** Você quer implementar automações práticas rapidamente.
 
 ---
 
@@ -390,6 +425,7 @@ Guia avançado de otimização de performance.
 
 - **README Principal:** [../README.md](../README.md)
 - **GitHub Issues:** [Reportar problemas](https://github.com/yourusername/borgstack/issues)
+- **Guia de Contribuição:** [CONTRIBUTING-PT.md](CONTRIBUTING-PT.md) - Como contribuir com o projeto
 - **Stories de Desenvolvimento:** [docs/stories/](stories/)
 
 ---

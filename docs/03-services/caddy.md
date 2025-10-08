@@ -1075,6 +1075,31 @@ docker stats caddy
 
 ---
 
+## 8. Dicas e Melhores Práticas
+
+### 8.1 Configuração Otimizada
+Consulte [docs/02-configuracao.md](../02-configuracao.md) para variáveis de ambiente específicas deste serviço.
+
+### 8.2 Performance
+- HTTP/2 habilitado por padrão
+- Gzip/Brotli compression
+- Rate limiting por IP
+
+### 8.3 Segurança
+- SSL automático Let's Encrypt
+- Headers de segurança (HSTS, CSP)
+- Block IPs suspeitos
+
+### 8.4 Monitoramento
+- Status codes 4xx/5xx
+- Latência de proxy
+- Certificados SSL expirando
+
+### 8.5 Casos de Uso
+Ver workflows de exemplo em [docs/09-workflows-exemplo.md](../09-workflows-exemplo.md)
+
+---
+
 ## Recursos Adicionais
 
 ### Documentação Oficial

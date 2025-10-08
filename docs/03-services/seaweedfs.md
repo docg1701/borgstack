@@ -551,6 +551,31 @@ docker compose exec -T seaweedfs tar czf - /data/filer > seaweedfs-filer-$(date 
    - Rotacione chaves S3 quando funcionários saírem
    - Use credenciais separadas para diferentes ambientes
 
+## 8. Dicas e Melhores Práticas
+
+### 8.1 Configuração Otimizada
+Consulte [docs/02-configuracao.md](../02-configuracao.md) para variáveis de ambiente específicas deste serviço.
+
+### 8.2 Performance
+- Consultar documentação oficial para tuning de seaweedfs
+- Monitorar uso de recursos
+- Configurar limites apropriados
+
+### 8.3 Segurança
+- Senhas fortes
+- API keys rotacionadas
+- Acesso restrito via rede interna
+
+### 8.4 Monitoramento
+- Health checks ativos
+- Logs de erro
+- Performance metrics
+
+### 8.5 Casos de Uso
+Ver workflows de exemplo em [docs/09-workflows-exemplo.md](../09-workflows-exemplo.md)
+
+---
+
 ## Recursos Adicionais
 
 - [SeaweedFS GitHub](https://github.com/seaweedfs/seaweedfs)

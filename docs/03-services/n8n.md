@@ -844,6 +844,120 @@ docker compose logs n8n | grep ERROR
 
 ---
 
+## 8. Dicas e Melhores Práticas
+
+### 8.1 Configuração Otimizada
+
+**Produção vs. Desenvolvimento:**
+```bash
+# .env para produção
+N8N_BASIC_AUTH_ACTIVE=false  # Usar OAuth/LDAP
+N8N_SECURE_COOKIE=true
+N8N_ENCRYPTION_KEY=senha-forte-256bits
+
+# Limites de execução
+EXECUTIONS_DATA_PRUNE=true
+EXECUTIONS_DATA_MAX_AGE=336  # 14 dias
+```
+
+**Recursos recomendados:**
+- CPU: 2 vCPUs mínimo (4+ para produção)
+- RAM: 2GB mínimo (4GB+ para produção)
+- Disco: 10GB para workflows + logs
+
+### 8.2 Performance
+
+**Otimizar execuções:**
+- Limite execuções simultâneas: máx 5-10
+- Use sub-workflows para lógica reutilizável
+- Evite loops infinitos (sempre adicione limite)
+- Use batching para operações em massa
+
+**Exemplo de batching:**
+```javascript
+// ❌ Ruim: 1000 requests individuais
+for (item of items) {
+  await httpRequest(item);
+}
+
+// ✅ Bom: 1 request com 1000 items
+await httpRequest(items, {batch: true});
+```
+
+### 8.3 Segurança
+
+**Credenciais:**
+- Armazene credenciais no n8n (não hardcode em workflows)
+- Use variáveis de ambiente para secrets sensíveis
+- Rotacione API keys a cada 90 dias
+- Nunca exponha credenciais em logs
+
+**Webhooks seguros:**
+```javascript
+// Validar HMAC signature
+const crypto = require('crypto');
+const signature = crypto
+  .createHmac('sha256', process.env.WEBHOOK_SECRET)
+  .update(JSON.stringify($input.item.json))
+  .digest('hex');
+
+if (signature !== $input.item.json.signature) {
+  throw new Error('Invalid signature');
+}
+```
+
+### 8.4 Manutenção
+
+**Backup de workflows:**
+```bash
+# Exportar todos os workflows (via API)
+curl https://n8n.seudominio.com.br/api/v1/workflows \
+  -H "X-N8N-API-KEY: $API_KEY" \
+  > workflows-backup-$(date +%Y%m%d).json
+```
+
+**Limpeza de dados:**
+```sql
+-- Limpar execuções antigas (PostgreSQL)
+DELETE FROM n8n_db.execution_entity
+WHERE finished = true
+  AND stopped_at < NOW() - INTERVAL '30 days';
+```
+
+**Monitoramento:**
+- Acompanhe taxa de falhas: alvo < 1%
+- Monitore tempo de execução: workflows lentos precisam otimização
+- Configure alertas para falhas críticas
+
+### 8.5 Troubleshooting Rápido
+
+| Problema | Solução Rápida |
+|----------|----------------|
+| Workflow não dispara | Verificar se está ativo (toggle verde) |
+| Timeout | Aumentar `EXECUTIONS_TIMEOUT` no .env |
+| Credencial inválida | Recriar credencial do zero |
+| Memória alta | Reduzir `EXECUTIONS_PROCESS_MAX` |
+| Webhook 404 | Verificar URL pública do n8n acessível |
+
+### 8.6 Casos de Uso Comuns
+
+1. **Sincronização bidirecional** (WhatsApp ↔ Chatwoot)
+   - Ver: [docs/04-integrations/whatsapp-chatwoot.md](../04-integrations/whatsapp-chatwoot.md)
+
+2. **Processamento de mídia** (Directus → FileFlows)
+   - Ver: [docs/04-integrations/directus-fileflows.md](../04-integrations/directus-fileflows.md)
+
+3. **Relatórios automatizados**
+   - Ver: [docs/09-workflows-exemplo.md](../09-workflows-exemplo.md#workflow-5-relatório-semanal-automatizado)
+
+4. **Backup automático**
+   - Ver: [docs/09-workflows-exemplo.md](../09-workflows-exemplo.md#workflow-2-backup-automático-de-banco-de-dados)
+
+5. **Integração CRM**
+   - Ver: [docs/09-workflows-exemplo.md](../09-workflows-exemplo.md#workflow-4-integração-com-crm-externo)
+
+---
+
 ## Recursos Adicionais
 
 **Documentação Oficial:**
