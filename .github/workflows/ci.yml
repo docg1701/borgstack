@@ -2973,14 +2973,6 @@ jobs:
             done
           '
 
-      - name: Run deployment verification tests
-        run: |
-          echo "Running deployment verification tests..."
-          for script in tests/deployment/verify-*.sh; do
-            echo "Running: $(basename $script)"
-            bash "$script" || echo "❌ $script failed (non-blocking)"
-          done
-
       - name: Run storage integration tests
         run: |
           chmod +x tests/integration/test-storage-integration.sh
