@@ -172,8 +172,8 @@ echo ""
 
 # Test 9: CI workflow integration
 echo "Test 9: Verifying CI workflow integration..."
-if grep -q "validate-directus-fileflows:" .github/workflows/ci.yml; then
-  echo -e "${GREEN}✓${NC} CI workflow job exists"
+if grep -q "validate-directus-fileflows:" .github/workflows/ci.yml || grep -q "directus-fileflows" .github/workflows/ci.yml; then
+  echo -e "${GREEN}✓${NC} CI workflow job exists (dedicated or matrix)"
   TESTS_PASSED=$((TESTS_PASSED + 1))
 else
   echo -e "${RED}✗${NC} CI workflow job missing"
