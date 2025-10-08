@@ -269,18 +269,7 @@ As a user experience specialist, I want step-by-step guides and tutorials in Por
 4. Best practices and optimization tips
 5. Community contribution guidelines
 
-### Story 6.4 Final Deployment Verification
-As a deployment engineer, I want a final verification that the complete stack deploys successfully, so that I can confidently deliver on the core project promise.
-
-**Acceptance Criteria:**
-1. Clean Ubuntu 24.04 LTS deployment tested
-2. Deployment within 4-6 hours verified on clean Ubuntu 24.04
-3. All components functional after deployment
-4. Basic workflows tested and working
-5. Performance metrics within expected ranges
-6. Documentation accuracy verified
-
-### Story 6.5 Component Update Procedures
+### Story 6.4 Component Update Procedures
 As a system administrator, I want documented procedures for updating individual components, so that I can maintain the system without breaking integrations.
 
 **Acceptance Criteria:**
@@ -290,3 +279,14 @@ As a system administrator, I want documented procedures for updating individual 
 4. Pre-update backup verification checklist
 5. Common update issues and solutions documented
 6. Update notification strategy defined
+
+### Story 6.5 Final Deployment Verification
+As a deployment engineer, I want a final verification that the complete stack deploys successfully, so that I can confidently deliver on the core project promise.
+
+**Acceptance Criteria:**
+1. Clean Ubuntu 24.04 LTS deployment tested
+2. Deployment within 4-6 hours verified on clean Ubuntu 24.04
+3. All components functional after deployment
+4. Basic workflows tested and working
+5. Performance metrics within expected ranges
+6. Documentation accuracy verified
