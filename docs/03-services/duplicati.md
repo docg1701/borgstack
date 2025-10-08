@@ -104,9 +104,9 @@ O Duplicati faz backup dos seguintes volumes de dados críticos:
 - **Localização dos dados**: Brasil (compatível com LGPD)
 
 **Configuração**:
-```
+```text
 URL do destino: s3://s3.sa-east-1.amazonaws.com/borgstack-backups-{cliente}
-```
+```text
 
 ##### Opção 2: Backblaze B2 (Econômico)
 
@@ -118,9 +118,9 @@ URL do destino: s3://s3.sa-east-1.amazonaws.com/borgstack-backups-{cliente}
 - **Camada gratuita**: 10GB armazenamento + 1GB download diário
 
 **Configuração**:
-```
+```text
 Selecione "B2 Cloud Storage" e insira credenciais
-```
+```text
 
 ##### Opção 3: Servidor FTP/SFTP Local
 
@@ -468,7 +468,7 @@ docker compose exec mongodb mongodump --username admin --password ${MONGODB_ROOT
 
 # Backup de volume (exemplo: n8n)
 docker compose exec n8n tar czf - /home/node/.n8n > n8n-backup-$(date +%Y%m%d).tar.gz
-```
+```text
 
 **Nota**: Estes são procedimentos de emergência. Backups automatizados do Duplicati são recomendados para produção.
 

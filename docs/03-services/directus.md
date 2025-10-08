@@ -68,7 +68,7 @@ Coleções no Directus são como tabelas de banco de dados que armazenam seu con
 
 ### Exemplo: Coleção de Artigos de Blog
 
-```
+```text
 Nome da Coleção: artigos_blog
 
 Configurações:
@@ -76,7 +76,7 @@ Configurações:
 - Ícone: article
 - Cor: Azul
 - Modelo de Exibição: {{titulo}}
-```
+```text
 
 ---
 
@@ -123,7 +123,7 @@ Depois de criar uma coleção, você precisa adicionar campos para armazenar dif
 
 ### Exemplo: Campos para Artigos de Blog
 
-```
+```text
 Campo: titulo
 - Tipo: Input → Text
 - Validação: Obrigatório
@@ -154,7 +154,7 @@ Campo: status
 - Tipo: Selection → Dropdown
 - Opções: rascunho, publicado, arquivado
 - Valor padrão: rascunho
-```
+```text
 
 ---
 
@@ -221,9 +221,9 @@ O Directus gera automaticamente APIs REST e GraphQL para todo o seu conteúdo.
 ### API REST
 
 **URL Base:**
-```
+```text
 https://directus.{SEU_DOMINIO}
-```
+```text
 
 **Endpoints Comuns:**
 
@@ -239,7 +239,7 @@ https://directus.{SEU_DOMINIO}
 **Exemplo: Listar Artigos**
 ```bash
 curl https://directus.{SEU_DOMINIO}/items/artigos_blog
-```
+```text
 
 **Exemplo: Criar Artigo**
 ```bash
@@ -247,14 +247,14 @@ curl -X POST https://directus.{SEU_DOMINIO}/items/artigos_blog \
   -H "Authorization: Bearer SEU_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"titulo": "Olá Mundo", "conteudo": "Meu primeiro artigo"}'
-```
+```text
 
 ### API GraphQL
 
 **Endpoint:**
-```
+```text
 https://directus.{SEU_DOMINIO}/graphql
-```
+```text
 
 **Exemplo de Query:**
 ```graphql
@@ -267,7 +267,7 @@ query {
     data_publicacao
   }
 }
-```
+```text
 
 **Exemplo de Mutation:**
 ```graphql
@@ -281,7 +281,7 @@ mutation {
     titulo
   }
 }
-```
+```text
 
 ### Autenticação da API
 
@@ -373,12 +373,12 @@ O Directus pode acionar workflows do n8n em eventos de conteúdo.
 **Verificar logs do PostgreSQL:**
 ```bash
 docker compose logs postgresql | grep -i error
-```
+```text
 
 **Verificar permissões do directus_user:**
 ```bash
 docker compose exec postgresql psql -U postgres -c "\du" | grep directus_user
-```
+```text
 
 **Solução:**
 - Verifique se `directus_db` existe e pertence a `directus_user`
@@ -392,12 +392,12 @@ docker compose exec postgresql psql -U postgres -c "\du" | grep directus_user
 **Verificar montagem do volume:**
 ```bash
 docker compose exec directus ls -la /directus/uploads
-```
+```text
 
 **Verificar STORAGE_LOCATIONS:**
 ```bash
 docker compose exec directus env | grep STORAGE_LOCATIONS
-```
+```text
 
 **Solução:**
 - Verifique se `STORAGE_LOCATIONS=local` está definido
@@ -411,12 +411,12 @@ docker compose exec directus env | grep STORAGE_LOCATIONS
 **Verificar conexão com Redis:**
 ```bash
 docker compose exec redis redis-cli -a ${REDIS_PASSWORD} ping
-```
+```text
 
 **Verificar configuração do Directus:**
 ```bash
 docker compose exec directus env | grep REDIS
-```
+```text
 
 **Solução:**
 - Verifique se `REDIS_PASSWORD` corresponde no `.env` e configuração do Redis
@@ -430,12 +430,12 @@ docker compose exec directus env | grep REDIS
 **Verificar criação do usuário admin nos logs:**
 ```bash
 docker compose logs directus | grep -i "admin"
-```
+```text
 
 **Verificar credenciais:**
 ```bash
 grep "DIRECTUS_ADMIN" .env
-```
+```text
 
 **Solução:**
 - Usuário admin criado automaticamente na primeira inicialização

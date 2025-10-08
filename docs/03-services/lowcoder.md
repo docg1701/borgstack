@@ -73,7 +73,7 @@ docker compose logs lowcoder
 
 # Verificar health check
 docker compose exec lowcoder curl -f http://localhost:3000/api/health
-```
+```text
 
 ### Primeiro Acesso
 
@@ -88,7 +88,7 @@ docker compose exec lowcoder curl -f http://localhost:3000/api/health
 ```bash
 # Visualizar credenciais do administrador
 grep LOWCODER_ADMIN .env
-```
+```text
 
 3. **Login Inicial**
    - Clique em "Sign in"
@@ -208,7 +208,7 @@ docker compose cp config/postgresql/create-lowcoder-readonly-users.sql postgresq
 docker compose exec postgresql psql -U postgres \
   -v LOWCODER_READONLY_DB_PASSWORD="$(grep LOWCODER_READONLY_DB_PASSWORD .env | cut -d= -f2)" \
   -f /tmp/create-lowcoder-readonly-users.sql
-```
+```text
 
 **Verificar Criação do Usuário**:
 
@@ -219,7 +219,7 @@ docker compose exec postgresql psql -U postgres -c "\du"
 # Verificar permissões somente-leitura em n8n_db
 docker compose exec postgresql psql -U postgres -d n8n_db \
   -c "SELECT grantee, privilege_type FROM information_schema.role_table_grants WHERE grantee = 'lowcoder_readonly_user';"
-```
+```text
 
 #### Conectar PostgreSQL no Lowcoder
 
@@ -244,7 +244,7 @@ docker compose exec postgresql psql -U postgres -d n8n_db \
 ```bash
 # Visualizar senha do usuário somente-leitura
 grep LOWCODER_READONLY_DB_PASSWORD .env
-```
+```text
 
 #### Bancos de Dados Disponíveis
 
@@ -256,9 +256,9 @@ grep LOWCODER_READONLY_DB_PASSWORD .env
 | `directus_db` | `lowcoder_readonly_user` | Conteúdo CMS | Estatísticas de conteúdo, análise de coleções |
 
 **Formato da String de Conexão** (para referência):
-```
+```text
 postgresql://lowcoder_readonly_user:${LOWCODER_READONLY_DB_PASSWORD}@postgresql:5432/chatwoot_db
-```
+```text
 
 ### REST API - Evolution API, Chatwoot, n8n
 
@@ -289,7 +289,7 @@ postgresql://lowcoder_readonly_user:${LOWCODER_READONLY_DB_PASSWORD}@postgresql:
   "number": "{{ phoneNumber.value }}",
   "text": "{{ messageText.value }}"
 }
-```
+```text
 
 #### Conectar Chatwoot API
 
@@ -312,7 +312,7 @@ postgresql://lowcoder_readonly_user:${LOWCODER_READONLY_DB_PASSWORD}@postgresql:
   "email": "{{ customerEmail.value }}",
   "phone_number": "{{ customerPhone.value }}"
 }
-```
+```text
 
 #### Conectar n8n Webhooks
 
@@ -503,7 +503,7 @@ Use workflow n8n para validação, logging e tratamento de erros.
   },
   "total_amount": {{ orderSummary.totalAmount }}
 }
-```
+```text
 
 ---
 
@@ -567,7 +567,7 @@ Sempre conceda **permissões mínimas necessárias** a datasources Lowcoder:
 ```sql
 -- ❌ PERIGOSO: Concatenação de string permite injeção SQL
 SELECT * FROM users WHERE email = '{{ textInput1.value }}'
-```
+```text
 
 **Exemplo de Ataque:**
 - Entrada do usuário: `admin@exemplo.com' OR '1'='1`
@@ -579,7 +579,7 @@ SELECT * FROM users WHERE email = '{{ textInput1.value }}'
 ```sql
 -- ✅ SEGURO: Query parametrizada (Lowcoder trata o escape)
 SELECT * FROM users WHERE email = {{ textInput1.value }}
-```
+```text
 
 **Melhores Práticas do Query Builder:**
 
@@ -677,7 +677,7 @@ docker compose config | grep LOWCODER_MONGODB_URL
 
 # Verificar LOWCODER_DB_PASSWORD em .env
 grep LOWCODER_DB_PASSWORD .env
-```
+```text
 
 **Causas Comuns**:
 - Container MongoDB não iniciado: `docker compose up -d mongodb`
@@ -705,7 +705,7 @@ docker compose config | grep LOWCODER_REDIS_URL
 
 # Reiniciar Redis se necessário
 docker compose restart redis
-```
+```text
 
 ### Login de Admin Não Funciona
 
@@ -728,7 +728,7 @@ sleep 60
 
 # Verificar logs novamente
 docker compose logs lowcoder | grep -i "admin"
-```
+```text
 
 ### Falha de Conexão com Datasource
 
@@ -749,7 +749,7 @@ docker compose exec postgresql psql -U postgres -c "\du"  # Listar usuários
 
 # Testar acesso específico ao banco
 docker compose exec postgresql psql -U lowcoder_readonly_user -d chatwoot_db -c "SELECT 1"
-```
+```text
 
 **Garantir que Lowcoder Pode Alcançar PostgreSQL**:
 - Ambos os containers devem estar na rede `borgstack_internal`
@@ -765,7 +765,7 @@ docker compose exec lowcoder curl -f https://evolution.exemplo.com.br/instance/f
 
 # Verificar regras de firewall (se API externa)
 curl -I https://external-api.exemplo.com
-```
+```text
 
 ### Problemas de Conexão com Usuário Somente-Leitura
 
@@ -789,7 +789,7 @@ docker compose cp config/postgresql/create-lowcoder-readonly-users.sql postgresq
 docker compose exec postgresql psql -U postgres \
   -v LOWCODER_READONLY_DB_PASSWORD="$(grep LOWCODER_READONLY_DB_PASSWORD .env | cut -d= -f2)" \
   -f /tmp/create-lowcoder-readonly-users.sql
-```
+```text
 
 **Problemas Comuns com Usuário Somente-Leitura**:
 - Usuário não criado: Execute script `config/postgresql/create-lowcoder-readonly-users.sql`
@@ -818,7 +818,7 @@ docker compose logs lowcoder | grep -i "save\|error"
 
 # Reiniciar Lowcoder
 docker compose restart lowcoder
-```
+```text
 
 ### Health Check Falhando
 
@@ -841,7 +841,7 @@ docker compose logs lowcoder | grep "Started"
 
 # Verificar se serviço Node.js iniciou
 docker compose logs lowcoder | grep "Node service"
-```
+```text
 
 **Causas Comuns**:
 - Servidor lento: Aumente `start_period` para 90s ou 120s em docker-compose.yml
@@ -870,7 +870,7 @@ docker compose restart lowcoder
 # Verificar recursos do servidor (RAM, CPU)
 htop
 df -h
-```
+```text
 
 **Ajustes de Performance**:
 - **MongoDB**: Adicione índices a campos consultados frequentemente

@@ -62,14 +62,14 @@ Os benchmarks foram estabelecidos baseados em um servidor de referência com as 
 4. Verificação de integridade: ~5-10 segundos
 
 **Exemplo Real**:
-```
+```text
 Arquivo: /source/n8n/workflows/workflow-chatbot.json (250 KB)
 Backup: AWS S3 São Paulo
 Tempo total: 45 segundos
   - Localização: 20s
   - Download: 15s
   - Verificação: 10s
-```
+```text
 
 ---
 
@@ -94,7 +94,7 @@ Tempo total: 45 segundos
 6. Testes funcionais: 5-15 minutos
 
 **Exemplo Real - n8n**:
-```
+```text
 Serviço: n8n
 Tamanho dos dados: 850 MB (120 workflows, credenciais, histórico)
 Backup: AWS S3 São Paulo
@@ -111,7 +111,7 @@ Tempo de restauração:
   8. Teste funcional: 5min
 
 Total: ~12 minutos (dentro do alvo de < 30 min)
-```
+```text
 
 ---
 
@@ -132,7 +132,7 @@ Total: ~12 minutos (dentro do alvo de < 30 min)
 - Vacuum/Analyze após restauração: +10-15% do tempo
 
 **Exemplo Real - PostgreSQL (n8n_db)**:
-```
+```text
 Banco: n8n_db
 Tamanho: 3.2 GB
 Backup: Backblaze B2
@@ -151,7 +151,7 @@ Tempo de restauração:
  10. Testes: 10min
 
 Total: ~32 minutos (dentro do alvo de < 1 hora)
-```
+```text
 
 ---
 
@@ -179,7 +179,7 @@ Total: ~32 minutos (dentro do alvo de < 1 hora)
 | 7. Ajustes e troubleshooting | 15-60 min | 5-10% |
 
 **Exemplo Real - Sistema Médio**:
-```
+```text
 Tamanho total: 120 GB
 Backup: AWS S3 São Paulo
 Rede: 200 Mbps (25 MB/s efetivo)
@@ -202,7 +202,7 @@ Total: ~3h 30min (dentro do alvo de < 4 horas para 100 GB)
 
 RTO alcançado: 3.5 horas
 RPO: 24 horas (backup diário)
-```
+```text
 
 ---
 
@@ -258,23 +258,23 @@ RPO: 24 horas (backup diário)
 ### 2. Otimizações de Configuração Duplicati
 
 **Tamanho de Bloco**:
-```
+```text
 dblock-size: 100mb (padrão: 50mb)
-```
+```text
 - Blocos maiores = menos overhead de rede
 - Trade-off: Menos granularidade para deduplicação
 
 **Upload Paralelo**:
-```
+```text
 asynchronous-concurrent-upload-limit: 8 (padrão: 4)
-```
+```text
 - Mais conexões paralelas = download mais rápido
 - Cuidado: Pode saturar conexão de rede
 
 **Descompressão**:
-```
+```text
 compression-module: zstd (já é o padrão)
-```
+```text
 - zstd: Melhor equilíbrio velocidade/taxa de compressão
 - Alternativa: lz4 (mais rápido, compressão menor)
 
@@ -295,7 +295,7 @@ compression-module: zstd (já é o padrão)
 
 # Terminal 3: Restaurar n8n
 ./scripts/restore.sh
-```
+```text
 
 **Restauração Incremental**:
 - Para volumes muito grandes (> 500 GB), considere restauração incremental:
@@ -317,7 +317,7 @@ compression-module: zstd (já é o padrão)
 
 ### Checklist de Teste de Restauração
 
-```
+```text
 □ Documentar versão do backup sendo restaurada
 □ Documentar timestamp de início do teste
 □ Registrar velocidade de rede disponível
@@ -330,7 +330,7 @@ compression-module: zstd (já é o padrão)
 □ Calcular tempo total e comparar com benchmarks
 □ Atualizar documentação se necessário
 □ Arquivar logs de restauração para auditoria
-```
+```text
 
 ### Template de Relatório de Teste
 
@@ -372,7 +372,7 @@ compression-module: zstd (já é o padrão)
 - Tempo real: Y horas
 - Variação: +/- Z%
 - Dentro do aceitável: [Sim/Não]
-```
+```text
 
 ---
 

@@ -17,32 +17,32 @@ O SeaweedFS Filer API está totalmente operacional e pode ser usado para operaç
 ### ✅ 1. Criar Diretório
 ```bash
 curl -X POST http://localhost:8888/test-dir/
-```
+```text
 
 ### ✅ 2. Upload de Arquivo
 ```bash
 curl -X POST -F "file=@myfile.txt" http://localhost:8888/test-dir/
-```
+```text
 
 ### ✅ 3. Listar Diretório
 ```bash
 curl http://localhost:8888/test-dir/
-```
+```text
 
 ### ✅ 4. Download de Arquivo
 ```bash
 curl http://localhost:8888/test-dir/myfile.txt
-```
+```text
 
 ### ✅ 5. Deletar Arquivo
 ```bash
 curl -X DELETE http://localhost:8888/test-dir/myfile.txt
-```
+```text
 
 ### ✅ 6. Deletar Diretório (recursivo)
 ```bash
 curl -X DELETE "http://localhost:8888/test-dir/?recursive=true"
-```
+```text
 
 ## Buckets Criados
 
@@ -81,7 +81,7 @@ Execução:
 ```bash
 chmod +x /tmp/test-filer-api.sh
 ./tmp/test-filer-api.sh
-```
+```text
 
 Resultado esperado: **✅ ALL TESTS PASSED**
 
