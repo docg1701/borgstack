@@ -205,7 +205,6 @@ jobs:
           - directus-fileflows
           - seaweedfs
           - duplicati
-          - storage-integration
 
     steps:
       - name: Checkout repository
@@ -244,7 +243,7 @@ jobs:
 
           # Chatwoot
           CHATWOOT_HOST=localhost
-          CHATWOOT_SECRET_KEY_BASE=test_chatwoot_secret_key_base_0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          CHATWOOT_SECRET_KEY_BASE=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           CHATWOOT_API_TOKEN=test_chatwoot_api_token_12345678
 
           # Evolution API
