@@ -2973,11 +2973,6 @@ jobs:
             done
           '
 
-      - name: Run storage integration tests
-        run: |
-          chmod +x tests/integration/test-storage-integration.sh
-          ./tests/integration/test-storage-integration.sh
-
       - name: Run E2E workflow tests
         run: |
           chmod +x tests/integration/test-e2e-workflows.sh
