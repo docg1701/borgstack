@@ -218,17 +218,86 @@ jobs:
         run: |
           echo "Creating temporary .env file with test credentials..."
           cat > .env << 'EOF'
-          # Test credentials for CI pipeline
-          POSTGRES_PASSWORD=test_postgres_password_12345678
-          N8N_DB_PASSWORD=test_n8n_password_12345678
-          CHATWOOT_DB_PASSWORD=test_chatwoot_password_12345678
-          DIRECTUS_DB_PASSWORD=test_directus_password_12345678
-          EVOLUTION_DB_PASSWORD=test_evolution_password_12345678
-          LOWCODER_DB_ENCRYPTION_PASSWORD=test_lowcoder_encryption_12345678
-          LOWCODER_DB_ENCRYPTION_SALT=test_lowcoder_salt_12345678
-          SEAWEEDFS_S3_ACCESS_KEY=test_s3_access_key
-          SEAWEEDFS_S3_SECRET_KEY=test_s3_secret_key_12345678
-          DUPLICATI_PASSWORD=test_duplicati_password_12345678
+          # Test credentials for CI pipeline - DO NOT USE IN PRODUCTION
+
+          # PostgreSQL (shared database)
+          POSTGRES_PASSWORD=test_postgres_password_12345678_ci_only
+
+          # Individual service database passwords
+          N8N_DB_PASSWORD=test_n8n_password_12345678_ci_only
+          CHATWOOT_DB_PASSWORD=test_chatwoot_password_12345678_ci_only
+          DIRECTUS_DB_PASSWORD=test_directus_password_12345678_ci_only
+          EVOLUTION_DB_PASSWORD=test_evolution_password_12345678_ci_only
+
+          # MongoDB
+          MONGODB_ROOT_PASSWORD=test_mongodb_root_password_12345678_ci_only
+          LOWCODER_DB_PASSWORD=test_lowcoder_db_password_12345678_ci_only
+          LOWCODER_READONLY_DB_PASSWORD=test_lowcoder_readonly_password_12345678_ci_only
+
+          # Redis
+          REDIS_PASSWORD=test_redis_password_12345678_ci_only
+
+          # Domain and Email
+          DOMAIN=localhost
+          EMAIL=ci-test@example.com
+          CORS_ALLOWED_ORIGINS=http://localhost,http://127.0.0.1
+
+          # Chatwoot
+          CHATWOOT_HOST=localhost
+          CHATWOOT_SECRET_KEY_BASE=test_chatwoot_secret_key_base_0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          CHATWOOT_API_TOKEN=test_chatwoot_api_token_12345678
+
+          # Evolution API
+          EVOLUTION_HOST=localhost
+          EVOLUTION_API_KEY=test_evolution_api_key_12345678_ci_only
+          EVOLUTION_WEBHOOK_URL=http://localhost:8080/webhook
+          DATABASE_CONNECTION_CLIENT_NAME=evolution_ci_test
+
+          # Lowcoder
+          LOWCODER_HOST=localhost
+          LOWCODER_ADMIN_EMAIL=admin@example.com
+          LOWCODER_ADMIN_PASSWORD=test_lowcoder_admin_password_12345678_ci_only
+          LOWCODER_ENCRYPTION_PASSWORD=test_lowcoder_encryption_12345678_ci_only
+          LOWCODER_ENCRYPTION_SALT=test_lowcoder_salt_12345678_ci_only
+
+          # Directus
+          DIRECTUS_HOST=localhost
+          DIRECTUS_KEY=0123456789abcdef0123456789abcdef
+          DIRECTUS_SECRET=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          DIRECTUS_ADMIN_EMAIL=admin@example.com
+          DIRECTUS_ADMIN_PASSWORD=test_directus_admin_password_12345678_ci_only
+          DIRECTUS_API_TOKEN=test_directus_api_token_12345678
+          DIRECTUS_WEBHOOK_SECRET=test_directus_webhook_secret_12345678
+          DIRECTUS_MEDIA_RETENTION_DAYS=30
+
+          # FileFlows
+          FILEFLOWS_HOST=localhost
+          FILEFLOWS_LOG_LEVEL=Information
+          FILEFLOWS_DELETE_ORIGINALS=false
+          TZ=UTC
+          PUID=1000
+          PGID=1000
+
+          # SeaweedFS
+          SEAWEEDFS_ACCESS_KEY=test_s3_access_key_ci_only
+          SEAWEEDFS_SECRET_KEY=test_s3_secret_key_12345678_ci_only
+          SEAWEEDFS_VOLUME_SIZE_LIMIT_MB=30000
+          SEAWEEDFS_REPLICATION=000
+          SEAWEEDFS_MAX_VOLUMES=7
+          SEAWEEDFS_VOLUME_PREALLOCATE=false
+
+          # Duplicati
+          DUPLICATI_PASSWORD=test_duplicati_password_12345678_ci_only
+          DUPLICATI_ENCRYPTION_KEY=test_duplicati_encryption_key_0123456789abcdef0123456789abcdef
+          DUPLICATI_PASSPHRASE=test_duplicati_passphrase_12345678_ci_only
+
+          # n8n
+          N8N_ENCRYPTION_KEY=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          N8N_BASIC_AUTH_USER=admin
+          N8N_BASIC_AUTH_PASSWORD=test_n8n_basic_auth_password_12345678_ci_only
+
+          # Global settings
+          LOG_LEVEL=info
           EOF
 
       - name: Run ${{ matrix.service }} validation
