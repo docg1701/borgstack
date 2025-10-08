@@ -19,13 +19,13 @@ Este documento descreve como integrar n8n com SeaweedFS usando a **Filer HTTP AP
 
 ## Arquitetura da Solução
 
-```
+```text
 ┌──────────┐                    ┌─────────────┐
 │   n8n    │ ──HTTP Request──>  │  SeaweedFS  │
 │          │   (Filer API)       │   Filer     │
 │workflows │ <─────────────────  │  :8888      │
 └──────────┘                    └─────────────┘
-```
+```text
 
 **Como funciona:**
 1. n8n usa **filesystem storage** (default) para dados internos
@@ -39,10 +39,10 @@ Este documento descreve como integrar n8n com SeaweedFS usando a **Filer HTTP AP
 
 ### 1. Endpoint da Filer API
 
-```
+```text
 Interno (containers): http://seaweedfs:8888/
 Externo (host):       http://localhost:8888/
-```
+```text
 
 ### 2. n8n Configuration
 
@@ -50,7 +50,7 @@ n8n usa **filesystem storage** (default, grátis):
 ```bash
 # Nenhuma configuração especial necessária!
 # n8n já está pronto para usar
-```
+```text
 
 ### 3. SeaweedFS Buckets
 
@@ -62,7 +62,7 @@ curl -X POST http://localhost:8888/buckets/my-bucket/
 
 # Verificar
 curl http://localhost:8888/buckets/ | grep "my-bucket"
-```
+```text
 
 ---
 
@@ -72,19 +72,19 @@ curl http://localhost:8888/buckets/ | grep "my-bucket"
 
 **Usando HTTP Request node no n8n:**
 
-```
+```text
 Method: POST
 URL: http://seaweedfs:8888/my-bucket/my-file.pdf
 Headers:
   Content-Type: multipart/form-data
 Body:
   file: [binary data from previous node]
-```
+```text
 
 **Exemplo com curl:**
 ```bash
 curl -F file=@document.pdf "http://localhost:8888/my-bucket/document.pdf"
-```
+```text
 
 **Response:**
 ```json
@@ -92,7 +92,7 @@ curl -F file=@document.pdf "http://localhost:8888/my-bucket/document.pdf"
   "name": "document.pdf",
   "size": 1024
 }
-```
+```text
 
 ---
 
@@ -100,15 +100,15 @@ curl -F file=@document.pdf "http://localhost:8888/my-bucket/document.pdf"
 
 **Usando HTTP Request node no n8n:**
 
-```
+```text
 Method: GET
 URL: http://seaweedfs:8888/my-bucket/my-file.pdf
-```
+```text
 
 **Exemplo com curl:**
 ```bash
 curl "http://localhost:8888/my-bucket/document.pdf" -o downloaded.pdf
-```
+```text
 
 ---
 
@@ -116,12 +116,12 @@ curl "http://localhost:8888/my-bucket/document.pdf" -o downloaded.pdf
 
 **Usando HTTP Request node no n8n:**
 
-```
+```text
 Method: GET
 URL: http://seaweedfs:8888/my-bucket/?pretty=y
 Headers:
   Accept: application/json
-```
+```text
 
 **Response:**
 ```json
@@ -136,7 +136,7 @@ Headers:
     }
   ]
 }
-```
+```text
 
 ---
 
@@ -144,15 +144,15 @@ Headers:
 
 **Usando HTTP Request node no n8n:**
 
-```
+```text
 Method: DELETE
 URL: http://seaweedfs:8888/my-bucket/my-file.pdf
-```
+```text
 
 **Exemplo com curl:**
 ```bash
 curl -X DELETE "http://localhost:8888/my-bucket/document.pdf"
-```
+```text
 
 ---
 
@@ -163,7 +163,7 @@ curl -X DELETE "http://localhost:8888/my-bucket/document.pdf"
 ```bash
 # Copiar dentro do SeaweedFS
 curl -X POST 'http://localhost:8888/destination/file.pdf?cp.from=/source/file.pdf'
-```
+```text
 
 ---
 
@@ -171,7 +171,7 @@ curl -X POST 'http://localhost:8888/destination/file.pdf?cp.from=/source/file.pd
 
 ### Workflow: Upload de Anexo de Email para SeaweedFS
 
-```
+```text
 1. Email Trigger (IMAP)
    ↓
 2. Extract Attachments
@@ -182,11 +182,11 @@ curl -X POST 'http://localhost:8888/destination/file.pdf?cp.from=/source/file.pd
    Body: {{ $binary.attachment }}
    ↓
 4. Save Metadata to Database
-```
+```text
 
 ### Workflow: Processar Imagem com FileFlows
 
-```
+```text
 1. Webhook Trigger (Directus upload)
    ↓
 2. HTTP Request (Copy to FileFlows input)
@@ -200,7 +200,7 @@ curl -X POST 'http://localhost:8888/destination/file.pdf?cp.from=/source/file.pd
 5. HTTP Request (Get processed file)
    Method: GET
    URL: http://seaweedfs:8888/fileflows-output/{{ $json.filename }}
-```
+```text
 
 ---
 
@@ -211,7 +211,7 @@ curl -X POST 'http://localhost:8888/destination/file.pdf?cp.from=/source/file.pd
 ```bash
 # Arquivo expira em 24 horas
 curl -F file=@temp.txt "http://localhost:8888/temp/file.txt?ttl=1d"
-```
+```text
 
 ### 2. Upload com Metadata Customizada
 
@@ -226,7 +226,7 @@ curl -F file=@doc.pdf \
 curl -I "http://localhost:8888/documents/invoice.pdf"
 # Seaweed-Author: John Doe
 # Seaweed-Category: invoices
-```
+```text
 
 ### 3. Append to File
 
@@ -234,7 +234,7 @@ curl -I "http://localhost:8888/documents/invoice.pdf"
 # Adicionar conteúdo ao final do arquivo
 curl -F file=@additional-data.txt \
   "http://localhost:8888/logs/application.log?op=append"
-```
+```text
 
 ### 4. Paginação de Listagem
 
@@ -242,7 +242,7 @@ curl -F file=@additional-data.txt \
 # Listar com limit e paginação
 curl "http://localhost:8888/my-bucket/?limit=10&lastFileName=file10.txt&pretty=y" \
   -H "Accept: application/json"
-```
+```text
 
 ---
 
@@ -267,7 +267,7 @@ PATCH https://directus.example.com/items/files/{{ $json.id }}
 Body: {
   "seaweedfs_url": "http://seaweedfs:8888/directus-backup/{{ $json.filename_download }}"
 }
-```
+```text
 
 ---
 
@@ -284,14 +284,14 @@ curl http://localhost:8888/
 
 # Volume API
 curl http://localhost:8080/status
-```
+```text
 
 ### Verificar Espaço Disponível
 
 ```bash
 # Via Master API
 curl http://localhost:9333/dir/status | jq '.Topology.Free'
-```
+```text
 
 ---
 
@@ -311,7 +311,7 @@ docker compose port seaweedfs 8888
 
 # Verificar logs
 docker compose logs seaweedfs | tail -50
-```
+```text
 
 ### Erro: 404 Not Found
 
@@ -324,7 +324,7 @@ curl -X POST http://localhost:8888/buckets/my-bucket/
 
 # Verificar buckets existentes
 curl http://localhost:8888/buckets/
-```
+```text
 
 ### Arquivo Muito Grande
 
@@ -334,7 +334,7 @@ curl http://localhost:8888/buckets/
 ```bash
 # Usar chunked upload ou aumentar limites no Caddy
 # Para n8n workflows: dividir arquivo em chunks
-```
+```text
 
 ---
 

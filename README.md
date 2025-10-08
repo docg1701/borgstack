@@ -891,16 +891,18 @@ O script é seguro para executar múltiplas vezes:
 
 ## 📚 Documentação
 
-Documentação abrangente está disponível no diretório `docs/`:
+**Documentação completa em Português Brasileiro está disponível →** [**docs/README.md**](docs/README.md)
 
-- **Guia de Instalação:** [docs/01-installation.md](docs/01-installation.md)
-- **Guia de Configuração:** [docs/02-configuration.md](docs/02-configuration.md)
-- **Guias de Serviços:** [docs/03-services/](docs/03-services/)
-- **Tutoriais de Integração:** [docs/04-integrations/](docs/04-integrations/)
-- **Solução de Problemas:** [docs/05-troubleshooting.md](docs/05-troubleshooting.md)
-- **Manutenção e Atualizações:** [docs/06-maintenance.md](docs/06-maintenance.md)
-- **Hardening de Segurança:** [docs/07-security.md](docs/07-security.md)
-- **Otimização de Desempenho:** [docs/08-performance.md](docs/08-performance.md)
+### Guias Principais
+
+- 📖 **[Guia de Instalação](docs/01-instalacao.md)** - Instalação completa passo a passo
+- ⚙️ **[Guia de Configuração](docs/02-configuracao.md)** - Configuração de variáveis de ambiente e serviços
+- 🔧 **[Guias de Serviços](docs/03-services/)** - Documentação detalhada de cada serviço
+- 🔗 **[Guias de Integração](docs/04-integrations/)** - Tutoriais de integração (WhatsApp, n8n, etc.)
+- 🚨 **[Solução de Problemas](docs/05-solucao-de-problemas.md)** - Troubleshooting e diagnóstico
+- 🔐 **[Guia de Segurança](docs/07-seguranca.md)** - Hardening e melhores práticas de segurança
+- 🛠️ **[Guia de Manutenção](docs/06-manutencao.md)** - Manutenção preventiva e atualizações
+- ⚡ **[Otimização de Desempenho](docs/08-desempenho.md)** - Tuning e otimização de performance
 
 ---
 

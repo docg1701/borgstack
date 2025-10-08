@@ -24,7 +24,7 @@ SeaweedFS é um sistema de armazenamento distribuído de objetos compatível com
 
 O SeaweedFS opera em **modo servidor unificado** no BorgStack, onde todos os componentes rodam em um único container:
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                   Container SeaweedFS                       │
 │                                                             │
@@ -43,7 +43,7 @@ O SeaweedFS opera em **modo servidor unificado** no BorgStack, onde todos os com
 │  │  • Autenticação AWS Signature v4                      │ │
 │  └───────────────────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────────┘
-```
+```text
 
 **Componentes:**
 
@@ -76,7 +76,7 @@ Todos os serviços BorgStack acessam o SeaweedFS via rede interna Docker:
 ```bash
 Endpoint S3: http://seaweedfs:8333
 Região: us-east-1
-```
+```text
 
 **Serviços que usam S3:**
 
@@ -92,7 +92,7 @@ As credenciais S3 são configuradas no arquivo `.env`:
 ```bash
 SEAWEEDFS_ACCESS_KEY=sua-chave-de-acesso-32-chars
 SEAWEEDFS_SECRET_KEY=sua-chave-secreta-64-chars
-```
+```text
 
 **Gerar credenciais fortes:**
 
@@ -102,7 +102,7 @@ openssl rand -base64 24
 
 # Secret Key (64 caracteres)
 openssl rand -base64 48
-```
+```text
 
 ⚠️ **Importante**: Guarde estas credenciais em local seguro. Elas são necessárias para todos os clientes S3.
 
@@ -127,7 +127,7 @@ Para habilitar acesso externo via HTTPS:
 
 O SeaweedFS usa um bucket principal com subdiretórios para cada serviço:
 
-```
+```text
 /buckets/
   borgstack/                      # Bucket principal
     n8n/                          # Anexos de workflows n8n
@@ -145,7 +145,7 @@ O SeaweedFS usa um bucket principal com subdiretórios para cada serviço:
       temp/                       # Arquivos temporários
     lowcoder/                     # Assets de aplicativos Lowcoder
     duplicati/                    # Área de staging de backups
-```
+```text
 
 **Por que um único bucket?**
 
@@ -176,7 +176,7 @@ aws --endpoint-url http://localhost:8333 s3 cp arquivo.jpg s3://borgstack/n8n/
 
 # Upload de diretório inteiro
 aws --endpoint-url http://localhost:8333 s3 sync ./meus-arquivos/ s3://borgstack/directus/
-```
+```text
 
 ### s3cmd
 
@@ -190,7 +190,7 @@ host_base = localhost:8333
 host_bucket = localhost:8333/%(bucket)
 use_https = False
 signature_v2 = False
-```
+```text
 
 Uso:
 
@@ -203,7 +203,7 @@ s3cmd put foto.png s3://borgstack/chatwoot/avatars/
 
 # Upload com metadados
 s3cmd put video.mp4 s3://borgstack/fileflows/input/ --mime-type=video/mp4
-```
+```text
 
 ### Python boto3
 
@@ -237,7 +237,7 @@ s3.put_object(
     Body='Conteúdo do arquivo',
     Metadata={'author': 'João', 'department': 'Vendas'}
 )
-```
+```text
 
 ## Fazendo Download de Arquivos
 
@@ -252,7 +252,7 @@ aws --endpoint-url http://localhost:8333 s3 sync s3://borgstack/directus/origina
 
 # Listar arquivos de um prefixo
 aws --endpoint-url http://localhost:8333 s3 ls s3://borgstack/fileflows/output/
-```
+```text
 
 ### s3cmd
 
@@ -262,7 +262,7 @@ s3cmd get s3://borgstack/chatwoot/avatars/foto.png ./
 
 # Download recursivo
 s3cmd get --recursive s3://borgstack/directus/ ./backup-directus/
-```
+```text
 
 ### Python boto3
 
@@ -281,7 +281,7 @@ url = s3.generate_presigned_url(
     ExpiresIn=3600
 )
 print(f"Link temporário: {url}")
-```
+```text
 
 ## Gerenciamento de Volumes
 
@@ -296,7 +296,7 @@ curl http://localhost:9333/dir/status
 
 # Status de volumes individuais
 curl http://localhost:9333/vol/status
-```
+```text
 
 ### Crescer Volumes Manualmente
 
@@ -308,7 +308,7 @@ curl "http://localhost:9333/vol/grow?count=4&replication=000"
 
 # Verificar volumes criados
 curl http://localhost:9333/dir/status
-```
+```text
 
 ### Monitorar Uso de Armazenamento
 
@@ -321,7 +321,7 @@ docker compose exec seaweedfs du -sh /data/filer
 
 # Tamanho dos metadados master
 docker compose exec seaweedfs du -sh /data/master
-```
+```text
 
 ### Configuração de Volumes
 
@@ -329,21 +329,21 @@ docker compose exec seaweedfs du -sh /data/master
 
 ```bash
 SEAWEEDFS_VOLUME_SIZE_LIMIT_MB=10240  # 10GB (padrão)
-```
+```text
 
 **Máximo de volumes** (`.env`):
 
 ```bash
 SEAWEEDFS_MAX_VOLUMES=100  # 100 volumes (padrão)
 # Capacidade total = 10GB × 100 = 1TB
-```
+```text
 
 **Pré-alocação de volumes** (`.env`):
 
 ```bash
 SEAWEEDFS_VOLUME_PREALLOCATE=false  # Padrão: desabilitado
 # true = pré-aloca espaço em disco (melhor performance, mais espaço usado)
-```
+```text
 
 ## Estratégia de Replicação
 
@@ -351,7 +351,7 @@ SEAWEEDFS_VOLUME_PREALLOCATE=false  # Padrão: desabilitado
 
 ```bash
 SEAWEEDFS_REPLICATION=000
-```
+```text
 
 **Formato**: `XYZ` onde:
 - **X** = Cópias em datacenters diferentes
@@ -404,7 +404,7 @@ STORAGE_S3_BUCKET=borgstack
 STORAGE_S3_REGION=us-east-1
 STORAGE_S3_ENDPOINT=http://seaweedfs:8333
 STORAGE_S3_ROOT=/directus/
-```
+```text
 
 ### FileFlows (Story 5.3)
 
@@ -426,7 +426,7 @@ AWS_REGION=us-east-1
 AWS_BUCKET_NAME=borgstack
 AWS_S3_ENDPOINT=http://seaweedfs:8333
 AWS_S3_PATH_PREFIX=chatwoot/
-```
+```text
 
 ### n8n Workflows
 
@@ -447,7 +447,7 @@ docker compose logs seaweedfs --tail=100
 
 # Verificar health check
 docker compose ps seaweedfs
-```
+```text
 
 ### S3 API Retorna 403 Forbidden
 
@@ -460,7 +460,7 @@ curl http://localhost:9333/cluster/status
 
 # Testar S3 API com credenciais
 curl -u ${SEAWEEDFS_ACCESS_KEY}:${SEAWEEDFS_SECRET_KEY} http://localhost:8333/
-```
+```text
 
 ### Volumes Não Crescem Automaticamente
 
@@ -473,7 +473,7 @@ curl "http://localhost:9333/vol/grow?count=4&replication=000"
 
 # Verificar limite de volumes não atingido
 docker compose exec seaweedfs printenv | grep MAX_VOLUMES
-```
+```text
 
 ### Performance Lenta
 
@@ -490,7 +490,7 @@ SEAWEEDFS_VOLUME_PREALLOCATE=true
 
 # Reiniciar SeaweedFS
 docker compose restart seaweedfs
-```
+```text
 
 ### Corrupção de Metadados Filer
 
@@ -506,7 +506,7 @@ docker compose up -d seaweedfs
 
 # Verificar logs filer
 docker compose logs seaweedfs --tail=50 | grep filer
-```
+```text
 
 ## Backup e Recuperação
 
@@ -517,7 +517,7 @@ Os volumes SeaweedFS são backupeados pelo Duplicati (Story 5.2). Backup manual:
 docker compose exec -T seaweedfs tar czf - /data/master > seaweedfs-master-$(date +%Y%m%d).tar.gz
 docker compose exec -T seaweedfs tar czf - /data/volume > seaweedfs-volume-$(date +%Y%m%d).tar.gz
 docker compose exec -T seaweedfs tar czf - /data/filer > seaweedfs-filer-$(date +%Y%m%d).tar.gz
-```
+```text
 
 ⚠️ **Importante**: Os 3 volumes são necessários para recuperação:
 
@@ -574,10 +574,10 @@ Para validação da implantação, execute:
 
 ```bash
 ./tests/deployment/verify-seaweedfs.sh
-```
+```text
 
 Para configuração detalhada, veja:
 
 ```bash
 config/seaweedfs/README.md
-```
+```text
