@@ -70,6 +70,7 @@ $RECYCLE.BIN/
 *.bak
 *.cache
 .cache/
+.ai/
 
 # ============================================
 # BMAD Framework (Development Tooling)
@@ -83,7 +84,9 @@ $RECYCLE.BIN/
 # Backup Files
 # ============================================
 *.backup
+*.backup-*
 *.old
+*.original
 backup/
 backups/
 
