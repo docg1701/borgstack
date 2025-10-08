@@ -450,6 +450,31 @@ Resposta esperada: Página HTML (interface do FileFlows)
 
 ---
 
+## 8. Dicas e Melhores Práticas
+
+### 8.1 Configuração Otimizada
+Consulte [docs/02-configuracao.md](../02-configuracao.md) para variáveis de ambiente específicas deste serviço.
+
+### 8.2 Performance
+- Consultar documentação oficial para tuning de fileflows
+- Monitorar uso de recursos
+- Configurar limites apropriados
+
+### 8.3 Segurança
+- Senhas fortes
+- API keys rotacionadas
+- Acesso restrito via rede interna
+
+### 8.4 Monitoramento
+- Health checks ativos
+- Logs de erro
+- Performance metrics
+
+### 8.5 Casos de Uso
+Ver workflows de exemplo em [docs/09-workflows-exemplo.md](../09-workflows-exemplo.md)
+
+---
+
 ## Recursos Adicionais
 
 - **Documentação Técnica:** `/config/fileflows/README.md` (guia técnico completo)

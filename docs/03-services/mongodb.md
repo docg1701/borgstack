@@ -1043,6 +1043,31 @@ docker stats mongodb
 
 ---
 
+## 8. Dicas e Melhores Práticas
+
+### 8.1 Configuração Otimizada
+Consulte [docs/02-configuracao.md](../02-configuracao.md) para variáveis de ambiente específicas deste serviço.
+
+### 8.2 Performance
+- Índices em queries frequentes
+- Aggregation pipeline otimizado
+- Connection pool: 100 conexões
+
+### 8.3 Segurança
+- Autenticação habilitada
+- Roles com least privilege
+- Backup diário
+
+### 8.4 Monitoramento
+- Uso de CPU/RAM
+- Slow queries (> 100ms)
+- Tamanho de coleções
+
+### 8.5 Casos de Uso
+Ver workflows de exemplo em [docs/09-workflows-exemplo.md](../09-workflows-exemplo.md)
+
+---
+
 ## Recursos Adicionais
 
 ### Documentação Oficial

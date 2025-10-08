@@ -960,6 +960,31 @@ docker compose logs chatwoot | grep Sidekiq
 
 ---
 
+## 8. Dicas e Melhores Práticas
+
+### 8.1 Configuração Otimizada
+Consulte [docs/02-configuracao.md](../02-configuracao.md) para variáveis de ambiente específicas deste serviço.
+
+### 8.2 Performance
+- Agentes simultâneos: calcular ~20-30 conversas/agente
+- Cache Redis para performance
+- CSAT surveys: enviar após resolução
+
+### 8.3 Segurança
+- 2FA obrigatório para agentes
+- Rotação de API tokens trimestral
+- Rate limiting em APIs públicas
+
+### 8.4 Monitoramento
+- Taxa de resolução (target: > 80%)
+- Tempo médio de resposta (target: < 5 min)
+- CSAT score (target: > 4.5/5)
+
+### 8.5 Casos de Uso
+Ver workflows de exemplo em [docs/09-workflows-exemplo.md](../09-workflows-exemplo.md)
+
+---
+
 ## Recursos Adicionais
 
 **Documentação Oficial:**

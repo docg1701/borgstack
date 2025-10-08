@@ -1216,6 +1216,56 @@ JOIN pg_stat_activity a ON p.pid = a.pid;
 
 ---
 
+## 8. Dicas e Melhores Práticas
+
+### 8.1 Configuração Otimizada
+**Connection pooling com pgbouncer** (para alta carga):
+```yaml
+# docker-compose.yml
+services:
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
+    environment:
+      DATABASE_URL: postgres://postgres:password@postgresql:5432/postgres
+      MAX_CLIENT_CONN: 1000
+      DEFAULT_POOL_SIZE: 25
+```
+
+**Recursos para produção:**
+- CPU: 2 vCPUs (4+ para produção)
+- RAM: 4GB (8GB+ para produção)
+- Disco: SSD obrigatório
+
+### 8.2 Performance
+**Indexes:**
+```sql
+-- Criar índice em colunas de busca frequente
+CREATE INDEX idx_conversations_status ON chatwoot_db.conversations(status);
+CREATE INDEX idx_messages_created ON chatwoot_db.messages(created_at);
+```
+
+**VACUUM regular:**
+```bash
+# Adicionar ao cron (semanal)
+docker compose exec postgresql vacuumdb --all --analyze
+```
+
+### 8.3 Backup e Restore
+**Backup incremental:**
+```bash
+# Backup de database específica
+docker compose exec -T postgresql pg_dump -U postgres chatwoot_db > chatwoot-$(date +%Y%m%d).sql
+```
+
+**Teste de restore mensal obrigatório!**
+
+### 8.4 Monitoramento
+- Conexões ativas: `SELECT count(*) FROM pg_stat_activity;`
+- Tamanho DBs: `SELECT pg_database.datname, pg_size_pretty(pg_database_size(pg_database.datname)) FROM pg_database;`
+- Queries lentas: verificar `pg_stat_statements`
+
+---
+
 ## Recursos Adicionais
 
 ### Documentação Oficial
