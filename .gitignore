@@ -75,10 +75,11 @@ $RECYCLE.BIN/
 # ============================================
 # BMAD Framework (Development Tooling)
 # ============================================
-# Keep BMAD files for project automation
-# .bmad-core/ is NOT ignored - it's part of the project
-# .bmad-local/
-# .bmad-*/
+# BMAD framework removed from project (archived in Git history)
+.bmad-core/
+.bmad-local/
+.bmad-*/
+.claude/commands/BMad/
 
 # ============================================
 # Backup Files
@@ -89,6 +90,7 @@ $RECYCLE.BIN/
 *.original
 backup/
 backups/
+docs/qa/assessments/
 
 # ============================================
 # Node.js (if used for scripting)
