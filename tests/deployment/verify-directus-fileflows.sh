@@ -67,11 +67,11 @@ echo ""
 
 # Test 2: Integration documentation exists
 echo "Test 2: Verifying integration documentation..."
-if [ -f "docs/04-integrations/directus-fileflows.md" ] && [ -f "docs/MANUAL_TASKS_4.3.md" ]; then
+if [ -f "docs/04-integrations/directus-fileflows.md" ]; then
   echo -e "${GREEN}✓${NC} Integration documentation exists"
   TESTS_PASSED=$((TESTS_PASSED + 1))
 else
-  echo -e "${RED}✗${NC} Documentation missing"
+  echo -e "${RED}✗${NC} Integration documentation missing"
   TESTS_FAILED=$((TESTS_FAILED + 1))
 fi
 echo ""
@@ -159,13 +159,26 @@ else
 fi
 echo ""
 
-# Test 8: Manual tasks documentation
-echo "Test 8: Verifying manual tasks documentation..."
-if [ -f "docs/MANUAL_TASKS_4.3.md" ] && grep -q "Task 9" docs/MANUAL_TASKS_4.3.md; then
-  echo -e "${GREEN}✓${NC} Manual tasks documentation complete (9 tasks)"
+# Test 8: Configuration guides for manual setup
+echo "Test 8: Verifying configuration guides..."
+GUIDES_OK=true
+if [ ! -f "config/n8n/workflows/README.md" ]; then
+  echo -e "${RED}✗${NC} n8n workflow guide missing"
+  GUIDES_OK=false
+fi
+if [ ! -f "config/directus/README.md" ]; then
+  echo -e "${RED}✗${NC} Directus configuration guide missing"
+  GUIDES_OK=false
+fi
+if [ ! -f "config/fileflows/README.md" ]; then
+  echo -e "${RED}✗${NC} FileFlows configuration guide missing"
+  GUIDES_OK=false
+fi
+
+if [ "$GUIDES_OK" = true ]; then
+  echo -e "${GREEN}✓${NC} All configuration guides complete"
   TESTS_PASSED=$((TESTS_PASSED + 1))
 else
-  echo -e "${RED}✗${NC} Manual tasks documentation incomplete"
   TESTS_FAILED=$((TESTS_FAILED + 1))
 fi
 echo ""
@@ -208,11 +221,15 @@ if [ $TESTS_FAILED -eq 0 ]; then
   echo "Directus-FileFlows integration is ready for deployment."
   echo ""
   echo "Next steps:"
-  echo "  1. Execute manual tasks: docs/MANUAL_TASKS_4.3.md (~100 min)"
-  echo "  2. Import n8n workflows (5 files)"
-  echo "  3. Configure Directus Flow + webhook security"
-  echo "  4. Configure FileFlows webhooks and flows"
-  echo "  5. Test end-to-end: Upload → Process → Verify"
+  echo "  1. Import n8n workflows (5 files) - See: config/n8n/workflows/README.md"
+  echo "  2. Configure Directus Flow + webhook security - See: config/directus/README.md"
+  echo "  3. Configure FileFlows webhooks and flows - See: config/fileflows/README.md"
+  echo "  4. Test end-to-end: Upload → Process → Verify"
+  echo ""
+  echo "Configuration guides:"
+  echo "  - config/n8n/workflows/README.md"
+  echo "  - config/directus/README.md"
+  echo "  - config/fileflows/README.md"
   exit 0
 else
   echo -e "${RED}✗ Some tests failed. Review output above.${NC}"
