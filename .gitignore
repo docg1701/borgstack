@@ -76,10 +76,10 @@ $RECYCLE.BIN/
 # BMAD Framework (Development Tooling)
 # ============================================
 # BMAD framework removed from project (archived in Git history)
-.bmad-core/
-.bmad-local/
-.bmad-*/
-.claude/commands/BMad/
+# .bmad-core/
+# .bmad-local/
+# .bmad-*/
+# .claude/commands/BMad/
 
 # ============================================
 # Backup Files
