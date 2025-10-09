@@ -251,7 +251,7 @@ Execute o script de instalação automatizada:
 
 O script verifica se seu sistema atende aos requisitos mínimos:
 
-```text
+```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Validating System Requirements
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -269,7 +269,7 @@ Validating System Requirements
 
 O script instala Docker Engine e Docker Compose automaticamente:
 
-```text
+```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Installing Docker Engine and Docker Compose v2
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -286,7 +286,7 @@ Installing Docker Engine and Docker Compose v2
 
 O script configura o UFW (Uncomplicated Firewall) com as portas necessárias:
 
-```text
+```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Configuring UFW Firewall
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -301,7 +301,7 @@ Configuring UFW Firewall
 
 O script irá solicitar suas informações de DNS e gerar senhas fortes automaticamente:
 
-```text
+```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Configuring Environment Variables
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -334,7 +334,7 @@ Enter SeaweedFS domain [seaweedfs.example.com.br]:
 
 O script baixa todas as imagens Docker necessárias:
 
-```text
+```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Deploying Services
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -367,7 +367,7 @@ Deploying Services
 
 Após o download, o script inicia os containers e aguarda que todos fiquem saudáveis:
 
-```text
+```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Waiting for Services to Become Healthy
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -406,7 +406,7 @@ Check 12/60:
 
 O Caddy automaticamente gera certificados SSL via Let's Encrypt:
 
-```text
+```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 SSL Certificates
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -436,7 +436,7 @@ docker compose ps
 
 **Output esperado:**
 
-```text
+```
 NAME                  IMAGE                          STATUS         PORTS
 borgstack-caddy       caddy:2.10-alpine             healthy        0.0.0.0:80->80/tcp, 0.0.0.0:443->443/tcp
 borgstack-chatwoot    chatwoot/chatwoot:v4.6.0-ce   healthy
@@ -878,7 +878,7 @@ curl -X POST https://${EVOLUTION_DOMAIN}/webhook/set/whatsapp-principal \
 
 No seu celular, envie uma mensagem para o número WhatsApp conectado (de outro número):
 
-```text
+```
 Olá! Este é um teste de integração.
 ```
 

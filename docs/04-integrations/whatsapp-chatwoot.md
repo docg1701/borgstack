@@ -34,7 +34,7 @@ sequenceDiagram
     n8n->>Evolution API: POST /message/sendText/{instance}
     Evolution API->>WhatsApp: Envia mensagem via API
     WhatsApp->>Cliente: Entrega mensagem
-```text
+```
 
 ### Componentes Envolvidos
 
@@ -125,7 +125,7 @@ curl -X POST https://evolution.seudominio.com.br/instance/create \
     "qrcode": true,
     "integration": "WHATSAPP-BAILEYS"
   }'
-```text
+```
 
 **Resposta esperada**:
 ```json
@@ -139,7 +139,7 @@ curl -X POST https://evolution.seudominio.com.br/instance/create \
     "base64": "data:image/png;base64,..."
   }
 }
-```text
+```
 
 #### 1.2. Conectar WhatsApp via QR Code
 
@@ -153,7 +153,7 @@ Verifique o status:
 ```bash
 curl -X GET https://evolution.seudominio.com.br/instance/connectionState/atendimento-principal \
   -H "apikey: SUA_API_KEY_AQUI"
-```text
+```
 
 **Resposta esperada** (conectado):
 ```json
@@ -161,7 +161,7 @@ curl -X GET https://evolution.seudominio.com.br/instance/connectionState/atendim
   "instance": "atendimento-principal",
   "state": "open"
 }
-```text
+```
 
 #### 1.3. Configurar Webhook para n8n
 
@@ -181,7 +181,7 @@ curl -X POST https://evolution.seudominio.com.br/webhook/set/atendimento-princip
       "CONNECTION_UPDATE"
     ]
   }'
-```text
+```
 
 **Parâmetros importantes**:
 - `enabled: true` - Ativa o webhook
@@ -194,7 +194,7 @@ curl -X POST https://evolution.seudominio.com.br/webhook/set/atendimento-princip
 # Envie uma mensagem de teste para o número WhatsApp
 # Verifique os logs do n8n para confirmar recebimento
 docker compose logs n8n | grep "whatsapp-incoming"
-```text
+```
 
 ---
 
@@ -224,7 +224,7 @@ docker compose logs n8n | grep "whatsapp-incoming"
 Account ID: 1
 API Token: abcdef1234567890abcdef1234567890
 Base URL: https://chatwoot.seudominio.com.br
-```text
+```
 
 #### 2.3. Criar Equipe de Atendimento
 
@@ -308,7 +308,7 @@ return {
     }
   }
 };
-```text
+```
 
 ##### Nó 4: Check if Contact Exists in Chatwoot
 - **Node**: `HTTP Request`
@@ -424,7 +424,7 @@ return {
     message: 'Falha ao processar mensagem'
   }
 };
-```text
+```
 
 **Salve e ative o workflow**.
 
@@ -488,7 +488,7 @@ console.log('Mensagem enviada com sucesso:', {
 });
 
 return { json: { status: 'sent' } };
-```text
+```
 
 **Salve e ative o workflow**.
 
@@ -501,7 +501,7 @@ Para evitar hardcoding de credenciais, configure variáveis de ambiente:
 1. Edite o arquivo `.env` no servidor:
 ```bash
 nano /home/usuario/borgstack/.env
-```text
+```
 
 2. Adicione as seguintes variáveis:
 ```bash
@@ -513,18 +513,18 @@ CHATWOOT_WEBHOOK_TOKEN=token_seguro_para_webhooks
 # Evolution API
 EVOLUTION_API_KEY=sua_api_key_evolution
 EVOLUTION_INSTANCE_NAME=atendimento-principal
-```text
+```
 
 3. Reinicie o n8n para carregar as novas variáveis:
 ```bash
 docker compose restart n8n
-```text
+```
 
 4. No n8n, acesse as variáveis via:
 ```javascript
 {{$env.CHATWOOT_API_TOKEN}}
 {{$env.EVOLUTION_API_KEY}}
-```text
+```
 
 ---
 
@@ -546,13 +546,13 @@ docker compose restart n8n
    - Deve existir um contato com o número do WhatsApp
 
 **Logs esperados (n8n)**:
-```text
+```
 2025-10-08 10:15:32 Webhook received: POST /webhook/whatsapp-incoming
 2025-10-08 10:15:32 Processing message from +5511999998888
 2025-10-08 10:15:33 Contact created in Chatwoot: ID 42
 2025-10-08 10:15:33 Conversation created: ID 101
 2025-10-08 10:15:33 Message added to conversation 101
-```text
+```
 
 #### Teste 2: Resposta Chatwoot → WhatsApp
 
@@ -566,11 +566,11 @@ docker compose restart n8n
    - A mensagem deve chegar no WhatsApp do cliente em ~1-3 segundos
 
 **Logs esperados (n8n)**:
-```text
+```
 2025-10-08 10:16:45 Webhook received: POST /webhook/chatwoot-message-created
 2025-10-08 10:16:45 Sending message to Evolution API: +5511999998888
 2025-10-08 10:16:46 Message sent successfully: ID wamid.xyz123
-```text
+```
 
 #### Teste 3: Múltiplas Conversas Simultâneas
 
@@ -628,7 +628,7 @@ if (isWeekend || !isBusinessHours) {
     }
   };
 }
-```text
+```
 
 ##### Send Auto Reply
 - **Node**: `IF` (branch TRUE de sendAutoReply)
@@ -667,7 +667,7 @@ return {
     conversationId: $node["Create or Get Conversation"].json.id
   }
 };
-```text
+```
 
 ##### Apply Tags to Conversation
 - **Node**: `HTTP Request`
@@ -732,7 +732,7 @@ curl -X POST https://n8n.seudominio.com.br/webhook/whatsapp-incoming \
 
 # 3. Verifique logs do n8n
 docker compose logs n8n --tail 50 | grep webhook
-```text
+```
 
 **Soluções**:
 
@@ -799,7 +799,7 @@ if (exists) {
 }
 
 return $input.item;
-```text
+```
 
 ---
 
@@ -826,7 +826,7 @@ curl -X POST https://evolution.seudominio.com.br/message/sendText/atendimento-pr
     "number": "5511999998888",
     "text": "Teste de envio manual"
   }'
-```text
+```
 
 **Soluções**:
 
@@ -869,7 +869,7 @@ docker compose logs n8n | grep "pushName"
 curl -X POST https://chatwoot.seudominio.com.br/api/v1/accounts/1/contacts/search \
   -H "api_access_token: $TOKEN" \
   -d '{"q": "5511999998888"}'
-```text
+```
 
 **Soluções**:
 
@@ -921,7 +921,7 @@ docker compose exec postgresql psql -U postgres -d chatwoot_db -c "
   FROM pg_stat_activity
   WHERE state = 'active';
 "
-```text
+```
 
 **Soluções**:
 
@@ -980,7 +980,7 @@ curl -X GET https://evolution.seudominio.com.br/instance/fetchInstances \
 
 # 3. Verifique variáveis de ambiente no n8n
 docker compose exec n8n env | grep -E "(CHATWOOT|EVOLUTION)"
-```text
+```
 
 **Soluções**:
 
@@ -1024,7 +1024,7 @@ docker compose logs chatwoot --tail 50 | grep "Conversation created"
 
 # Monitorar em tempo real (todos os serviços)
 docker compose logs -f n8n evolution chatwoot | grep -E "(webhook|message|error)"
-```text
+```
 
 ### Métricas de Performance
 

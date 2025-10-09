@@ -39,7 +39,7 @@ graph TB
     N8N -->|Messages| CHATWOOT
     N8N -->|WhatsApp| EVOLUTION
     N8N -->|App Data| LOWCODER
-```text
+```
 
 ### Matriz de Integrações
 
@@ -75,7 +75,7 @@ Database: n8n_db (ou chatwoot_db, directus_db, evolution_db)
 User: postgres
 Password: <valor de POSTGRES_PASSWORD do .env>
 SSL: Disable (rede interna)
-```text
+```
 
 4. Clique em **Test** para validar conexão
 5. Salve a credencial
@@ -88,7 +88,7 @@ docker compose exec n8n sh -c "nc -zv postgresql 5432"
 
 # Resultado esperado:
 # postgresql (172.x.x.x:5432) open
-```text
+```
 
 ### 1.2. Casos de Uso Práticos
 
@@ -117,7 +117,7 @@ WHERE c.status = 'resolved'
   AND c.created_at >= CURRENT_DATE - INTERVAL '1 day'
   AND c.created_at < CURRENT_DATE
 GROUP BY DATE(c.created_at);
-```text
+```
 
 ##### Nó 3: Format Data
 - **Node**: `Function`
@@ -136,7 +136,7 @@ return {
 Gerado automaticamente às ${new Date().toLocaleTimeString('pt-BR')}`
   }
 };
-```text
+```
 
 ##### Nó 4: Send to Telegram
 - **Node**: `Telegram`
@@ -167,7 +167,7 @@ FROM contacts
 WHERE created_at >= CURRENT_DATE - INTERVAL '1 day'
   AND created_at < CURRENT_DATE
 ORDER BY created_at DESC;
-```text
+```
 
 ##### Nó 2: Transform to CRM Format
 - **Node**: `Function`
@@ -189,7 +189,7 @@ return contacts.map(contact => {
     }
   };
 });
-```text
+```
 
 ##### Nó 3: HTTP Request - Send to CRM
 - **Node**: `HTTP Request`
@@ -200,7 +200,7 @@ return contacts.map(contact => {
 {
   "contacts": "{{$json}}"
 }
-```text
+```
 
 ---
 
@@ -227,7 +227,7 @@ SELECT
 FROM n8n_db.workflow_entity
 WHERE active = true
 ORDER BY updated_at DESC;
-```text
+```
 
 ##### Nó 2: Convert to JSON Backup
 - **Node**: `Function`
@@ -252,7 +252,7 @@ return {
     }
   }
 };
-```text
+```
 
 ##### Nó 3: Save to SeaweedFS
 - **Node**: `HTTP Request`
@@ -276,7 +276,7 @@ JOIN users u ON c.assignee_id = u.id
 WHERE c.status = 'open'
 GROUP BY u.name
 ORDER BY conversas_pendentes DESC;
-```text
+```
 
 #### Calcular Taxa de Resposta
 ```sql
@@ -292,7 +292,7 @@ FROM messages
 WHERE created_at >= CURRENT_DATE - INTERVAL '7 days'
 GROUP BY DATE(created_at)
 ORDER BY dia DESC;
-```text
+```
 
 #### Verificar Saúde dos Serviços (Connections)
 ```sql
@@ -304,7 +304,7 @@ FROM pg_stat_activity
 WHERE state = 'active'
 GROUP BY datname
 ORDER BY connections DESC;
-```text
+```
 
 ---
 
@@ -359,7 +359,7 @@ await client.lPush('queue:emails', JSON.stringify({
 await client.disconnect();
 
 return { json: { success: true, lastRun } };
-```text
+```
 
 ### 2.2. Casos de Uso Práticos
 
@@ -396,7 +396,7 @@ if (current > 100) {
 }
 
 return { json: { allowed: true, count: current, limit: 100 } };
-```text
+```
 
 ##### Nó 2: Call External API (somente se rate limit OK)
 - Conectado ao nó anterior
@@ -438,7 +438,7 @@ if (cached) {
 
 // Se não tem cache, retorna null para continuar workflow
 return null;
-```text
+```
 
 ##### Nó 2: Call Weather API (se cache miss)
 - **Node**: `HTTP Request`
@@ -465,7 +465,7 @@ await client.setEx(cacheKey, 300, JSON.stringify(data));
 await client.disconnect();
 
 return { json: { ...data, from_cache: false } };
-```text
+```
 
 ---
 
@@ -506,7 +506,7 @@ const queueSize = await client.lLen('queue:emails');
 await client.disconnect();
 
 return { json: { queued: true, queue_size: queueSize } };
-```text
+```
 
 **Workflow 2: Processar Fila (Worker)**
 
@@ -542,7 +542,7 @@ if (items.length === 0) {
 }
 
 return items.map(item => ({ json: item }));
-```text
+```
 
 ##### Nó 3: Send Emails
 - **Node**: `Send Email`
@@ -581,7 +581,7 @@ await client.publish('events:conversations', JSON.stringify(event));
 await client.disconnect();
 
 return { json: { published: true, event } };
-```text
+```
 
 **Workflow Subscriber: Receber Eventos (n8n Trigger)**
 
@@ -631,7 +631,7 @@ await client.subscribe('channel', (message) => console.log(message));
 // Expiração
 await client.expire('key', 3600); // 1 hora
 await client.ttl('key'); // Tempo restante
-```text
+```
 
 ---
 
@@ -650,7 +650,7 @@ Name: BorgStack Directus
 URL: http://directus:8055
 Email: admin@example.com
 Password: <sua senha admin>
-```text
+```
 
 4. Ou use **Access Token** (mais seguro):
 
@@ -658,12 +658,12 @@ Password: <sua senha admin>
 Name: BorgStack Directus (Token)
 URL: http://directus:8055
 Access Token: <seu token estático>
-```text
+```
 
 Para gerar token estático:
 ```bash
 # Acessar Directus > User Settings > Generate Static Token
-```text
+```
 
 ### 3.2. Casos de Uso Práticos
 
@@ -702,7 +702,7 @@ return {
     article_id: article.id
   }
 };
-```text
+```
 
 ##### Nó 4: Send to Mailchimp/Sendinblue
 - **Node**: `HTTP Request` (API do provedor de e-mail)
@@ -738,7 +738,7 @@ return {
     imported_at: new Date().toISOString()
   }
 };
-```text
+```
 
 ##### Nó 3: Create in Directus
 - **Node**: `Directus`
@@ -811,7 +811,7 @@ return {
 #### Listar Itens com Filtro
 ```bash
 GET /items/articles?filter[status][_eq]=published&sort=-date_created&limit=10
-```text
+```
 
 #### Criar Item
 ```bash
@@ -824,7 +824,7 @@ Authorization: Bearer TOKEN
   "content": "Conteúdo...",
   "status": "draft"
 }
-```text
+```
 
 #### Atualizar Item
 ```bash
@@ -835,7 +835,7 @@ Authorization: Bearer TOKEN
 {
   "status": "published"
 }
-```text
+```
 
 #### Fazer Upload de Arquivo
 ```bash
@@ -844,12 +844,12 @@ Content-Type: multipart/form-data
 Authorization: Bearer TOKEN
 
 [binary file data]
-```text
+```
 
 #### Buscar com Relacionamentos
 ```bash
 GET /items/articles?fields=*,author.first_name,author.last_name,category.name
-```text
+```
 
 ---
 
@@ -870,7 +870,7 @@ Secret Access Key: <valor de S3_SECRET_KEY do .env>
 Region: us-east-1 (padrão)
 Custom Endpoint: http://seaweedfs:8333
 Force Path Style: Yes
-```text
+```
 
 ### 4.2. Casos de Uso Práticos
 
@@ -905,7 +905,7 @@ return {
     uploaded_at: new Date().toISOString()
   }
 };
-```text
+```
 
 ---
 
@@ -921,7 +921,7 @@ return {
 - **Command**:
 ```bash
 docker compose exec -T postgresql pg_dump -U postgres -Fc chatwoot_db > /tmp/chatwoot_backup_$(date +%Y%m%d).dump
-```text
+```
 
 ##### Nó 3: Read Dump File
 - **Node**: `Read Binary File`
@@ -978,17 +978,17 @@ docker compose exec -T postgresql pg_dump -U postgres -Fc chatwoot_db > /tmp/cha
 #### Upload via Filer API
 ```bash
 curl -F file=@photo.jpg "http://seaweedfs:8888/uploads/"
-```text
+```
 
 #### Download via Filer API
 ```bash
 curl "http://seaweedfs:8888/uploads/photo.jpg" -o photo.jpg
-```text
+```
 
 #### Listar Diretório
 ```bash
 curl "http://seaweedfs:8888/uploads/?pretty=y"
-```text
+```
 
 #### S3 API - Upload (AWS SDK compatible)
 ```javascript
@@ -1006,7 +1006,7 @@ await s3.putObject({
   Key: 'file.txt',
   Body: 'Hello World'
 }).promise();
-```text
+```
 
 ---
 
@@ -1051,7 +1051,7 @@ FileFlows não tem nó dedicado no n8n. Use **HTTP Request** com API REST.
   "flow": "video-transcode",
   "library": "directus-uploads"
 }
-```text
+```
 
 ##### Nó 4: Update Directus Status
 - **Node**: `Directus`
@@ -1064,7 +1064,7 @@ FileFlows não tem nó dedicado no n8n. Use **HTTP Request** com API REST.
   "processing_status": "queued",
   "fileflows_job_id": "{{$json.uid}}"
 }
-```text
+```
 
 ---
 
@@ -1090,7 +1090,7 @@ const completed = jobs.filter(job => job.status === 'Processed');
 if (completed.length === 0) return null;
 
 return completed.map(job => ({ json: job }));
-```text
+```
 
 ##### Nó 4: Update Directus
 - **Node**: `Directus`
@@ -1103,7 +1103,7 @@ return completed.map(job => ({ json: job }));
   "processing_status": "completed",
   "processed_at": "{{$now.toISO()}}"
 }
-```text
+```
 
 ---
 
@@ -1136,7 +1136,7 @@ Use **HTTP Request** com API REST do Lowcoder.
   "applicationType": "Application",
   "dsl": {}
 }
-```text
+```
 
 ---
 
@@ -1181,7 +1181,7 @@ return {
     node: error.node.name
   }
 };
-```text
+```
 
 ### 7.2. Retry Logic
 
@@ -1210,7 +1210,7 @@ for (let attempt = 1; attempt <= maxRetries; attempt++) {
     await new Promise(resolve => setTimeout(resolve, delay));
   }
 }
-```text
+```
 
 ### 7.3. Logging Estruturado
 
@@ -1236,7 +1236,7 @@ function log(level, message, metadata = {}) {
 // Uso:
 log('info', 'Processing started', { item_count: $json.items.length });
 log('error', 'API call failed', { api: 'external', status: 500 });
-```text
+```
 
 ### 7.4. Validação de Dados
 
@@ -1272,7 +1272,7 @@ if (errors.length > 0) {
 }
 
 return { json: data };
-```text
+```
 
 ---
 
@@ -1289,7 +1289,7 @@ docker compose logs n8n | grep ERROR
 
 # Exportar logs para arquivo
 docker compose logs n8n --since 24h > n8n_logs_$(date +%Y%m%d).txt
-```text
+```
 
 ### 8.2. Métricas de Performance
 
@@ -1318,7 +1318,7 @@ if (duration > 5000) {
 }
 
 return { json: { ...result, _execution_time_ms: duration } };
-```text
+```
 
 ---
 

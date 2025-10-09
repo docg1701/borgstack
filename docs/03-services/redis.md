@@ -44,7 +44,7 @@ docker compose logs -f redis
 
 # Verificar status
 docker compose ps redis
-```text
+```
 
 ### Organização dos Dados
 
@@ -56,7 +56,7 @@ Redis usa **databases numerados** (0-15 por padrão):
 # Database 2: Directus
 # Database 3: Lowcoder
 # Database 4-15: Disponíveis
-```text
+```
 
 **Estratégia de Isolamento**:
 - Cada serviço usa database separado
@@ -73,7 +73,7 @@ REDIS_PASSWORD=senha_super_segura_redis
 
 # URL de conexão (formato)
 redis://:senha@redis:6379/0
-```text
+```
 
 ### Conectar ao Redis
 
@@ -95,7 +95,7 @@ docker compose exec redis redis-cli -a senha_super_segura_redis PING
 
 # Ver informações do servidor
 docker compose exec redis redis-cli -a senha_super_segura_redis INFO
-```text
+```
 
 #### Connection String
 
@@ -113,7 +113,7 @@ redis://:senha_super_segura_redis@redis:6379/2
 
 # Lowcoder (database 3)
 redis://:senha_super_segura_redis@redis:6379/3
-```text
+```
 
 ---
 
@@ -151,7 +151,7 @@ KEYS *
 # Listar chaves por padrão
 KEYS user:*
 KEYS sessao:*
-```text
+```
 
 ### 2. Data Types
 
@@ -172,7 +172,7 @@ INCRBY contador 10
 
 # Decrementar
 DECR contador
-```text
+```
 
 #### Hash
 
@@ -196,7 +196,7 @@ HEXISTS usuario:1 nome
 
 # Deletar campo
 HDEL usuario:1 idade
-```text
+```
 
 #### List
 
@@ -223,7 +223,7 @@ RPOP fila:jobs
 
 # Obter elemento por índice
 LINDEX fila:jobs 0
-```text
+```
 
 #### Set
 
@@ -250,7 +250,7 @@ SADD tags:post:2 "redis" "nosql"
 SINTER tags:post:1 tags:post:2  # Interseção
 SUNION tags:post:1 tags:post:2  # União
 SDIFF tags:post:1 tags:post:2   # Diferença
-```text
+```
 
 #### Sorted Set
 
@@ -277,7 +277,7 @@ ZSCORE ranking "usuario1"
 
 # Incrementar score
 ZINCRBY ranking 50 "usuario1"
-```text
+```
 
 ### 3. Expiração e TTL
 
@@ -299,7 +299,7 @@ PTTL minhaChave
 
 # Remover expiração (tornar persistente)
 PERSIST minhaChave
-```text
+```
 
 ### 4. Pub/Sub (Publish/Subscribe)
 
@@ -318,7 +318,7 @@ PSUBSCRIBE canal:*
 
 # Unsubscribe
 UNSUBSCRIBE canal:notificacoes
-```text
+```
 
 ### 5. Transactions
 
@@ -343,7 +343,7 @@ MULTI
 SET minhaChave "novo_valor"
 EXEC
 # Se minhaChave foi modificada, EXEC retorna null
-```text
+```
 
 ---
 
@@ -367,7 +367,7 @@ docker compose exec redis redis-cli -a senha PING
 
 # Ver informações do servidor
 docker compose exec redis redis-cli -a senha INFO server
-```text
+```
 
 ### Passo 2: Explorar Databases e Chaves
 
@@ -376,7 +376,7 @@ docker compose exec redis redis-cli -a senha INFO server
 docker compose exec redis redis-cli -a senha
 
 # Dentro do redis-cli:
-```text
+```
 
 ```redis
 # Ver database atual
@@ -406,7 +406,7 @@ DBSIZE
 
 SELECT 2
 DBSIZE
-```text
+```
 
 ### Passo 3: Monitorar Operações em Tempo Real
 
@@ -417,7 +417,7 @@ docker compose exec redis redis-cli -a senha MONITOR
 # Exemplo de saída:
 # 1710364800.123456 [0 172.18.0.5:51234] "GET" "workflow:cache:123"
 # 1710364801.234567 [1 172.18.0.6:51235] "SETEX" "session:abc" "3600" "{...}"
-```text
+```
 
 ### Passo 4: Analisar Uso de Memória
 
@@ -433,7 +433,7 @@ docker compose exec redis redis-cli -a senha --memkeys
 
 # Ver estatísticas detalhadas
 docker compose exec redis redis-cli -a senha MEMORY STATS
-```text
+```
 
 ### Passo 5: Gerenciar Cache
 
@@ -454,7 +454,7 @@ docker compose exec redis redis-cli -a senha --scan | while read key; do
         echo "$key: ${ttl}s"
     fi
 done
-```text
+```
 
 ---
 
@@ -482,7 +482,7 @@ docker compose exec redis redis-cli -a senha LASTSAVE
 # save 900 1       # Após 900s se >= 1 chave mudou
 # save 300 10      # Após 300s se >= 10 chaves mudaram
 # save 60 10000    # Após 60s se >= 10000 chaves mudaram
-```text
+```
 
 #### AOF (Append Only File)
 
@@ -500,7 +500,7 @@ docker compose exec redis redis-cli -a senha INFO persistence
 # appendfsync everysec  # fsync a cada segundo (padrão)
 # appendfsync always    # fsync a cada operação (mais lento, mais seguro)
 # appendfsync no        # deixa o OS decidir (mais rápido, menos seguro)
-```text
+```
 
 ### Backup Manual
 
@@ -516,7 +516,7 @@ docker compose exec redis redis-cli -a senha INFO persistence | grep rdb_bgsave_
 
 # Copiar dump.rdb do container
 docker cp redis:/data/dump.rdb ./backups/redis_$(date +%Y%m%d).rdb
-```text
+```
 
 #### Backup via AOF
 
@@ -527,14 +527,14 @@ docker compose exec redis redis-cli -a senha CONFIG GET appendonly
 
 # Copiar arquivos AOF
 docker cp redis:/data/appendonlydir ./backups/redis_aof_$(date +%Y%m%d)
-```text
+```
 
 #### Backup via redis-cli --rdb
 
 ```bash
 # Backup remoto (recomendado)
 docker compose exec redis redis-cli -a senha --rdb ./backups/dump_$(date +%Y%m%d).rdb
-```text
+```
 
 ### Restore
 
@@ -553,7 +553,7 @@ docker compose start redis
 
 # Verificar restauração
 docker compose exec redis redis-cli -a senha DBSIZE
-```text
+```
 
 ### Script de Backup Automatizado
 
@@ -609,7 +609,7 @@ echo "Cleaning old backups (older than $RETENTION_DAYS days)..."
 find "$BACKUP_DIR" -name "*.rdb" -mtime +$RETENTION_DAYS -delete
 
 echo "✅ Backup process completed successfully!"
-```text
+```
 
 ---
 
@@ -637,7 +637,7 @@ docker compose exec redis redis-cli -a senha CONFIG GET maxmemory
 
 # Ver política atual
 docker compose exec redis redis-cli -a senha CONFIG GET maxmemory-policy
-```text
+```
 
 ### Políticas de Eviction Explicadas
 
@@ -663,7 +663,7 @@ docker compose exec redis redis-cli -a senha SLOWLOG RESET
 # Configurar threshold (microsegundos)
 # slowlog-log-slower-than 10000  # 10ms
 docker compose exec redis redis-cli -a senha CONFIG SET slowlog-log-slower-than 10000
-```text
+```
 
 ### Pipeline e Batching
 
@@ -677,7 +677,7 @@ redis-cli SET key3 value3
 
 # COM pipeline (rápido - uma roundtrip)
 echo -e "SET key1 value1\nSET key2 value2\nSET key3 value3" | redis-cli -a senha --pipe
-```text
+```
 
 ---
 
@@ -710,7 +710,7 @@ docker compose exec redis redis-cli -a senha CLIENT LIST
 
 # Ver comandos executados
 docker compose exec redis redis-cli -a senha INFO commandstats
-```text
+```
 
 ### Métricas Importantes
 
@@ -734,7 +734,7 @@ blocked_clients: 0
 # Persistência
 rdb_last_save_time: 1710364800
 aof_current_size: 1048576
-```text
+```
 
 ---
 
@@ -748,7 +748,7 @@ QUEUE_BULL_REDIS_DB=0
 QUEUE_BULL_REDIS_HOST=redis
 QUEUE_BULL_REDIS_PORT=6379
 QUEUE_BULL_REDIS_PASSWORD=senha_redis
-```text
+```
 
 **Uso**:
 - Cache de workflows
@@ -760,14 +760,14 @@ QUEUE_BULL_REDIS_PASSWORD=senha_redis
 # Ver chaves do n8n
 docker compose exec redis redis-cli -a senha -n 0 KEYS bull:*
 docker compose exec redis redis-cli -a senha -n 0 KEYS cache:*
-```text
+```
 
 ### Chatwoot
 
 ```bash
 # Connection string (database 1)
 REDIS_URL=redis://:senha_redis@redis:6379/1
-```text
+```
 
 **Uso**:
 - Sidekiq jobs (background workers)
@@ -782,7 +782,7 @@ docker compose exec redis redis-cli -a senha -n 1 LLEN queue:default
 
 # Ver canais Pub/Sub
 docker compose exec redis redis-cli -a senha -n 1 PUBSUB CHANNELS
-```text
+```
 
 ### Directus
 
@@ -792,7 +792,7 @@ REDIS_HOST=redis
 REDIS_PORT=6379
 REDIS_PASSWORD=senha_redis
 CACHE_REDIS_DB=2
-```text
+```
 
 **Uso**:
 - Cache de schemas
@@ -804,14 +804,14 @@ CACHE_REDIS_DB=2
 # Ver cache do Directus
 docker compose exec redis redis-cli -a senha -n 2 KEYS cache:*
 docker compose exec redis redis-cli -a senha -n 2 KEYS session:*
-```text
+```
 
 ### Lowcoder
 
 ```bash
 # Connection string (database 3)
 REDIS_URL=redis://:senha_redis@redis:6379/3
-```text
+```
 
 **Uso**:
 - Cache de aplicações
@@ -822,7 +822,7 @@ REDIS_URL=redis://:senha_redis@redis:6379/3
 ```bash
 # Ver cache do Lowcoder
 docker compose exec redis redis-cli -a senha -n 3 KEYS *
-```text
+```
 
 ---
 
@@ -859,7 +859,7 @@ docker inspect redis | grep "Ports"
 # Verificar rede
 docker inspect redis | grep -A 5 "Networks"
 # Esperado: borgstack_internal
-```text
+```
 
 ### 2. Redis Está Lento
 
@@ -893,7 +893,7 @@ docker compose exec redis redis-cli -a senha CONFIG SET appendonly no
 # Testar performance
 # Reabilitar:
 docker compose exec redis redis-cli -a senha CONFIG SET appendonly yes
-```text
+```
 
 ### 3. Memória Esgotada
 
@@ -930,7 +930,7 @@ docker compose exec redis redis-cli -a senha CONFIG SET maxmemory-policy allkeys
 
 # Forçar garbage collection
 docker compose exec redis redis-cli -a senha BGREWRITEAOF
-```text
+```
 
 ### 4. AOF Corrompido
 
@@ -959,7 +959,7 @@ docker compose restart redis
 # Reabilitar AOF
 docker compose exec redis redis-cli -a senha CONFIG SET appendonly yes
 docker compose exec redis redis-cli -a senha CONFIG REWRITE
-```text
+```
 
 ### 5. Muitas Conexões
 
@@ -985,7 +985,7 @@ docker compose exec redis redis-cli -a senha CONFIG SET maxclients 20000
 
 # Permanente: editar redis.conf
 # maxclients 20000
-```text
+```
 
 ### 6. Dados Perdidos Após Restart
 
@@ -1016,7 +1016,7 @@ docker compose exec redis redis-cli -a senha CONFIG REWRITE
 
 # Forçar save manual
 docker compose exec redis redis-cli -a senha BGSAVE
-```text
+```
 
 ### 7. Container Reinicia Constantemente
 
@@ -1041,7 +1041,7 @@ docker compose exec redis redis-server --test-config
 # docker compose down redis
 # docker volume rm borgstack_redis_data
 # docker compose up -d redis
-```text
+```
 
 ---
 
@@ -1067,7 +1067,7 @@ docker compose exec redis redis-cli -a senha CONFIG RESETSTAT
 
 # Ver tempo de uptime
 docker compose exec redis redis-cli -a senha INFO server | grep uptime
-```text
+```
 
 ### Manutenção
 
@@ -1089,7 +1089,7 @@ docker compose exec redis redis-cli -a senha -n 0 FLUSHDB
 
 # Limpar TODOS os databases (CUIDADO!)
 docker compose exec redis redis-cli -a senha FLUSHALL
-```text
+```
 
 ### Debug
 
@@ -1113,7 +1113,7 @@ docker compose exec redis redis-cli -a senha --intrinsic-latency 100
 docker compose exec redis redis-cli -a senha --bigkeys
 docker compose exec redis redis-cli -a senha --memkeys
 docker compose exec redis redis-cli -a senha MEMORY DOCTOR
-```text
+```
 
 ---
 
@@ -1180,7 +1180,7 @@ N8N_REDIS_URL=redis://:senha@redis:6379/0
 CHATWOOT_REDIS_URL=redis://:senha@redis:6379/1
 DIRECTUS_REDIS_URL=redis://:senha@redis:6379/2
 LOWCODER_REDIS_URL=redis://:senha@redis:6379/3
-```text
+```
 
 ### Portas
 
@@ -1193,7 +1193,7 @@ LOWCODER_REDIS_URL=redis://:senha@redis:6379/3
 ```yaml
 volumes:
   borgstack_redis_data:  # Dados do Redis (/data)
-```text
+```
 
 ### Configurações Recomendadas
 

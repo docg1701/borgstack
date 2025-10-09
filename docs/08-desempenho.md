@@ -42,7 +42,7 @@ graph TD
     K -->|No| D
 
     L --> D
-```text
+```
 
 ### Regras de Ouro
 
@@ -91,7 +91,7 @@ docker stats --no-stream --format "table {{.Name}}\t{{.NetIO}}" | \
 
 echo ""
 echo "✅ Otimize os containers com maiores percentuais primeiro"
-```text
+```
 
 ---
 
@@ -134,7 +134,7 @@ ss -s | grep "TCP:"
 echo ""
 echo "════════════════════════════════════════════════════════"
 '
-```text
+```
 
 ### 2.2. Coletar Métricas Históricas
 
@@ -165,7 +165,7 @@ while IFS=, read -r name cpu mem_usage mem_perc net_io block_io; do
 done
 
 echo "✅ Métricas coletadas: $METRICS_FILE"
-```text
+```
 
 **Automatizar coleta (crontab)**:
 
@@ -175,7 +175,7 @@ echo "✅ Métricas coletadas: $METRICS_FILE"
 
 # Agregar métricas diárias
 0 0 * * * /path/to/aggregate-daily-metrics.sh
-```text
+```
 
 ### 2.3. Dashboard de Performance com n8n
 
@@ -238,7 +238,7 @@ return stats.map(s => ({ json: s }));
 // Body: Container {{ $json.container }} está com uso elevado:
 // - CPU: {{ $json.cpu_percent }}%
 // - Memory: {{ $json.mem_percent }}% ({{ $json.mem_usage_mb }} MB)
-```text
+```
 
 ---
 
@@ -301,7 +301,7 @@ services:
       --maxmemory 1536mb
       --maxmemory-policy allkeys-lru
     # ...
-```text
+```
 
 ### 3.2. Verificar Limites Configurados
 
@@ -338,7 +338,7 @@ for container in $(docker compose ps -q); do
 
     echo ""
 done
-```text
+```
 
 ### 3.3. Otimizar Builds Docker
 
@@ -370,7 +370,7 @@ FROM node:18-alpine
 WORKDIR /app
 COPY --from=0 /app .
 CMD ["npm", "start"]
-```text
+```
 
 ### 3.4. Health Checks Otimizados
 
@@ -394,7 +394,7 @@ services:
       timeout: 3s
       retries: 3
       start_period: 5s
-```text
+```
 
 ---
 
@@ -492,7 +492,7 @@ autovacuum_vacuum_threshold = 50        # Min 50 tuplas
 autovacuum_vacuum_scale_factor = 0.1    # + 10% da tabela
 autovacuum_analyze_threshold = 50
 autovacuum_analyze_scale_factor = 0.05  # + 5% da tabela
-```text
+```
 
 ### 4.2. Otimização de Queries
 
@@ -527,7 +527,7 @@ LIMIT 20;
 
 -- Resetar estatísticas
 SELECT pg_stat_statements_reset();
-```text
+```
 
 #### Analisar Plano de Execução
 
@@ -541,7 +541,7 @@ EXPLAIN ANALYZE SELECT * FROM conversations WHERE status = 'open';
 -- EXPLAIN com mais detalhes
 EXPLAIN (ANALYZE, BUFFERS, VERBOSE, FORMAT JSON)
 SELECT * FROM conversations WHERE status = 'open';
-```text
+```
 
 **Interpretar EXPLAIN**:
 
@@ -601,7 +601,7 @@ ON directus_revisions (collection, item);
 -- Activity por user (auditoria)
 CREATE INDEX CONCURRENTLY idx_activity_user
 ON directus_activity (user, timestamp DESC);
-```text
+```
 
 **IMPORTANTE**: Use `CREATE INDEX CONCURRENTLY` para não bloquear a tabela durante criação do índice.
 
@@ -630,7 +630,7 @@ LEFT JOIN messages m ON c.id = m.conversation_id
 WHERE c.status = 'open'
 ORDER BY c.updated_at DESC
 LIMIT 100;
-```text
+```
 
 ### 4.3. Vacuum e Maintenance
 
@@ -666,7 +666,7 @@ EOF
 
 echo ""
 echo "✅ Manutenção completa"
-```text
+```
 
 ### 4.4. Connection Pooling (PgBouncer)
 
@@ -697,7 +697,7 @@ services:
       - POSTGRES_HOST=pgbouncer  # Em vez de postgresql
       - POSTGRES_PORT=5432
     # ...
-```text
+```
 
 ---
 
@@ -766,7 +766,7 @@ replica-lazy-flush yes
 # I/O threads (Redis 6+)
 io-threads 4
 io-threads-do-reads yes
-```text
+```
 
 ### 5.2. Monitorar Performance Redis
 
@@ -805,7 +805,7 @@ docker compose exec redis redis-cli INFO commandstats | \
     grep cmdstat | \
     sort -t= -k2 -nr | \
     head -10
-```text
+```
 
 ### 5.3. Otimizar Uso do Redis
 
@@ -834,7 +834,7 @@ for (let i = 0; i < 1000; i++) {
 await pipeline.exec();  // 1 round-trip
 
 await client.quit();
-```text
+```
 
 #### Usar Estruturas de Dados Eficientes
 
@@ -853,7 +853,7 @@ await client.hSet('user:1', {
 
 // Recuperar
 const user = await client.hGetAll('user:1');
-```text
+```
 
 #### TTL Apropriado
 
@@ -866,7 +866,7 @@ await client.set('session:abc123', sessionData, {
 // Verificar TTL
 const ttl = await client.ttl('session:abc123');
 console.log(`Expira em ${ttl} segundos`);
-```text
+```
 
 ---
 
@@ -893,7 +893,7 @@ services:
           memory: 3G
         reservations:
           memory: 2G
-```text
+```
 
 ### 6.2. Índices MongoDB
 
@@ -940,7 +940,7 @@ const indexes = await db.collection('applications').indexes();
 console.log(indexes);
 
 await client.close();
-```text
+```
 
 ### 6.3. Analisar Queries Lentas
 
@@ -956,7 +956,7 @@ db.system.profile.find({ millis: { $gt: 100 } })
 
 // Analisar query específica
 db.applications.find({ userId: "abc123" }).explain("executionStats");
-```text
+```
 
 ---
 
@@ -979,7 +979,7 @@ services:
       - borgstack_internal  # Apenas rede interna (mais rápido)
 
   # n8n → PostgreSQL: latência mínima (mesma rede)
-```text
+```
 
 ### 7.2. DNS Caching
 
@@ -992,7 +992,7 @@ services:
       - 8.8.4.4
     dns_search:
       - borgstack.local
-```text
+```
 
 ### 7.3. Otimizar Caddy (Reverse Proxy)
 
@@ -1058,7 +1058,7 @@ directus.borgstack.local {
     # API sem cache
     reverse_proxy directus:8055
 }
-```text
+```
 
 ---
 
@@ -1080,7 +1080,7 @@ services:
 volumes:
   borgstack_postgresql_data:
     driver: local
-```text
+```
 
 ### 8.2. Limitar Logs
 
@@ -1094,7 +1094,7 @@ services:
         max-size: "10m"      # Máximo 10MB por arquivo
         max-file: "3"        # Manter 3 arquivos (total 30MB)
         compress: "true"     # Comprimir logs antigos
-```text
+```
 
 ### 8.3. Monitorar I/O de Disco
 
@@ -1113,7 +1113,7 @@ echo ""
 
 # I/O do sistema
 iostat -x 1 5
-```text
+```
 
 ---
 
@@ -1145,7 +1145,7 @@ docker compose exec postgresql pgbench -c 10 -j 2 -t 1000 postgres
 echo ""
 echo "3. Teste CONCORRÊNCIA ALTA:"
 docker compose exec postgresql pgbench -c 50 -j 4 -t 500 postgres
-```text
+```
 
 ### 9.2. Benchmark Redis
 
@@ -1171,7 +1171,7 @@ docker compose exec redis redis-benchmark -t lpush -n 100000 -q
 
 echo "4. PIPELINE (10 comandos):"
 docker compose exec redis redis-benchmark -n 100000 -P 10 -q
-```text
+```
 
 ### 9.3. Benchmark HTTP (Caddy/n8n)
 
@@ -1208,7 +1208,7 @@ wrk -t4 -c100 -d30s --latency https://n8n.borgstack.local/webhook-test/ping
 # -c100: 100 conexões
 # -d30s: duração 30 segundos
 # --latency: mostrar latências
-```text
+```
 
 ---
 
@@ -1255,7 +1255,7 @@ echo "DICAS:"
 echo "- Se muitos system calls: otimizar I/O"
 echo "- Se muitas threads: verificar configuração de workers"
 echo "- Se processo específico: investigar aquele processo"
-```text
+```
 
 ### 10.2. Container Usando Muita Memória
 
@@ -1300,7 +1300,7 @@ echo "SOLUÇÕES:"
 echo "- Aumentar limite de memória no docker-compose.yml"
 echo "- Reiniciar container para liberar memória"
 echo "- Otimizar aplicação (memory leaks, cache excessivo)"
-```text
+```
 
 ### 10.3. Queries PostgreSQL Lentas
 
@@ -1332,7 +1332,7 @@ SELECT
     pid
 FROM pg_locks
 WHERE NOT granted;
-```text
+```
 
 ### 10.4. Checklist de Performance
 
@@ -1380,7 +1380,7 @@ WHERE NOT granted;
 - [ ] Métricas coletadas historicamente
 - [ ] Alertas de performance configurados
 - [ ] Benchmark baseline documentado
-```text
+```
 
 ---
 

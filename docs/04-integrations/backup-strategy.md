@@ -14,7 +14,7 @@ Este documento descreve a estratégia de backup do BorgStack e procedimentos det
 
 ### Componentes do Sistema de Backup
 
-```text
+```
 ┌─────────────────────────────────────────────────────────────┐
 │                     BorgStack Services                       │
 │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐   │
@@ -37,7 +37,7 @@ Este documento descreve a estratégia de backup do BorgStack e procedimentos det
                 │ • Backblaze B2      │
                 │ • SFTP Local        │
                 └─────────────────────┘
-```text
+```
 
 ## Cenários de Recuperação
 
@@ -271,7 +271,7 @@ cd borgstack
 
 # Execute bootstrap
 sudo ./scripts/bootstrap.sh
-```text
+```
 
 **1.2. Configure arquivo .env**:
 
@@ -286,7 +286,7 @@ nano .env
 # DUPLICATI_PASSWORD=<sua-senha>
 # DUPLICATI_ENCRYPTION_KEY=<sua-chave>
 # DUPLICATI_PASSPHRASE=<CRÍTICO-senha-de-criptografia>
-```text
+```
 
 **1.3. NÃO inicie todos os serviços ainda**:
 
@@ -296,7 +296,7 @@ docker compose up -d duplicati
 
 # Verifique se iniciou
 docker compose ps duplicati
-```text
+```
 
 #### Fase 2: Configuração do Duplicati
 
@@ -375,7 +375,7 @@ docker compose ps duplicati
 
 ```bash
 docker compose up -d
-```text
+```
 
 **4.2. Monitore inicialização**:
 
@@ -385,7 +385,7 @@ watch docker compose ps
 
 # Aguarde até todos mostrarem "healthy"
 # Isso pode levar 5-10 minutos
-```text
+```
 
 **4.3. Verifique logs de cada serviço**:
 
@@ -401,7 +401,7 @@ docker compose logs chatwoot --tail 50
 
 # Todos os serviços
 docker compose logs --tail 20
-```text
+```
 
 #### Fase 5: Validação e Testes
 
@@ -413,7 +413,7 @@ docker compose logs --tail 20
 
 # Ou manualmente
 docker compose ps
-```text
+```
 
 **5.2. Teste funcional de cada serviço**:
 
@@ -444,7 +444,7 @@ docker compose exec seaweedfs weed shell << EOF
 s3.bucket.list
 exit
 EOF
-```text
+```
 
 **5.4. Teste funcionalidade crítica**:
 
@@ -462,14 +462,14 @@ EOF
 # Via web UI: Selecione backup → "Executar agora"
 # OU via script
 ./scripts/backup-now.sh
-```text
+```
 
 #### Fase 6: Documentação e Revisão
 
 **6.1. Documente a recuperação**:
 
 Crie registro da recuperação:
-```text
+```
 Data: [DATA]
 Servidor original: [IP/HOSTNAME]
 Servidor novo: [IP/HOSTNAME]
@@ -477,7 +477,7 @@ Versão backup restaurada: [DATA/HORA]
 Tempo total de recuperação: [HORAS]
 Problemas encontrados: [LISTA]
 Lições aprendidas: [LISTA]
-```text
+```
 
 **6.2. Atualize procedimentos** se necessário
 
@@ -495,7 +495,7 @@ Lições aprendidas: [LISTA]
 
 ### Checklist de Teste de DR
 
-```text
+```
 □ Documentação de DR está atualizada
 □ Credenciais de backup estão acessíveis
 □ DUPLICATI_PASSPHRASE está armazenada em local seguro
@@ -507,7 +507,7 @@ Lições aprendidas: [LISTA]
 □ Tempo de recuperação dentro do RTO (≤ 4 horas): SIM/NÃO
 □ Equipe treinada em procedimentos de DR
 □ Lessons learned documentadas
-```text
+```
 
 ## Procedimentos de Rollback
 
@@ -549,7 +549,7 @@ docker compose exec postgresql pg_dumpall -U postgres > backup-postgresql-$(date
 
 # Banco específico
 docker compose exec postgresql pg_dump -U postgres -d n8n_db > backup-n8n-$(date +%Y%m%d-%H%M).sql
-```text
+```
 
 **Backup MongoDB**:
 ```bash
@@ -558,7 +558,7 @@ docker compose exec mongodb mongodump \
   --password ${MONGODB_ROOT_PASSWORD} \
   --authenticationDatabase admin \
   --out /tmp/mongo-backup-$(date +%Y%m%d-%H%M)
-```text
+```
 
 **Backup de Volumes**:
 ```bash
@@ -567,7 +567,7 @@ docker compose exec n8n tar czf - /home/node/.n8n > n8n-backup-$(date +%Y%m%d-%H
 
 # Exemplo: Evolution API
 docker compose exec evolution tar czf - /evolution/instances > evolution-backup-$(date +%Y%m%d-%H%M).tar.gz
-```text
+```
 
 ## Contatos de Emergência
 

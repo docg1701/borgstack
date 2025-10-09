@@ -27,7 +27,7 @@ A Evolution API no BorgStack está configurada com as seguintes credenciais padr
 ```bash
 URL: https://evolution.seudominio.com.br
 API Key: (definida em EVOLUTION_API_KEY no arquivo .env)
-```text
+```
 
 ### Verificando Status da API
 
@@ -41,7 +41,7 @@ docker compose logs -f evolution-api
 # Testar conectividade
 curl -X GET https://evolution.seudominio.com.br/instance/fetchInstances \
   -H "apikey: SUA_API_KEY_AQUI"
-```text
+```
 
 ---
 
@@ -106,7 +106,7 @@ curl -X POST https://evolution.seudominio.com.br/instance/create \
     "qrcode": true,
     "integration": "WHATSAPP-BAILEYS"
   }'
-```text
+```
 
 **Resposta:**
 ```json
@@ -123,7 +123,7 @@ curl -X POST https://evolution.seudominio.com.br/instance/create \
     "base64": "iVBORw0KG..."
   }
 }
-```text
+```
 
 ### Passo 2: Escanear QR Code
 
@@ -146,7 +146,7 @@ curl -X POST https://evolution.seudominio.com.br/instance/create \
     "qrcode": false,
     "integration": "WHATSAPP-BAILEYS"
   }'
-```text
+```
 
 Isso retornará um código de 8 dígitos para inserir no WhatsApp.
 
@@ -155,7 +155,7 @@ Isso retornará um código de 8 dígitos para inserir no WhatsApp.
 ```bash
 curl -X GET https://evolution.seudominio.com.br/instance/connectionState/atendimento-principal \
   -H "apikey: SUA_API_KEY_AQUI"
-```text
+```
 
 **Resposta:**
 ```json
@@ -165,7 +165,7 @@ curl -X GET https://evolution.seudominio.com.br/instance/connectionState/atendim
     "state": "open"
   }
 }
-```text
+```
 
 **Estados Possíveis**:
 - `connecting`: Conectando ao WhatsApp
@@ -182,7 +182,7 @@ curl -X POST https://evolution.seudominio.com.br/message/sendText/atendimento-pr
     "number": "5511987654321",
     "text": "Olá! Esta é minha primeira mensagem via Evolution API."
   }'
-```text
+```
 
 ---
 
@@ -204,12 +204,12 @@ WEBHOOK_EVENTS_MESSAGES_UPSERT=true
 WEBHOOK_EVENTS_MESSAGES_UPDATE=true
 WEBHOOK_EVENTS_CONNECTION_UPDATE=true
 WEBHOOK_EVENTS_QRCODE_UPDATED=true
-```text
+```
 
 Reinicie o container:
 ```bash
 docker compose restart evolution-api
-```text
+```
 
 ### Webhook por Instância
 
@@ -231,14 +231,14 @@ curl -X POST https://evolution.seudominio.com.br/webhook/set/atendimento-princip
       "SEND_MESSAGE"
     ]
   }'
-```text
+```
 
 ### Verificar Webhook Configurado
 
 ```bash
 curl -X GET https://evolution.seudominio.com.br/webhook/find/atendimento-principal \
   -H "apikey: SUA_API_KEY_AQUI"
-```text
+```
 
 **Resposta:**
 ```json
@@ -254,7 +254,7 @@ curl -X GET https://evolution.seudominio.com.br/webhook/find/atendimento-princip
     "SEND_MESSAGE"
   ]
 }
-```text
+```
 
 ### Exemplo de Payload do Webhook
 
@@ -284,7 +284,7 @@ Quando uma nova mensagem chega, o webhook recebe:
   "server_url": "https://evolution.seudominio.com.br",
   "apikey": "UUID-DA-INSTANCIA"
 }
-```text
+```
 
 ---
 
@@ -320,7 +320,7 @@ curl -X POST https://evolution.seudominio.com.br/instance/create \
     "chatwootOrganization": "Minha Empresa",
     "chatwootLogo": "https://seudominio.com.br/logo.png"
   }'
-```text
+```
 
 ### Opção 2: Configurar em Instância Existente
 
@@ -346,7 +346,7 @@ curl -X POST https://evolution.seudominio.com.br/chatwoot/set/atendimento-princi
     "organization": "Minha Empresa",
     "logo": "https://seudominio.com.br/logo.png"
   }'
-```text
+```
 
 ### Parâmetros da Integração Chatwoot
 
@@ -371,7 +371,7 @@ curl -X POST https://evolution.seudominio.com.br/chatwoot/set/atendimento-princi
 ```bash
 curl -X GET https://evolution.seudominio.com.br/chatwoot/find/atendimento-principal \
   -H "apikey: SUA_API_KEY_AQUI"
-```text
+```
 
 ---
 
@@ -395,15 +395,15 @@ curl -X POST https://evolution.seudominio.com.br/webhook/set/atendimento-princip
     "enabled": true,
     "events": ["MESSAGES_UPSERT"]
   }'
-```text
+```
 
 3. **Processar Mensagem no n8n**:
 
 Exemplo de workflow:
 
-```text
+```
 Webhook → Function (Extrair Dados) → PostgreSQL (Salvar) → HTTP Request (Responder)
-```text
+```
 
 **Function Node (Extrair dados da mensagem)**:
 ```javascript
@@ -417,7 +417,7 @@ return {
   instance: webhookData.instance,
   messageId: webhookData.data.key.id
 };
-```text
+```
 
 **HTTP Request Node (Enviar resposta automática)**:
 ```json
@@ -433,7 +433,7 @@ return {
     "text": "Obrigado pela mensagem! Em breve retornaremos."
   }
 }
-```text
+```
 
 ### Diagrama de Integração n8n + Evolution API
 
@@ -450,7 +450,7 @@ sequenceDiagram
     N8N->>PG: Salvar no Banco
     N8N->>EVO: Enviar Resposta
     EVO->>WA: Entregar Resposta
-```text
+```
 
 ---
 
@@ -466,7 +466,7 @@ curl -X POST https://evolution.seudominio.com.br/message/sendText/atendimento-pr
     "number": "5511987654321",
     "text": "Olá! Como posso ajudá-lo?"
   }'
-```text
+```
 
 ### Mensagem com Mídia (Imagem)
 
@@ -480,7 +480,7 @@ curl -X POST https://evolution.seudominio.com.br/message/sendMedia/atendimento-p
     "media": "https://example.com/imagem.jpg",
     "caption": "Confira nossa nova promoção!"
   }'
-```text
+```
 
 ### Mensagem de Áudio
 
@@ -492,7 +492,7 @@ curl -X POST https://evolution.seudominio.com.br/message/sendWhatsAppAudio/atend
     "number": "5511987654321",
     "audio": "https://example.com/audio.mp3"
   }'
-```text
+```
 
 ### Mensagem de Documento
 
@@ -506,7 +506,7 @@ curl -X POST https://evolution.seudominio.com.br/message/sendMedia/atendimento-p
     "media": "https://example.com/contrato.pdf",
     "fileName": "Contrato_2025.pdf"
   }'
-```text
+```
 
 ### Verificar Número é WhatsApp
 
@@ -520,7 +520,7 @@ curl -X POST https://evolution.seudominio.com.br/chat/whatsappNumbers/atendiment
       "5511912345678"
     ]
   }'
-```text
+```
 
 **Resposta:**
 ```json
@@ -534,7 +534,7 @@ curl -X POST https://evolution.seudominio.com.br/chat/whatsappNumbers/atendiment
     "exists": false
   }
 ]
-```text
+```
 
 ---
 
@@ -545,28 +545,28 @@ curl -X POST https://evolution.seudominio.com.br/chat/whatsappNumbers/atendiment
 ```bash
 curl -X GET https://evolution.seudominio.com.br/instance/fetchInstances \
   -H "apikey: SUA_API_KEY_AQUI"
-```text
+```
 
 ### Deletar Instância
 
 ```bash
 curl -X DELETE https://evolution.seudominio.com.br/instance/delete/atendimento-principal \
   -H "apikey: SUA_API_KEY_AQUI"
-```text
+```
 
 ### Desconectar Instância (Logout)
 
 ```bash
 curl -X DELETE https://evolution.seudominio.com.br/instance/logout/atendimento-principal \
   -H "apikey: SUA_API_KEY_AQUI"
-```text
+```
 
 ### Restart Instância
 
 ```bash
 curl -X PUT https://evolution.seudominio.com.br/instance/restart/atendimento-principal \
   -H "apikey: SUA_API_KEY_AQUI"
-```text
+```
 
 ---
 
@@ -586,7 +586,7 @@ DATABASE_SAVE_DATA_NEW_MESSAGE=true
 DATABASE_SAVE_MESSAGE_UPDATE=true
 DATABASE_SAVE_DATA_CONTACTS=true
 DATABASE_SAVE_DATA_CHATS=true
-```text
+```
 
 ### Consultar Mensagens no PostgreSQL
 
@@ -613,7 +613,7 @@ ORDER BY created_at DESC;
 -- Contatos importados
 SELECT * FROM evolution_contacts
 WHERE instance_name = 'atendimento-principal';
-```text
+```
 
 ---
 
@@ -630,12 +630,12 @@ S3_BUCKET=evolution-media
 S3_PORT=8333
 S3_ENDPOINT=seaweedfs:8333
 S3_USE_SSL=false
-```text
+```
 
 Reinicie o container:
 ```bash
 docker compose restart evolution-api
-```text
+```
 
 As mídias serão automaticamente enviadas ao SeaweedFS e os links serão retornados nas mensagens.
 
@@ -653,7 +653,7 @@ export EVOLUTION_API_KEY="$(openssl rand -base64 32 | tr -d '=+/')"
 # Rotacione a API key periodicamente
 # Edite no .env e reinicie:
 docker compose restart evolution-api
-```text
+```
 
 ### 2. HTTPS Obrigatório
 
@@ -666,7 +666,7 @@ Configure um token de validação para webhooks:
 ```bash
 # No .env
 WA_BUSINESS_TOKEN_WEBHOOK=meu_token_secreto_webhook
-```text
+```
 
 Valide o token nos webhooks recebidos:
 
@@ -680,7 +680,7 @@ if (webhookToken !== expectedToken) {
 }
 
 return $input.item;
-```text
+```
 
 ### 4. Limite de Taxa (Rate Limiting)
 
@@ -697,7 +697,7 @@ curl -X POST https://evolution.seudominio.com.br/chat/whatsappNumbers/atendiment
   -H "apikey: SUA_API_KEY_AQUI" \
   -H "Content-Type: application/json" \
   -d '{"numbers": ["5511987654321"]}'
-```text
+```
 
 ### 6. Backup de Instâncias
 
@@ -709,7 +709,7 @@ docker compose logs duplicati | grep evolution
 
 # Backup manual
 docker compose exec postgresql pg_dump -U evolution evolution > evolution_backup.sql
-```text
+```
 
 ---
 
@@ -737,7 +737,7 @@ curl -X POST https://evolution.seudominio.com.br/instance/create \
 
 # Verificar conectividade com WhatsApp
 docker compose exec evolution-api ping -c 3 web.whatsapp.com
-```text
+```
 
 ### 2. Webhook Não Recebe Eventos
 
@@ -764,7 +764,7 @@ curl -X POST https://evolution.seudominio.com.br/webhook/set/atendimento-princip
     "enabled": true,
     "events": ["MESSAGES_UPSERT", "CONNECTION_UPDATE"]
   }'
-```text
+```
 
 ### 3. Mensagens Não Enviadas
 
@@ -789,7 +789,7 @@ docker compose logs evolution-api | grep -i "rate"
 # Restart da instância
 curl -X PUT https://evolution.seudominio.com.br/instance/restart/atendimento-principal \
   -H "apikey: SUA_API_KEY_AQUI"
-```text
+```
 
 ### 4. Integração Chatwoot Não Funciona
 
@@ -820,7 +820,7 @@ curl -X POST https://evolution.seudominio.com.br/chatwoot/set/atendimento-princi
 
 # Verificar logs de ambos os serviços
 docker compose logs -f evolution-api chatwoot
-```text
+```
 
 ### 5. QR Code Não Aparece
 
@@ -843,7 +843,7 @@ curl -X POST https://evolution.seudominio.com.br/instance/create \
     "qrcode": false,
     "integration": "WHATSAPP-BAILEYS"
   }'
-```text
+```
 
 ### 6. Banco de Dados PostgreSQL Não Conecta
 
@@ -868,7 +868,7 @@ docker compose exec postgresql psql -U postgres -c "GRANT ALL PRIVILEGES ON DATA
 
 # Reiniciar Evolution API
 docker compose restart evolution-api
-```text
+```
 
 ### 7. Container Reinicia Constantemente
 
@@ -894,7 +894,7 @@ docker stats evolution-api
 docker compose down evolution-api
 docker system prune -f
 docker compose up -d evolution-api
-```text
+```
 
 ---
 
@@ -986,7 +986,7 @@ CHATWOOT_MESSAGE_DELETE=true
 CACHE_REDIS_ENABLED=true
 CACHE_REDIS_URI=redis://redis:6379
 CACHE_REDIS_SAVE_INSTANCES=true
-```text
+```
 
 ### Portas e Endpoints
 

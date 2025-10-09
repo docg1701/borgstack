@@ -55,7 +55,7 @@ Para uma instalação completa e funcional, você precisará:
 
 Você precisará configurar subdomínios para cada serviço. Exemplo usando `example.com`:
 
-```text
+```
 n8n.example.com         → n8n (automação de workflows)
 chatwoot.example.com    → Chatwoot (atendimento ao cliente)
 evolution.example.com   → Evolution API (WhatsApp Business)
@@ -64,7 +64,7 @@ directus.example.com    → Directus (CMS headless)
 fileflows.example.com   → FileFlows (processamento de mídia)
 duplicati.example.com   → Duplicati (sistema de backup)
 seaweedfs.example.com   → SeaweedFS (armazenamento de objetos)
-```text
+```
 
 **💡 Dica:** Recomendamos usar um único domínio raiz com subdomínios, mas você pode usar domínios diferentes para cada serviço se preferir.
 
@@ -93,7 +93,7 @@ flowchart TD
     I -->|Sim| J[✓ Sucesso]
     I -->|Não| K[Mostrar logs]
     K --> L[Verificar manualmente]
-```text
+```
 
 **Tempo estimado:** 15-30 minutos (dependendo da velocidade da internet para download das imagens Docker)
 
@@ -105,7 +105,7 @@ Conecte-se ao seu servidor Ubuntu 24.04 via SSH:
 
 ```bash
 ssh usuario@seu-servidor.com
-```text
+```
 
 Certifique-se de estar usando um usuário com privilégios `sudo`. Você será solicitado a inserir sua senha durante a instalação.
 
@@ -122,12 +122,12 @@ git clone https://github.com/yourusername/borgstack.git
 
 # Entre no diretório do projeto
 cd borgstack
-```text
+```
 
 **💡 Dica:** Se você não tiver o Git instalado, instale-o primeiro:
 ```bash
 sudo apt-get update && sudo apt-get install -y git
-```text
+```
 
 #### 3. Executar o Script de Bootstrap
 
@@ -135,12 +135,12 @@ Execute o script de instalação automatizada:
 
 ```bash
 ./scripts/bootstrap.sh
-```text
+```
 
 **O que acontece durante a execução:**
 
 **Etapa 1: Validação do Sistema (1-2 minutos)**
-```text
+```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Validating Ubuntu Version
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -158,10 +158,10 @@ Validating System Requirements
 ℹ CPU cores: 8 (min: 4, recommended: 8)
 ✓ CPU cores sufficient: 8
 ✓ All system requirements validated
-```text
+```
 
 **Etapa 2: Instalação do Docker (3-5 minutos)**
-```text
+```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Installing Docker Engine and Docker Compose v2
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -176,10 +176,10 @@ Installing Docker Engine and Docker Compose v2
 ✓ Docker installed: Docker version 27.3.1, build ce12230
 ✓ Docker Compose installed: Docker Compose version v2.29.7
 ⚠ NOTE: You may need to log out and back in for docker group membership to take effect.
-```text
+```
 
 **Etapa 3: Configuração do Firewall (1 minuto)**
-```text
+```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Configuring UFW Firewall
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -198,10 +198,10 @@ To                         Action      From
 443/tcp                    ALLOW       Anywhere
 
 ✓ Firewall configured
-```text
+```
 
 **Etapa 4: Geração do Arquivo .env (1 minuto)**
-```text
+```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Generating .env File
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -211,10 +211,10 @@ Generating .env File
 ✓ Generated .env file with strong passwords
 ⚠ IMPORTANT: Save these credentials securely!
 ⚠ The .env file contains all system passwords
-```text
+```
 
 **Etapa 5: Implantação dos Serviços (5-15 minutos)**
-```text
+```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Deploying Services
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -238,10 +238,10 @@ Deploying Services
 
 ℹ Starting services...
 ✓ All services started successfully
-```text
+```
 
 **Etapa 6: Validação de Health Checks (2-5 minutos)**
-```text
+```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Validating Health Checks
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -254,13 +254,13 @@ Validating Health Checks
 ✓ chatwoot: healthy
 ✓ evolution: healthy
 ✓ All core services are healthy
-```text
+```
 
 #### 4. Revisar Informações de Instalação
 
 Após a conclusão, o script exibirá informações importantes:
 
-```text
+```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Installation Complete!
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -292,7 +292,7 @@ Next Steps:
 
 For troubleshooting, see docs/05-solucao-de-problemas.md
 Installation log saved to: /tmp/borgstack-bootstrap.log
-```text
+```
 
 **⚠️ IMPORTANTE:** Salve o arquivo `.env` em local seguro! Ele contém todas as credenciais do sistema.
 
@@ -322,7 +322,7 @@ df -BG / | awk 'NR==2 {print $2}' | sed 's/G//'
 # Verificar CPU cores
 nproc
 # Deve retornar: 4 ou mais
-```text
+```
 
 ### 2. Instalar Docker Engine
 
@@ -330,14 +330,14 @@ Remova versões antigas do Docker (se existirem):
 
 ```bash
 sudo apt-get remove -y docker docker-engine docker.io containerd runc
-```text
+```
 
 Instale as dependências necessárias:
 
 ```bash
 sudo apt-get update
 sudo apt-get install -y ca-certificates curl gnupg
-```text
+```
 
 Adicione a chave GPG oficial do Docker:
 
@@ -345,7 +345,7 @@ Adicione a chave GPG oficial do Docker:
 sudo install -m 0755 -d /etc/apt/keyrings
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
 sudo chmod a+r /etc/apt/keyrings/docker.gpg
-```text
+```
 
 Adicione o repositório Docker ao APT:
 
@@ -354,27 +354,27 @@ echo \
   "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
   $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
   sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-```text
+```
 
 Atualize o índice de pacotes e instale o Docker:
 
 ```bash
 sudo apt-get update
 sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-```text
+```
 
 Adicione seu usuário ao grupo docker:
 
 ```bash
 sudo usermod -aG docker $USER
-```text
+```
 
 Inicie e habilite o serviço Docker:
 
 ```bash
 sudo systemctl start docker
 sudo systemctl enable docker
-```text
+```
 
 Verifique a instalação:
 
@@ -384,7 +384,7 @@ docker --version
 
 docker compose version
 # Deve exibir: Docker Compose version v2.29.7 ou superior
-```text
+```
 
 **⚠️ IMPORTANTE:** Faça logout e login novamente para que a associação ao grupo docker tenha efeito. Alternativamente, execute `newgrp docker` para atualizar suas permissões de grupo na sessão atual.
 
@@ -394,7 +394,7 @@ Instale utilitários essenciais:
 
 ```bash
 sudo apt-get install -y curl wget git ufw dnsutils htop sysstat
-```text
+```
 
 ### 4. Configurar o Firewall UFW
 
@@ -419,10 +419,10 @@ sudo ufw enable
 
 # Verificar status
 sudo ufw status verbose
-```text
+```
 
 **Saída esperada:**
-```text
+```
 Status: active
 Logging: on (low)
 Default: deny (incoming), allow (outgoing), disabled (routed)
@@ -433,7 +433,7 @@ To                         Action      From
 22/tcp                     ALLOW IN    Anywhere
 80/tcp                     ALLOW IN    Anywhere
 443/tcp                    ALLOW IN    Anywhere
-```text
+```
 
 **⚠️ ATENÇÃO:** Se você usa uma porta SSH personalizada (diferente de 22), ajuste a regra do UFW antes de habilitar o firewall, ou você perderá acesso SSH!
 
@@ -443,7 +443,7 @@ To                         Action      From
 cd ~
 git clone https://github.com/yourusername/borgstack.git
 cd borgstack
-```text
+```
 
 ### 6. Criar e Configurar o Arquivo .env
 
@@ -451,13 +451,13 @@ Copie o arquivo de exemplo:
 
 ```bash
 cp .env.example .env
-```text
+```
 
 Edite o arquivo `.env` com suas configurações:
 
 ```bash
 nano .env
-```text
+```
 
 **Você DEVE alterar os seguintes valores:**
 
@@ -465,7 +465,7 @@ nano .env
 ```bash
 # Gerar senha segura
 openssl rand -base64 32 | tr -d "=+/" | cut -c1-32
-```text
+```
 
 Execute o comando acima 10 vezes para gerar senhas únicas para:
 - `POSTGRES_PASSWORD`
@@ -485,12 +485,12 @@ Execute o comando acima 10 vezes para gerar senhas únicas para:
 N8N_HOST=n8n.mycompany.com.br
 CHATWOOT_HOST=chatwoot.mycompany.com.br
 # ... e assim por diante para todos os serviços
-```text
+```
 
 **Configure permissões seguras:**
 ```bash
 chmod 600 .env
-```text
+```
 
 **⚠️ CRÍTICO:** Nunca commite o arquivo `.env` ao Git! Ele contém todas as credenciais do sistema.
 
@@ -500,7 +500,7 @@ Baixe as imagens Docker:
 
 ```bash
 docker compose pull
-```text
+```
 
 **Tempo estimado:** 5-15 minutos, dependendo da velocidade da internet.
 
@@ -508,16 +508,16 @@ Inicie os serviços:
 
 ```bash
 docker compose up -d
-```text
+```
 
 Verifique o status dos containers:
 
 ```bash
 docker compose ps
-```text
+```
 
 **Saída esperada (após 2-3 minutos):**
-```text
+```
 NAME                        STATUS              PORTS
 borgstack-postgresql-1      Up 2 minutes (healthy)
 borgstack-redis-1           Up 2 minutes (healthy)
@@ -527,7 +527,7 @@ borgstack-n8n-1             Up 2 minutes (healthy)
 borgstack-chatwoot-1        Up 2 minutes (healthy)
 borgstack-evolution-1       Up 2 minutes (healthy)
 ...
-```text
+```
 
 **💡 Dica:** Alguns serviços levam até 90 segundos para ficarem "healthy", especialmente o Directus (migrações de banco de dados).
 
@@ -565,13 +565,13 @@ Aguarde a propagação DNS (geralmente 5-15 minutos) e verifique:
 dig n8n.example.com
 
 # Deve retornar seu IP público na seção ANSWER
-```text
+```
 
 **Saída esperada:**
-```text
+```
 ;; ANSWER SECTION:
 n8n.example.com.    300    IN    A    123.45.67.89
-```text
+```
 
 **Ferramentas online para verificar DNS:**
 - https://dnschecker.org/
@@ -613,32 +613,32 @@ Acesse cada serviço para verificar que está funcionando e gerar certificados S
 ### 5. Configurar Contas de Administrador
 
 **n8n:**
-```text
+```
 1. Acesse https://n8n.example.com
 2. Crie conta de administrador (primeiro usuário é automaticamente admin)
 3. Email: seu-email@example.com
 4. Senha: use uma senha forte (12+ caracteres)
 5. Finalize a configuração inicial
-```text
+```
 
 **Chatwoot:**
-```text
+```
 1. Acesse https://chatwoot.example.com
 2. Crie conta de administrador
 3. Nome da conta: Seu nome ou empresa
 4. Email: seu-email@example.com
 5. Senha: use uma senha forte (12+ caracteres)
 6. Complete o wizard de configuração
-```text
+```
 
 **Directus:**
-```text
+```
 1. Acesse https://directus.example.com/admin
 2. Faça login com credenciais do .env:
    Email: valor de DIRECTUS_ADMIN_EMAIL
    Senha: valor de DIRECTUS_ADMIN_PASSWORD
 3. Altere a senha padrão no seu perfil
-```text
+```
 
 **💡 Dica:** Anote todas as credenciais em um gerenciador de senhas seguro (ex: 1Password, Bitwarden, LastPass).
 
@@ -652,14 +652,14 @@ ls -la .env
 
 # Se não estiver correto, corrija:
 chmod 600 .env
-```text
+```
 
 **Faça backup das credenciais:**
 ```bash
 # Copie o .env para local seguro (fora do servidor)
 # Nunca envie por email ou chat!
 # Use um gerenciador de senhas ou armazenamento criptografado
-```text
+```
 
 **Configure autenticação de dois fatores (2FA):**
 - n8n: Habilite 2FA nas configurações de usuário
@@ -676,7 +676,7 @@ Após a instalação e configuração DNS, execute estas verificações para gar
 
 ```bash
 docker compose ps
-```text
+```
 
 **Todos os containers devem mostrar:**
 - STATUS: `Up X minutes (healthy)` ou `Up X minutes`
@@ -689,16 +689,16 @@ docker compose logs nome-do-servico --tail 100
 
 # Exemplo:
 docker compose logs n8n --tail 100
-```text
+```
 
 ### 2. Verificar Volumes Docker
 
 ```bash
 docker volume ls | grep borgstack
-```text
+```
 
 **Saída esperada (15+ volumes):**
-```text
+```
 local     borgstack_postgresql_data
 local     borgstack_redis_data
 local     borgstack_mongodb_data
@@ -711,19 +711,19 @@ local     borgstack_duplicati_data
 local     borgstack_seaweedfs_data
 local     borgstack_lowcoder_data
 ...
-```text
+```
 
 ### 3. Verificar Redes Docker
 
 ```bash
 docker network ls | grep borgstack
-```text
+```
 
 **Saída esperada:**
-```text
+```
 a1b2c3d4e5f6   borgstack_internal    bridge    local
 g7h8i9j0k1l2   borgstack_external    bridge    local
-```text
+```
 
 ### 4. Executar Scripts de Verificação
 
@@ -750,7 +750,7 @@ O BorgStack inclui scripts de validação para cada componente:
 
 # Executar TODOS os testes de deploy
 ./tests/run-all-tests.sh
-```text
+```
 
 **💡 Dica:** Se algum teste falhar, consulte a seção de [Solução de Problemas](#solução-de-problemas) abaixo.
 
@@ -759,19 +759,19 @@ O BorgStack inclui scripts de validação para cada componente:
 **Verificar que Caddy está acessível:**
 ```bash
 curl -I https://n8n.example.com
-```text
+```
 
 **Saída esperada:**
-```text
+```
 HTTP/2 200
 server: Caddy
 content-type: text/html; charset=utf-8
-```text
+```
 
 **Verificar SSL:**
 ```bash
 openssl s_client -connect n8n.example.com:443 -servername n8n.example.com < /dev/null
-```text
+```
 
 **Deve mostrar:** `Verify return code: 0 (ok)` (certificado válido)
 
@@ -811,7 +811,7 @@ free -h
 # 1. Fazer upgrade do servidor para 16GB+ (recomendado)
 # 2. Reduzir serviços no docker-compose.yml (não recomendado)
 # 3. Usar instalação manual e ajustar memory limits (avançado)
-```text
+```
 
 ### Problema: Docker installation fails
 
@@ -828,7 +828,7 @@ cat /etc/os-release
 # Se for 24.04, verifique conectividade com o repositório Docker:
 curl -I https://download.docker.com/linux/ubuntu/dists/noble/stable/
 # Deve retornar HTTP/1.1 200 OK
-```text
+```
 
 ### Problema: Permission denied ao executar docker commands
 
@@ -849,7 +849,7 @@ newgrp docker
 # Verificar que está funcionando
 docker ps
 # Não deve mais mostrar erro de permissão
-```text
+```
 
 ### Problema: Ports 80/443 already in use
 
@@ -870,7 +870,7 @@ sudo systemctl disable nginx
 
 # Reiniciar os serviços do BorgStack
 docker compose restart caddy
-```text
+```
 
 ### Problema: Container não está healthy após 5 minutos
 
@@ -889,7 +889,7 @@ docker inspect --format='{{json .State.Health}}' borgstack-n8n-1 | jq
 
 # Verificar uso de recursos
 docker stats
-```text
+```
 
 **Soluções comuns:**
 - **Erro de banco de dados:** Verifique senhas no `.env`
@@ -910,7 +910,7 @@ dig n8n.example.com
 
 # Ver logs do Caddy
 docker compose logs caddy | grep "acme"
-```text
+```
 
 **Soluções:**
 ```bash
@@ -921,7 +921,7 @@ sudo ufw status
 # E verifique security groups / firewall rules no painel da cloud
 
 # Se domínio aponta para IP errado, corrija no DNS
-```text
+```
 
 ### Problema: Cannot access service web UI
 
@@ -941,7 +941,7 @@ docker compose ps n8n
 
 # 4. Tentar acessar localmente
 curl -I http://localhost:5678  # porta do n8n
-```text
+```
 
 **Solução:**
 ```bash
@@ -953,7 +953,7 @@ docker compose logs nome-do-servico
 
 # Se DNS não está resolvendo:
 # Aguarde propagação ou verifique configuração DNS
-```text
+```
 
 ### Logs Importantes
 
@@ -974,13 +974,13 @@ docker compose logs n8n chatwoot directus --tail 50
 
 # Filtrar logs por padrão
 docker compose logs n8n | grep ERROR
-```text
+```
 
 **Log do bootstrap:**
 ```bash
 # O script de bootstrap salva log completo em:
 cat /tmp/borgstack-bootstrap.log
-```text
+```
 
 ### Obter Ajuda
 

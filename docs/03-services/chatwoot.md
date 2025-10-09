@@ -58,14 +58,14 @@ Chatwoot é uma plataforma de atendimento ao cliente **open-source** e **omnican
 ### Acesso ao Sistema
 
 **Interface Web:**
-```text
+```
 URL: https://chatwoot.{SEU_DOMINIO}
 Exemplo: https://chatwoot.mycompany.com.br
-```text
+```
 
 **Arquitetura no BorgStack:**
 
-```text
+```
 Chatwoot Container
 ├── Rails Web App (porta 3000)
 ├── PostgreSQL (chatwoot_db)
@@ -80,7 +80,7 @@ Chatwoot Container
 └── Volume Persistente
     └── borgstack_chatwoot_storage
         └── Uploads (imagens, arquivos)
-```text
+```
 
 ---
 
@@ -141,7 +141,7 @@ SMTP_ADDRESS=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USERNAME=no-reply@mycompany.com.br
 SMTP_PASSWORD=[senha-app-gmail]
-```text
+```
 
 **⚠️ Configurar Email é Opcional:**
 - Chatwoot funciona SEM email configurado
@@ -209,7 +209,7 @@ Uma **Conversation** é um **thread de mensagens** com um cliente específico.
 
 **Estados de uma conversa:**
 
-```text
+```
 Open (Aberta)
   ↓
 Pending (Pendente - aguardando resposta do cliente)
@@ -217,7 +217,7 @@ Pending (Pendente - aguardando resposta do cliente)
 Resolved (Resolvida)
   ↓
 [Cliente responde] → Volta para Open
-```text
+```
 
 **Atributos importantes:**
 - **Status:** Open, Pending, Resolved
@@ -328,7 +328,7 @@ Vamos criar um inbox **Website** (widget de chat para seu site).
   }
 })(document,"script");
 </script>
-```text
+```
 
 **Adicione ao HTML do seu site:**
 ```html
@@ -350,7 +350,7 @@ Vamos criar um inbox **Website** (widget de chat para seu site).
   })(document,"script");
 </script>
 </body>
-```text
+```
 
 ### Passo 5: Testar o Widget
 
@@ -369,13 +369,13 @@ Vamos criar um inbox **Website** (widget de chat para seu site).
 
 **Filtros disponíveis:**
 
-```text
+```
 Conversations
 ├── Mine (Atribuídas a mim)
 ├── Unassigned (Sem atribuição)
 ├── All (Todas)
 └── [Por Label] (ex: Vendas, Suporte)
-```text
+```
 
 **Ordenação:**
 - Mais recentes primeiro
@@ -414,11 +414,11 @@ Conversations
 
 **Estados:**
 
-```text
+```
 Open → Pending → Resolved
   ↑__________________|
   (Cliente responde)
-```text
+```
 
 **Como mudar:**
 1. Clique na conversa
@@ -569,7 +569,7 @@ sequenceDiagram
     Chatwoot-->>n8n: Conversa criada
     n8n->>Chatwoot: POST /api/v1/messages
     Chatwoot-->>n8n: Mensagem adicionada
-```text
+```
 
 ### Passo 1: Criar Inbox API no Chatwoot
 
@@ -611,7 +611,7 @@ sequenceDiagram
 
 **Resumo do workflow:**
 
-```text
+```
 Webhook Trigger (Evolution API)
     ↓
 Function (Processar dados WhatsApp)
@@ -621,7 +621,7 @@ HTTP Request (Criar/Buscar Contact no Chatwoot)
 HTTP Request (Criar/Buscar Conversation no Chatwoot)
     ↓
 HTTP Request (Adicionar Message no Chatwoot)
-```text
+```
 
 ### Passo 4: Testar Integração
 
@@ -649,7 +649,7 @@ HTTP Request (Adicionar Message no Chatwoot)
 # Usar em requisições
 curl https://chatwoot.mycompany.com.br/api/v1/accounts/1/conversations \
   -H "api_access_token: xyz789token"
-```text
+```
 
 ### Endpoints Principais
 
@@ -657,18 +657,18 @@ curl https://chatwoot.mycompany.com.br/api/v1/accounts/1/conversations \
 
 ```bash
 GET /api/v1/accounts/{account_id}/conversations
-```text
+```
 
 ```bash
 curl https://chatwoot.mycompany.com.br/api/v1/accounts/1/conversations \
   -H "api_access_token: xyz789token"
-```text
+```
 
 **Criar conversa:**
 
 ```bash
 POST /api/v1/accounts/{account_id}/conversations
-```text
+```
 
 ```bash
 curl -X POST https://chatwoot.mycompany.com.br/api/v1/accounts/1/conversations \
@@ -680,13 +680,13 @@ curl -X POST https://chatwoot.mycompany.com.br/api/v1/accounts/1/conversations \
     "contact_id": 42,
     "status": "open"
   }'
-```text
+```
 
 **Enviar mensagem:**
 
 ```bash
 POST /api/v1/accounts/{account_id}/conversations/{conversation_id}/messages
-```text
+```
 
 ```bash
 curl -X POST https://chatwoot.mycompany.com.br/api/v1/accounts/1/conversations/123/messages \
@@ -697,13 +697,13 @@ curl -X POST https://chatwoot.mycompany.com.br/api/v1/accounts/1/conversations/1
     "message_type": "outgoing",
     "private": false
   }'
-```text
+```
 
 **Criar contato:**
 
 ```bash
 POST /api/v1/accounts/{account_id}/contacts
-```text
+```
 
 ```bash
 curl -X POST https://chatwoot.mycompany.com.br/api/v1/accounts/1/contacts \
@@ -715,7 +715,7 @@ curl -X POST https://chatwoot.mycompany.com.br/api/v1/accounts/1/contacts \
     "phone_number": "+5511987654321",
     "inbox_id": 1
   }'
-```text
+```
 
 ### Webhooks
 
@@ -758,13 +758,13 @@ curl -X POST https://chatwoot.mycompany.com.br/api/v1/accounts/1/contacts \
     }
   }
 }
-```text
+```
 
 ### Documentação Completa da API
 
-```text
+```
 https://chatwoot.mycompany.com.br/swagger
-```text
+```
 
 ---
 
@@ -777,13 +777,13 @@ https://chatwoot.mycompany.com.br/swagger
 // Expor token no código front-end
 const token = "xyz789token";
 fetch(`https://chatwoot.com/api/...?api_access_token=${token}`)
-```text
+```
 
 **✅ SEMPRE:**
 ```javascript
 // Usar proxy backend que esconde o token
 fetch(`/api/chatwoot/conversations`)  // Seu backend adiciona token
-```text
+```
 
 ### 2. Limitar Permissões de Agentes
 
@@ -799,7 +799,7 @@ fetch(`/api/chatwoot/conversations`)  // Seu backend adiciona token
 ```bash
 # .env
 ALLOWED_ORIGINS=https://mycompany.com.br,https://app.mycompany.com.br
-```text
+```
 
 ### 4. Habilitar Autenticação de 2 Fatores (2FA)
 
@@ -853,7 +853,7 @@ ALLOWED_ORIGINS=https://mycompany.com.br,https://app.mycompany.com.br
 // Verifique se widget está carregando:
 console.log(window.chatwootSDK);
 // Deve retornar objeto, não undefined
-```text
+```
 
 **Soluções:**
 
@@ -883,7 +883,7 @@ docker compose logs n8n --tail 50 | grep whatsapp
 
 # 3. Chatwoot está recebendo API calls?
 docker compose logs chatwoot --tail 100 | grep "POST /api/v1"
-```text
+```
 
 **Debugging n8n workflow:**
 - n8n → Executions → Veja execuções falhadas
@@ -936,7 +936,7 @@ ActionMailer::Base.mail(
 ).deliver_now
 
 exit
-```text
+```
 
 **Erro comum: Gmail bloqueia SMTP:**
 - Use **App Password**, não senha da conta
@@ -956,7 +956,7 @@ docker compose logs chatwoot | grep ERROR
 
 # Ver Sidekiq jobs (background)
 docker compose logs chatwoot | grep Sidekiq
-```text
+```
 
 ---
 

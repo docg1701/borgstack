@@ -56,14 +56,14 @@ n8n é uma plataforma de automação de workflows de código aberto que conecta 
 ### Acesso ao Sistema
 
 **Interface Web:**
-```text
+```
 URL: https://n8n.{SEU_DOMINIO}
 Exemplo: https://n8n.mycompany.com.br
-```text
+```
 
 **Arquitetura no BorgStack:**
 
-```text
+```
 n8n Container
 ├── Editor Web UI (porta 5678)
 ├── PostgreSQL (n8n_db)
@@ -76,7 +76,7 @@ n8n Container
 └── Volume Persistente
     └── borgstack_n8n_data
         └── Arquivos locais (se usar filesystem storage)
-```text
+```
 
 ---
 
@@ -132,7 +132,7 @@ QUEUE_BULL_REDIS_PASSWORD=${REDIS_PASSWORD}
 
 # Webhook URL base
 WEBHOOK_URL=https://n8n.mycompany.com.br/
-```text
+```
 
 **⚠️ CRÍTICO - Backup da Chave de Encriptação:**
 
@@ -142,7 +142,7 @@ grep N8N_ENCRYPTION_KEY .env
 
 # IMPORTANTE: Sem essa chave, você PERDE acesso a todas as credenciais!
 # Salve em local seguro (gerenciador de senhas, cofre criptografado)
-```text
+```
 
 ### Adicionar Mais Usuários
 
@@ -172,12 +172,12 @@ N8N_SMTP_PORT=587
 N8N_SMTP_USER=no-reply@mycompany.com.br
 N8N_SMTP_PASS=senha-app-gmail
 N8N_SMTP_SENDER=n8n@mycompany.com.br
-```text
+```
 
 Reinicie o n8n:
 ```bash
 docker compose restart n8n
-```text
+```
 
 ---
 
@@ -188,7 +188,7 @@ docker compose restart n8n
 Um workflow é uma **sequência de ações automatizadas** que são executadas quando um evento acontece.
 
 **Estrutura:**
-```text
+```
 Trigger (Gatilho)
     ↓
 Node 1 (Ação)
@@ -196,10 +196,10 @@ Node 1 (Ação)
 Node 2 (Transformação)
     ↓
 Node 3 (Ação Final)
-```text
+```
 
 **Exemplo prático:**
-```text
+```
 Webhook Trigger (recebe mensagem WhatsApp)
     ↓
 HTTP Request (busca dados do cliente no CRM)
@@ -207,7 +207,7 @@ HTTP Request (busca dados do cliente no CRM)
 IF Node (verifica se é cliente VIP)
     ↓
 Chatwoot Node (cria ticket prioritário)
-```text
+```
 
 ### Nodes (Nós)
 
@@ -238,17 +238,17 @@ Conexões ligam nodes e definem o **fluxo de dados**.
 
 **Tipos de Conexões:**
 
-```text
+```
 Node A ──main──> Node B    (Conexão principal - dados fluem)
 Node A ──error─> Node C    (Conexão de erro - só se Node A falhar)
-```text
+```
 
 **Múltiplas saídas:**
-```text
+```
 IF Node
 ├──true──> Node B
 └──false─> Node C
-```text
+```
 
 ### Executions (Execuções)
 
@@ -260,10 +260,10 @@ Cada vez que um workflow roda, é criada uma **execução** com:
 - **Logs:** Mensagens de debug/erro
 
 **Ver execuções:**
-```text
+```
 Menu lateral → Executions
 Ou: Clique em "Executions" dentro de um workflow
-```text
+```
 
 ### Credentials (Credenciais)
 
@@ -276,12 +276,12 @@ Credenciais armazenam **informações de autenticação** de forma segura.
 4. Múltiplos workflows podem reusar a mesma credencial
 
 **Exemplo - Credencial HTTP:**
-```text
+```
 Name: Chatwoot API
 Type: Header Auth
 Header Name: api_access_token
 Header Value: [seu-token-aqui]
-```text
+```
 
 ---
 
@@ -319,10 +319,10 @@ Vamos criar um workflow simples que recebe um webhook e salva dados no PostgreSQ
 curl -X POST https://n8n.mycompany.com.br/webhook-test/test-webhook \
   -H "Content-Type: application/json" \
   -d '{"name": "João Silva", "email": "joao@example.com", "action": "signup"}'
-```text
+```
 
 **Via navegador (Postman, Insomnia):**
-```text
+```
 Method: POST
 URL: https://n8n.mycompany.com.br/webhook-test/test-webhook
 Body (JSON):
@@ -331,7 +331,7 @@ Body (JSON):
   "email": "joao@example.com",
   "action": "signup"
 }
-```text
+```
 
 Você verá os dados aparecerem no n8n!
 
@@ -400,7 +400,7 @@ CREATE TABLE user_signups (
 
 # Sair
 \q
-```text
+```
 
 ### Passo 8: Executar o Workflow
 
@@ -418,11 +418,11 @@ CREATE TABLE user_signups (
    ```
 
 **Saída esperada:**
-```text
+```
  id |     name      |       email        |         created_at
 ----+---------------+--------------------+----------------------------
   1 | Maria Santos  | maria@example.com  | 2025-10-08 14:23:45.123456
-```text
+```
 
 **🎉 Parabéns! Você criou seu primeiro workflow funcional!**
 
@@ -572,13 +572,13 @@ Query:
 
 Query Parameters:
   $1 = {{ $json.email }}
-```text
+```
 
 ### Integração: n8n → Chatwoot
 
 **Cenário:** Criar conversa automaticamente
 
-```text
+```
 HTTP Request Node:
   Method: POST
   URL: https://chatwoot.mycompany.com.br/api/v1/accounts/1/conversations
@@ -589,25 +589,25 @@ HTTP Request Node:
       "inbox_id": 1,
       "contact_id": "{{ $json.contact_id }}"
     }
-```text
+```
 
 ### Integração: n8n → SeaweedFS (Upload de Arquivo)
 
 **Cenário:** Upload de arquivo via Filer API
 
-```text
+```
 HTTP Request Node:
   Method: PUT
   URL: http://seaweedfs:8888/my-bucket/{{ $json.filename }}
   Body Type: Binary Data
   Input Binary Field: data
-```text
+```
 
 ### Integração: n8n → Directus
 
 **Cenário:** Criar item em coleção
 
-```text
+```
 HTTP Request Node:
   Method: POST
   URL: https://directus.mycompany.com.br/items/articles
@@ -618,13 +618,13 @@ HTTP Request Node:
       "content": "{{ $json.content }}",
       "status": "published"
     }
-```text
+```
 
 ### Integração: n8n → Evolution API
 
 **Cenário:** Enviar mensagem WhatsApp
 
-```text
+```
 HTTP Request Node:
   Method: POST
   URL: https://evolution.mycompany.com.br/message/sendText/instance_name
@@ -635,7 +635,7 @@ HTTP Request Node:
       "number": "{{ $json.phone }}",
       "text": "Olá! Sua solicitação foi processada."
     }
-```text
+```
 
 ---
 
@@ -644,18 +644,18 @@ HTTP Request Node:
 ### 1. Proteger Webhooks com Autenticação
 
 **❌ NUNCA faça isso em produção:**
-```text
+```
 Webhook Trigger
   Authentication: None
-```text
+```
 
 **✅ SEMPRE use autenticação:**
-```text
+```
 Webhook Trigger
   Authentication: Header Auth
   Header Name: X-Webhook-Secret
   Header Value: [senha forte de 32 caracteres]
-```text
+```
 
 **Exemplo de chamada segura:**
 ```bash
@@ -663,7 +663,7 @@ curl -X POST https://n8n.mycompany.com.br/webhook/secure-endpoint \
   -H "X-Webhook-Secret: xK9mP2vL7nR4wQ8sT3fH6jD1gC5yE0zA" \
   -H "Content-Type: application/json" \
   -d '{"data": "secure"}'
-```text
+```
 
 ### 2. Nunca Logar Dados Sensíveis
 
@@ -671,13 +671,13 @@ curl -X POST https://n8n.mycompany.com.br/webhook/secure-endpoint \
 ```javascript
 // Function Node
 console.log("Password:", items[0].json.password);  // MAU!
-```text
+```
 
 **✅ Faça:**
 ```javascript
 // Function Node
 console.log("Processing user:", items[0].json.email);  // Sem senha
-```text
+```
 
 ### 3. Usar Variáveis de Ambiente
 
@@ -721,7 +721,7 @@ console.log("Processing user:", items[0].json.email);  // Sem senha
 
 # Backup banco de dados
 docker compose exec postgresql pg_dump -U n8n_user n8n_db > n8n_backup.sql
-```text
+```
 
 ---
 
@@ -736,7 +736,7 @@ docker compose logs n8n --tail 100
 
 # Ver execuções falhadas no UI
 n8n → Executions → Filter: Failed
-```text
+```
 
 **Causas comuns:**
 - ❌ Workflow não está ativo (toggle OFF)
@@ -768,7 +768,7 @@ n8n → Executions → Filter: Failed
 # Testar webhook
 curl -I https://n8n.mycompany.com.br/webhook/seu-path
 # Deve retornar: 200 ou 405 (não 404)
-```text
+```
 
 ### Problema: Execução travada (stuck)
 
@@ -786,7 +786,7 @@ curl -I https://n8n.mycompany.com.br/webhook/seu-path
 # Ver execuções em andamento
 docker compose exec postgresql psql -U n8n_user -d n8n_db -c \
   "SELECT id, workflowId, mode, status, startedAt FROM execution_entity WHERE status = 'running';"
-```text
+```
 
 ### Problema: Performance lenta
 
@@ -840,7 +840,7 @@ docker compose logs n8n | grep ERROR
 
 # Ver logs de execução específica
 # UI: Executions → [execução] → Execution Data → Logs
-```text
+```
 
 ---
 

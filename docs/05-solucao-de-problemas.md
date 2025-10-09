@@ -19,7 +19,7 @@ flowchart TD
     H -->|Sim| J{Integração<br/>Funcionando?}
     J -->|Não| K[Problemas de<br/>Integração]
     J -->|Sim| L[Performance/<br/>Otimização]
-```text
+```
 
 ---
 
@@ -32,7 +32,7 @@ flowchart TD
 docker compose ps
 
 # Resultado esperado: 14 containers com status "Up" e "healthy"
-```text
+```
 
 **Interpretação dos Status**:
 - `Up (healthy)` ✅ - Container rodando e saudável
@@ -52,7 +52,7 @@ df -h /
 
 # Verificar memória disponível
 free -h
-```text
+```
 
 **Limites Críticos**:
 - RAM: > 90% uso = ⚠️ Risco de OOM (Out of Memory)
@@ -70,7 +70,7 @@ docker compose logs | grep -i error
 
 # Monitorar em tempo real
 docker compose logs -f
-```text
+```
 
 ---
 
@@ -82,7 +82,7 @@ docker compose logs -f
 ```bash
 $ ./scripts/bootstrap.sh
 ERROR: Insufficient RAM. Found: 8GB, Required: 16GB minimum
-```text
+```
 
 **Causa**: Servidor com menos de 16GB de RAM.
 
@@ -94,7 +94,7 @@ free -h | grep Mem:
 # Exemplo de saída:
 # Mem:           7.8Gi       2.1Gi       1.2Gi       0.1Gi       4.5Gi       5.4Gi
 #                ↑ Total disponível
-```text
+```
 
 **Soluções**:
 
@@ -103,7 +103,7 @@ free -h | grep Mem:
 # Adicionar mais RAM ao servidor
 # Mínimo: 16GB (funcional)
 # Recomendado: 36GB (produção)
-```text
+```
 
 **Opção 2: Reduzir Serviços**
 ```bash
@@ -122,7 +122,7 @@ nano docker-compose.yml
 
 # Reiniciar
 docker compose up -d
-```text
+```
 
 **Opção 3: Configurar Swap** (Temporário, não ideal)
 ```bash
@@ -134,7 +134,7 @@ sudo swapon /swapfile
 
 # Tornar permanente
 echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
-```text
+```
 
 ---
 
@@ -144,7 +144,7 @@ echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
 ```bash
 ERROR: Wrong OS detected. Ubuntu 24.04 LTS required.
 Current: Ubuntu 22.04 LTS
-```text
+```
 
 **Causa**: Bootstrap script requer Ubuntu 24.04 LTS.
 
@@ -162,7 +162,7 @@ sudo do-release-upgrade
 
 # Verificar versão
 lsb_release -a
-```text
+```
 
 **Opção 2: Instalação Manual no Ubuntu 22.04**
 ```bash
@@ -185,7 +185,7 @@ docker --version
 docker compose version
 
 # Prosseguir com deploy manual (pular bootstrap.sh)
-```text
+```
 
 ---
 
@@ -195,7 +195,7 @@ docker compose version
 ```bash
 $ docker ps
 permission denied while trying to connect to the Docker daemon socket
-```text
+```
 
 **Causa**: Usuário não está no grupo `docker`.
 
@@ -221,7 +221,7 @@ groups
 
 # Testar
 docker ps
-```text
+```
 
 ---
 
@@ -230,7 +230,7 @@ docker ps
 **Sintomas**:
 ```bash
 Error starting userland proxy: listen tcp4 0.0.0.0:443: bind: address already in use
-```text
+```
 
 **Causa**: Outro serviço (Apache, Nginx) usando portas 80/443.
 
@@ -245,7 +245,7 @@ sudo lsof -i :443
 
 # Ou usar ss
 sudo ss -tlnp | grep :443
-```text
+```
 
 **Soluções**:
 
@@ -262,7 +262,7 @@ sudo systemctl disable nginx
 # Reiniciar BorgStack
 docker compose down
 docker compose up -d
-```text
+```
 
 **Opção 2: Mudar Portas do Caddy**
 ```bash
@@ -279,7 +279,7 @@ nano docker-compose.yml
 docker compose up -d caddy
 
 # Acessar via: https://seudominio.com.br:8443
-```text
+```
 
 ---
 
@@ -292,7 +292,7 @@ docker compose up -d caddy
 $ docker compose ps
 NAME                 STATUS
 chatwoot             Restarting (1) 5 seconds ago
-```text
+```
 
 **Diagnóstico**:
 ```bash
@@ -304,16 +304,16 @@ docker inspect chatwoot --format='{{json .State.Health}}' | jq
 
 # Ver últimas tentativas de restart
 docker events --filter 'container=chatwoot' --since 10m
-```text
+```
 
 **Causas Comuns e Soluções**:
 
 #### Causa 1: Variável de Ambiente Faltando
 
 **Erro no log**:
-```text
+```
 ERROR: Missing required environment variable: POSTGRES_PASSWORD
-```text
+```
 
 **Solução**:
 ```bash
@@ -328,15 +328,15 @@ grep POSTGRES_PASSWORD .env
 
 # Recriar container
 docker compose up -d --force-recreate chatwoot
-```text
+```
 
 #### Causa 2: Dependência Não Saudável
 
 **Erro no log**:
-```text
+```
 could not connect to server: Connection refused
 Is the server running on host "postgresql" (172.x.x.x) and accepting connections?
-```text
+```
 
 **Solução**:
 ```bash
@@ -355,14 +355,14 @@ docker compose ps postgresql
 
 # Reiniciar container dependente
 docker compose restart chatwoot
-```text
+```
 
 #### Causa 3: Porta Conflitante
 
 **Erro no log**:
-```text
+```
 Error starting userland proxy: listen tcp4 0.0.0.0:5432: bind: address already in use
-```text
+```
 
 **Solução**:
 ```bash
@@ -378,7 +378,7 @@ nano docker-compose.yml
     #   - "5432:5432"  # Comentado - acesso apenas interno
 
 docker compose up -d postgresql
-```text
+```
 
 ---
 
@@ -389,7 +389,7 @@ docker compose up -d postgresql
 $ docker compose ps n8n
 NAME   STATUS
 n8n    Up 2 minutes (unhealthy)
-```text
+```
 
 **Diagnóstico**:
 ```bash
@@ -401,7 +401,7 @@ docker inspect n8n --format='{{range .State.Health.Log}}{{.Output}}{{end}}'
 
 # Testar health check manualmente
 docker compose exec n8n curl -f http://localhost:5678/healthz || echo "Health check failed"
-```text
+```
 
 **Causas e Soluções**:
 
@@ -425,7 +425,7 @@ nano docker-compose.yml
 
 # Aplicar
 docker compose up -d n8n
-```text
+```
 
 #### Causa 2: Health Check URL Incorreta
 
@@ -437,7 +437,7 @@ docker compose exec n8n curl http://localhost:5678/health
 docker compose exec n8n curl http://localhost:5678/healthz
 
 # Atualizar docker-compose.yml com endpoint correto
-```text
+```
 
 #### Causa 3: Processo Principal Travado
 
@@ -451,7 +451,7 @@ docker compose restart n8n
 
 # Se persistir, recriar
 docker compose up -d --force-recreate n8n
-```text
+```
 
 ---
 
@@ -465,7 +465,7 @@ Out of memory: Killed process 1234
 
 # Ou no sistema
 docker compose logs | grep "Out of memory"
-```text
+```
 
 **Diagnóstico**:
 ```bash
@@ -480,7 +480,7 @@ docker compose config | grep -A 5 "mem_limit"
 
 # Ver eventos OOM
 dmesg | grep -i "out of memory"
-```text
+```
 
 **Soluções**:
 
@@ -488,7 +488,7 @@ dmesg | grep -i "out of memory"
 ```bash
 # Upgrade de hardware (solução ideal)
 # Recomendado: 36GB RAM para todos os serviços
-```text
+```
 
 #### Solução 2: Configurar Limites de Memória
 ```bash
@@ -510,7 +510,7 @@ nano docker-compose.yml
 
 # Aplicar
 docker compose up -d
-```text
+```
 
 #### Solução 3: Reduzir Workers/Processos
 ```bash
@@ -527,7 +527,7 @@ N8N_CONCURRENCY_PRODUCTION_LIMIT=5  # Reduzir de 10
 
 # Reiniciar
 docker compose restart chatwoot n8n
-```text
+```
 
 #### Solução 4: Configurar Swap (Emergência)
 ```bash
@@ -542,7 +542,7 @@ echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
 
 # Ajustar swappiness
 sudo sysctl vm.swappiness=10
-```text
+```
 
 ---
 
@@ -556,7 +556,7 @@ no space left on device
 $ df -h
 Filesystem      Size  Used Avail Use% Mounted on
 /dev/sda1       200G  195G  5.0G  98% /
-```text
+```
 
 **Diagnóstico**:
 ```bash
@@ -575,7 +575,7 @@ docker system df
 
 # Ver maiores diretórios
 du -h --max-depth=1 / 2>/dev/null | sort -hr | head -20
-```text
+```
 
 **Soluções**:
 
@@ -593,7 +593,7 @@ docker system prune -a --volumes
 # Deleted Images: 28
 # Deleted Containers: 5
 # Total reclaimed space: 8.5GB
-```text
+```
 
 #### Solução 2: Limpar Logs
 ```bash
@@ -620,7 +620,7 @@ sudo nano /etc/docker/daemon.json
 # Reiniciar Docker
 sudo systemctl restart docker
 docker compose up -d
-```text
+```
 
 #### Solução 3: Mover Dados para Volume Maior
 ```bash
@@ -638,7 +638,7 @@ docker info | grep "Docker Root Dir"
 
 # Reiniciar serviços
 docker compose up -d
-```text
+```
 
 ---
 
@@ -650,7 +650,7 @@ docker compose up -d
 ```bash
 $ docker compose logs caddy
 unable to get certificate: acme: error: 403 - urn:ietf:params:acme:error:unauthorized
-```text
+```
 
 **Causa**: DNS não propagado, porta 80/443 bloqueada, ou domínio apontando para IP errado.
 
@@ -673,7 +673,7 @@ curl -v http://localhost
 
 # 5. Verificar firewall
 sudo ufw status
-```text
+```
 
 **Soluções**:
 
@@ -694,7 +694,7 @@ nano docker-compose.yml
       - ACME_CA=https://acme-staging-v02.api.letsencrypt.org/directory
 
 docker compose up -d caddy
-```text
+```
 
 #### Solução 2: Abrir Portas no Firewall
 ```bash
@@ -711,7 +711,7 @@ sudo ufw status | grep -E "80|443"
 
 # Testar de fora
 curl -I http://seudominio.com.br
-```text
+```
 
 #### Solução 3: Verificar IP do Domínio
 ```bash
@@ -728,7 +728,7 @@ dig seudominio.com.br +short
 # 3. Editar registro A
 # 4. Apontar para IP correto
 # 5. Desabilitar proxy (nuvem cinza, não laranja)
-```text
+```
 
 ---
 
@@ -739,7 +739,7 @@ dig seudominio.com.br +short
 # No log do serviço (ex: n8n)
 Error: connect ECONNREFUSED 172.18.0.5:5432
 could not connect to server: Connection refused
-```text
+```
 
 **Diagnóstico**:
 ```bash
@@ -758,7 +758,7 @@ docker network inspect borgstack_internal
 
 # 5. Verificar se serviço está na rede correta
 docker inspect n8n --format='{{json .NetworkSettings.Networks}}' | jq
-```text
+```
 
 **Soluções**:
 
@@ -774,7 +774,7 @@ nano docker-compose.yml
 
 # Recriar container
 docker compose up -d --force-recreate n8n
-```text
+```
 
 #### Solução 2: PostgreSQL Não Aceitando Conexões
 ```bash
@@ -791,7 +791,7 @@ docker compose restart postgresql
 
 # Aguardar healthy
 watch docker compose ps postgresql
-```text
+```
 
 #### Solução 3: Credenciais Incorretas
 ```bash
@@ -804,7 +804,7 @@ docker compose config | grep POSTGRES
 # Se divergentes, corrigir .env e recriar
 docker compose down
 docker compose up -d
-```text
+```
 
 ---
 
@@ -816,7 +816,7 @@ docker compose up -d
 # ERR_CONNECTION_REFUSED
 # ou
 # 502 Bad Gateway
-```text
+```
 
 **Diagnóstico**:
 ```bash
@@ -834,7 +834,7 @@ docker compose ps n8n chatwoot directus
 
 # 5. Testar acesso direto ao backend (bypass Caddy)
 curl -I http://localhost:5678  # n8n
-```text
+```
 
 **Soluções**:
 
@@ -851,7 +851,7 @@ docker compose logs caddy
 
 # Corrigir Caddyfile e recriar
 docker compose up -d --force-recreate caddy
-```text
+```
 
 #### Solução 2: Backend Unhealthy
 ```bash
@@ -863,7 +863,7 @@ docker compose restart n8n
 
 # Verificar logs
 docker compose logs n8n --tail 100
-```text
+```
 
 #### Solução 3: DNS Não Resolvendo
 ```bash
@@ -879,7 +879,7 @@ sudo nano /etc/hosts
 
 # Testar novamente
 curl -I https://n8n.seudominio.com.br
-```text
+```
 
 ---
 
@@ -892,7 +892,7 @@ curl -I https://n8n.seudominio.com.br
 # No log dos serviços
 FATAL: sorry, too many clients already
 Error: Connection pool timeout
-```text
+```
 
 **Diagnóstico**:
 ```bash
@@ -910,7 +910,7 @@ docker compose exec postgresql psql -U postgres -c "
 docker compose exec postgresql psql -U postgres -c "SHOW max_connections;"
 
 # Resultado típico: max_connections = 100
-```text
+```
 
 **Soluções**:
 
@@ -927,7 +927,7 @@ docker compose restart postgresql
 
 # Verificar
 docker compose exec postgresql psql -U postgres -c "SHOW max_connections;"
-```text
+```
 
 #### Solução 2: Configurar Connection Pooling
 ```bash
@@ -942,7 +942,7 @@ DB_POSTGRESDB_POOL_SIZE=10  # Reduzir de 20
 
 # Reiniciar serviços
 docker compose restart chatwoot n8n
-```text
+```
 
 #### Solução 3: Identificar e Matar Conexões Idle
 ```bash
@@ -965,7 +965,7 @@ docker compose exec postgresql psql -U postgres -c "
   WHERE state = 'idle'
     AND state_change < now() - interval '1 hour';
 "
-```text
+```
 
 ---
 
@@ -976,7 +976,7 @@ docker compose exec postgresql psql -U postgres -c "
 # No log dos serviços
 OOM command not allowed when used memory > 'maxmemory'
 MISCONF Redis is configured to save RDB snapshots, but it's currently not able to persist on disk
-```text
+```
 
 **Diagnóstico**:
 ```bash
@@ -991,7 +991,7 @@ docker compose exec redis redis-cli INFO memory
 # Ver configuração
 docker compose exec redis redis-cli CONFIG GET maxmemory
 docker compose exec redis redis-cli CONFIG GET maxmemory-policy
-```text
+```
 
 **Soluções**:
 
@@ -1008,7 +1008,7 @@ docker compose restart redis
 
 # Verificar
 docker compose exec redis redis-cli CONFIG GET maxmemory
-```text
+```
 
 #### Solução 2: Configurar Política de Eviction
 ```bash
@@ -1029,7 +1029,7 @@ maxmemory-policy allkeys-lru
 
 # Reiniciar
 docker compose restart redis
-```text
+```
 
 #### Solução 3: Limpar Cache Manualmente
 ```bash
@@ -1046,7 +1046,7 @@ docker compose exec redis redis-cli -n 1 FLUSHDB
 
 # Ou limpar tudo (CUIDADO!)
 docker compose exec redis redis-cli FLUSHALL
-```text
+```
 
 ---
 
@@ -1057,7 +1057,7 @@ docker compose exec redis redis-cli FLUSHALL
 # No log do Lowcoder
 MongoServerError: Authentication failed
 Error: Could not connect to MongoDB
-```text
+```
 
 **Diagnóstico**:
 ```bash
@@ -1073,7 +1073,7 @@ docker compose exec mongodb mongosh \
 
 # Ver usuários
 docker compose exec mongodb mongosh admin -u root -p senha_root --eval "db.getUsers()"
-```text
+```
 
 **Soluções**:
 
@@ -1102,7 +1102,7 @@ exit
 
 # Testar nova conexão
 docker compose exec mongodb mongosh -u lowcoder_user -p senha_lowcoder --authenticationDatabase admin lowcoder
-```text
+```
 
 #### Solução 2: Corrigir String de Conexão
 ```bash
@@ -1123,7 +1123,7 @@ LOWCODER_MONGODB_URL=mongodb://lowcoder_user:senha_lowcoder@mongodb:27017/lowcod
 
 # Reiniciar Lowcoder
 docker compose restart lowcoder-api-service lowcoder-node-service
-```text
+```
 
 ---
 
@@ -1159,7 +1159,7 @@ docker compose logs n8n | grep "whatsapp-incoming"
 
 # 4. Verificar workflow ativo
 docker compose exec n8n n8n workflow:list
-```text
+```
 
 **Soluções**:
 
@@ -1179,7 +1179,7 @@ curl -X POST https://evolution.seudominio.com.br/webhook/set/atendimento-princip
     "webhookByEvents": false,
     "events": ["MESSAGES_UPSERT"]
   }'
-```text
+```
 
 #### Solução 2: Ativar Workflow
 ```bash
@@ -1193,7 +1193,7 @@ docker compose exec n8n n8n workflow:activate --id=1
 # 1. Acessar n8n
 # 2. Workflows > WhatsApp to Chatwoot
 # 3. Clicar em "Active" (toggle no canto superior direito)
-```text
+```
 
 #### Solução 3: Verificar DNS/SSL
 ```bash
@@ -1205,7 +1205,7 @@ openssl s_client -connect n8n.seudominio.com.br:443
 
 # Ver logs do Caddy
 docker compose logs caddy | grep n8n
-```text
+```
 
 ---
 
@@ -1232,7 +1232,7 @@ curl -X POST https://chatwoot.seudominio.com.br/api/v1/accounts/1/contacts \
 
 # Ver logs do Chatwoot
 docker compose logs chatwoot | grep "contacts"
-```text
+```
 
 **Soluções**:
 
@@ -1251,7 +1251,7 @@ CHATWOOT_API_TOKEN=novo_token_aqui
 
 # Reiniciar n8n para carregar novo token
 docker compose restart n8n
-```text
+```
 
 #### Solução 2: Formato de Telefone Incorreto
 ```bash
@@ -1269,7 +1269,7 @@ return {
     phone_number: normalized
   }
 };
-```text
+```
 
 ---
 
@@ -1311,7 +1311,7 @@ docker inspect n8n --format='{{json .State}}' | jq
 # Ver redes
 docker network ls
 docker network inspect borgstack_internal
-```text
+```
 
 ### 7.2. PostgreSQL
 
@@ -1346,7 +1346,7 @@ docker compose exec postgresql psql -U postgres -c "
 
 # Vacuum (manutenção)
 docker compose exec postgresql psql -U postgres -d chatwoot_db -c "VACUUM ANALYZE;"
-```text
+```
 
 ### 7.3. Redis
 
@@ -1374,7 +1374,7 @@ done
 
 # Monitorar comandos em tempo real
 docker compose exec redis redis-cli -a senha_redis MONITOR
-```text
+```
 
 ### 7.4. Sistema
 
@@ -1404,7 +1404,7 @@ sudo ss -tlnp
 # Testar conectividade
 ping google.com
 curl ifconfig.me  # IP público
-```text
+```
 
 ---
 
@@ -1429,7 +1429,7 @@ cp docker-compose.yml /tmp/borgstack-compose-$(date +%Y%m%d).backup
 
 # 5. Reiniciar
 docker compose up -d
-```text
+```
 
 ### 8.2. Restaurar de Backup
 
@@ -1450,7 +1450,7 @@ docker compose up -d
 
 # 5. Verificar
 docker compose ps
-```text
+```
 
 ### 8.3. Reset Completo (Última Opção)
 
@@ -1475,7 +1475,7 @@ rm -rf config/
 # Ou manualmente:
 ./scripts/generate-env.sh
 docker compose up -d
-```text
+```
 
 ### 8.4. Recuperar Banco de Dados Corrompido
 
@@ -1502,7 +1502,7 @@ docker compose exec -T postgresql pg_restore \
 
 # 5. Reiniciar tudo
 docker compose restart
-```text
+```
 
 #### Redis
 
@@ -1522,7 +1522,7 @@ docker volume create borgstack_redis_data
 docker compose up -d redis
 
 # Cache será reconstruído automaticamente
-```text
+```
 
 ---
 
@@ -1559,7 +1559,7 @@ docker network inspect borgstack_internal >> network.txt
 # 7. Compactar tudo
 tar -czf borgstack-debug-$(date +%Y%m%d).tar.gz \
   status.txt logs.txt config-sanitized.txt resources.txt network.txt
-```text
+```
 
 ### 9.2. Onde Reportar
 
@@ -1592,13 +1592,13 @@ tar -czf borgstack-debug-$(date +%Y%m%d).tar.gz \
 - BorgStack Version: v1.0
 
 ## Logs Relevantes
-```text
+```
 [Cole logs aqui]
-```text
+```
 
 ## Tentativas de Solução
 [O que você já tentou]
-```text
+```
 
 ---
 

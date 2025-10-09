@@ -14,7 +14,7 @@ graph LR
     D --> E[Testes de<br/>Restauração]
     E --> F[Otimização<br/>de Performance]
     F --> A
-```text
+```
 
 ### Frequência de Tarefas
 
@@ -68,13 +68,13 @@ echo -e "\n❤️  Health Status:"
 docker ps --format "table {{.Names}}\t{{.Status}}" | grep -E "unhealthy|starting"
 
 echo -e "\n✅ Daily check complete"
-```text
+```
 
 **Salvar e executar**:
 ```bash
 chmod +x scripts/daily-check.sh
 ./scripts/daily-check.sh
-```text
+```
 
 **Automatizar via cron**:
 ```bash
@@ -83,7 +83,7 @@ crontab -e
 
 # Adicionar linha (executa todo dia às 8h, salva resultado)
 0 8 * * * /home/usuario/borgstack/scripts/daily-check.sh >> /var/log/borgstack-daily.log 2>&1
-```text
+```
 
 ---
 
@@ -122,13 +122,13 @@ echo -e "\n🔄 Available Updates:"
 docker compose pull --dry-run 2>&1 | grep "Pulling"
 
 echo -e "\n✅ Weekly check complete"
-```text
+```
 
 **Automatizar via cron**:
 ```bash
 # Executar todo domingo às 10h
 0 10 * * 0 /home/usuario/borgstack/scripts/weekly-check.sh >> /var/log/borgstack-weekly.log 2>&1
-```text
+```
 
 ---
 
@@ -151,7 +151,7 @@ docker system prune -a -f
 
 # Reiniciar
 docker compose up -d
-```text
+```
 
 #### Tarefa 2: Verificar Integridade dos Backups
 
@@ -169,7 +169,7 @@ docker compose exec duplicati ls -lh /backups/ | tail -1
 
 # 3. Verificar consistência do backup
 docker compose exec duplicati duplicati-cli test file:///backups/latest.zip
-```text
+```
 
 #### Tarefa 3: Atualizar Imagens Docker
 
@@ -186,7 +186,7 @@ grep -i error /tmp/borgstack-logs-$(date +%Y%m).txt | sort | uniq -c | sort -nr 
 
 # Analisar warnings
 grep -i warn /tmp/borgstack-logs-$(date +%Y%m).txt | sort | uniq -c | sort -nr | head -20
-```text
+```
 
 ---
 
@@ -223,7 +223,7 @@ ls -la config/*/
 
 # Verificar mudanças inesperadas
 git diff HEAD config/
-```text
+```
 
 #### Tarefa 3: Análise de Performance
 
@@ -245,7 +245,7 @@ docker compose exec postgresql psql -U postgres -c "
 
 # Analisar cache hit rate do Redis
 docker compose exec redis redis-cli INFO stats | grep -E "keyspace_(hits|misses)"
-```text
+```
 
 ---
 
@@ -266,7 +266,7 @@ cp .env .env.backup-$(date +%Y%m%d)
 echo "Nova senha PostgreSQL: $(openssl rand -base64 32)"
 echo "Nova senha Redis: $(openssl rand -base64 32)"
 echo "Nova senha MongoDB: $(openssl rand -base64 32)"
-```text
+```
 
 #### Passo 2: Atualizar PostgreSQL
 
@@ -286,7 +286,7 @@ nano .env
 
 # 5. Recriar containers que usam PostgreSQL
 docker compose up -d --force-recreate n8n chatwoot directus evolution
-```text
+```
 
 #### Passo 3: Atualizar Redis
 
@@ -304,7 +304,7 @@ nano .env
 # 3. Reiniciar Redis e dependentes
 docker compose restart redis
 docker compose restart n8n chatwoot directus lowcoder-api-service
-```text
+```
 
 #### Passo 4: Atualizar MongoDB
 
@@ -329,7 +329,7 @@ nano .env
 
 # 6. Reiniciar Lowcoder
 docker compose restart lowcoder-api-service lowcoder-node-service lowcoder-frontend
-```text
+```
 
 #### Passo 5: Rotacionar API Keys
 
@@ -350,7 +350,7 @@ docker compose restart lowcoder-api-service lowcoder-node-service lowcoder-front
 
 # n8n Webhook Auth
 # Se usar autenticação em webhooks, regenerar tokens
-```text
+```
 
 #### Passo 6: Verificar Tudo Funcionando
 
@@ -362,7 +362,7 @@ docker compose restart lowcoder-api-service lowcoder-node-service lowcoder-front
 docker compose exec n8n wget -O- http://n8n:5678/healthz
 docker compose exec chatwoot curl http://chatwoot:3000/health
 docker compose exec directus curl http://directus:8055/server/health
-```text
+```
 
 ---
 
@@ -395,7 +395,7 @@ flowchart TD
     P --> Q[Revisar Breaking<br/>Changes]
     Q --> R[Atualizar]
     R --> S[Testes Extensivos]
-```text
+```
 
 **Tipos de atualização**:
 - **Patch** (1.0.0 → 1.0.1): Bug fixes, sem breaking changes
@@ -414,7 +414,7 @@ docker compose images
 
 # Verificar atualizações disponíveis (não baixa)
 docker compose pull --dry-run
-```text
+```
 
 #### Passo 2: Revisar Changelogs
 
@@ -431,7 +431,7 @@ docker compose pull --dry-run
 # - Database migrations
 # - Configuration changes
 # - Deprecated features
-```text
+```
 
 #### Passo 3: Backup Completo
 
@@ -453,7 +453,7 @@ sudo tar -czf /backups/volumes_$(date +%Y%m%d).tar.gz -C /var/lib/docker/volumes
 
 # 4. Backup de configurações
 tar -czf /backups/configs_$(date +%Y%m%d).tar.gz docker-compose.yml .env config/
-```text
+```
 
 #### Passo 4: Atualizar Imagens
 
@@ -466,7 +466,7 @@ docker compose pull
 # Pulling redis ... done
 # Pulling n8n ... done
 # ...
-```text
+```
 
 #### Passo 5: Aplicar Atualizações
 
@@ -476,7 +476,7 @@ docker compose up -d --force-recreate
 
 # Monitorar logs durante startup
 docker compose logs -f
-```text
+```
 
 #### Passo 6: Verificar Saúde
 
@@ -491,7 +491,7 @@ docker compose logs --since 10m | grep -i error
 curl -f https://n8n.seudominio.com.br/healthz
 curl -f https://chatwoot.seudominio.com.br/health
 curl -f https://directus.seudominio.com.br/server/health
-```text
+```
 
 #### Passo 7: Testes Funcionais
 
@@ -502,7 +502,7 @@ curl -f https://directus.seudominio.com.br/server/health
 # [ ] Executar ação básica (ex: criar workflow no n8n)
 # [ ] Verificar integrações funcionando (WhatsApp → Chatwoot)
 # [ ] Verificar backups agendados rodando
-```text
+```
 
 #### Passo 8: Rollback (se necessário)
 
@@ -528,7 +528,7 @@ docker compose up -d
 
 # 5. Verificar
 docker compose ps
-```text
+```
 
 ---
 
@@ -555,7 +555,7 @@ docker compose up -d --force-recreate n8n
 
 # 4. Verificar
 docker compose logs -f n8n
-```text
+```
 
 ---
 
@@ -580,7 +580,7 @@ docker compose logs SERVICE_NAME --tail=100
 
 # Monitorar logs em tempo real
 docker compose logs -f SERVICE_NAME
-```text
+```
 
 **Soluções Comuns:**
 
@@ -588,7 +588,7 @@ docker compose logs -f SERVICE_NAME
    ```bash
    # Aguardar até 10 minutos para migrations grandes
    watch docker compose ps SERVICE_NAME
-   ```text
+   ```
 
 2. **Verificar variáveis de ambiente** - Configurações podem ter mudado:
    ```bash
@@ -597,7 +597,7 @@ docker compose logs -f SERVICE_NAME
 
    # Verificar variáveis do serviço
    docker compose config | grep -A 20 "SERVICE_NAME:"
-   ```text
+   ```
 
 3. **Verificar conectividade com bancos de dados:**
    ```bash
@@ -609,7 +609,7 @@ docker compose logs -f SERVICE_NAME
 
    # Testar conexão MongoDB (se aplicável)
    docker compose exec SERVICE_NAME nc -zv mongodb 27017
-   ```text
+   ```
 
 4. **Rollback para versão anterior:**
    ```bash
@@ -621,7 +621,7 @@ docker compose logs -f SERVICE_NAME
    # 2. Restaurar backup de banco de dados
    # 3. Recriar container
    docker compose up -d --force-recreate SERVICE_NAME
-   ```text
+   ```
 
 **Exemplo Prático:** n8n 1.62 → 1.63 migration delay
 
@@ -630,7 +630,7 @@ Ao atualizar n8n de 1.62.x para 1.63.0, a migration de banco de dados pode demor
 ```bash
 # Verificar progresso da migration nos logs
 docker compose logs n8n | grep -i migration
-```text
+```
 
 ---
 
@@ -651,7 +651,7 @@ df -h
 
 # Verificar conexão com banco de dados
 docker compose exec postgresql pg_isready -U postgres
-```text
+```
 
 **Soluções Comuns:**
 
@@ -662,7 +662,7 @@ docker compose exec postgresql pg_isready -U postgres
 
    # Liberar espaço se necessário
    docker system prune -a
-   ```text
+   ```
 
 2. **Verificar permissões de banco de dados:**
    ```bash
@@ -674,7 +674,7 @@ docker compose exec postgresql pg_isready -U postgres
 
    # Garantir que usuário tem permissões adequadas
    GRANT ALL PRIVILEGES ON DATABASE service_db TO service_user;
-   ```text
+   ```
 
 3. **Restaurar backup e tentar novamente:**
    ```bash
@@ -686,14 +686,14 @@ docker compose exec postgresql pg_isready -U postgres
 
    # Reiniciar serviço
    docker compose up -d SERVICE_NAME
-   ```text
+   ```
 
 4. **Consultar changelog para migrations problemáticas:**
    ```bash
    # Exemplo para n8n:
    # Visitar: https://github.com/n8n-io/n8n/releases
    # Procurar por "migration" ou "database" nas release notes
-   ```text
+   ```
 
 **Exemplo Prático:** Chatwoot database schema changes
 
@@ -713,7 +713,7 @@ docker compose exec -T postgresql psql -U postgres chatwoot_db < /backups/chatwo
 
 # 4. Reiniciar
 docker compose up -d chatwoot
-```text
+```
 
 ---
 
@@ -735,7 +735,7 @@ curl -X GET https://SERVICE.seudominio.com.br/api/endpoint
 
 # Revisar changelog para "BREAKING CHANGE"
 # Visitar página de releases do serviço
-```text
+```
 
 **Soluções Comuns:**
 
@@ -747,7 +747,7 @@ curl -X GET https://SERVICE.seudominio.com.br/api/endpoint
    # 3. Atualizar formato de requisição/resposta conforme nova versão
    # 4. Testar workflow
    # 5. Salvar e reativar
-   ```text
+   ```
 
 2. **Atualizar webhooks com novos formatos:**
    ```bash
@@ -767,7 +767,7 @@ curl -X GET https://SERVICE.seudominio.com.br/api/endpoint
    }
 
    # Atualizar código que processa webhook para novo formato
-   ```text
+   ```
 
 3. **Ajustar configurações conforme documentação:**
    ```bash
@@ -777,7 +777,7 @@ curl -X GET https://SERVICE.seudominio.com.br/api/endpoint
 
    # Reiniciar serviço após mudanças
    docker compose restart SERVICE_NAME
-   ```text
+   ```
 
 **Exemplo Prático:** Evolution API v2.0 → v2.2 webhook format change
 
@@ -801,7 +801,7 @@ const newFormat = {
 return {json: newFormat};
 
 # 3. Salvar e testar
-```text
+```
 
 ---
 
@@ -823,7 +823,7 @@ docker compose exec SERVICE_NAME nc -zv redis 6379
 
 # Verificar logs para erros de versão
 docker compose logs SERVICE_NAME | grep -i "version"
-```text
+```
 
 **Soluções Comuns:**
 
@@ -843,7 +843,7 @@ docker compose logs SERVICE_NAME | grep -i "version"
    # 4. Agora aplicações podem ser atualizadas
    ./scripts/update-service.sh n8n 1.113.0
    ./scripts/update-service.sh chatwoot 4.7.0
-   ```text
+   ```
 
 2. **Consultar matriz de compatibilidade nos changelogs:**
    ```bash
@@ -852,7 +852,7 @@ docker compose logs SERVICE_NAME | grep -i "version"
    # https://docs.n8n.io/hosting/installation/server-setups/
 
    # Se PostgreSQL está muito antigo, atualizar primeiro
-   ```text
+   ```
 
 3. **Reverter para versões compatíveis:**
    ```bash
@@ -864,7 +864,7 @@ docker compose logs SERVICE_NAME | grep -i "version"
 
    # Opção 2: Atualizar PostgreSQL (requer mais cuidado)
    ./scripts/update-service.sh postgresql 18.0
-   ```text
+   ```
 
 **Exemplo Prático:** n8n requer PostgreSQL >= 13
 
@@ -887,7 +887,7 @@ docker compose exec postgresql psql -U postgres -c "SELECT version();"
 
 # 4. Agora atualizar n8n
 ./scripts/update-service.sh n8n 1.113.0
-```text
+```
 
 ---
 
@@ -908,7 +908,7 @@ docker compose config | grep -A 10 "SERVICE_NAME:" | grep volumes
 
 # Verificar se dados existem no volume
 docker run --rm -v borgstack_SERVICE_data:/data alpine ls -la /data
-```text
+```
 
 **Soluções Comuns:**
 
@@ -923,7 +923,7 @@ docker run --rm -v borgstack_SERVICE_data:/data alpine ls -la /data
 
    # 2. Restaurar volumes do backup
    ./scripts/restore.sh
-   ```text
+   ```
 
 2. **Restaurar configuração do backup:**
    ```bash
@@ -938,7 +938,7 @@ docker run --rm -v borgstack_SERVICE_data:/data alpine ls -la /data
 
    # Reiniciar serviço
    docker compose restart SERVICE_NAME
-   ```text
+   ```
 
 3. **Verificar se paths de volumes mudaram no docker-compose.yml:**
    ```bash
@@ -954,7 +954,7 @@ docker run --rm -v borgstack_SERVICE_data:/data alpine ls -la /data
 
    # Recriar container com paths corretos
    docker compose up -d --force-recreate SERVICE_NAME
-   ```text
+   ```
 
 **Exemplo Prático:** Volume path change breaking configs
 
@@ -985,7 +985,7 @@ docker run --rm \
 
 # 3. Reiniciar serviço
 docker compose up -d n8n
-```text
+```
 
 ---
 
@@ -1007,7 +1007,7 @@ docker compose pull SERVICE_NAME
 # Exemplo:
 # n8n: https://hub.docker.com/r/n8nio/n8n/tags
 # chatwoot: https://hub.docker.com/r/chatwoot/chatwoot/tags
-```text
+```
 
 **Soluções Comuns:**
 
@@ -1024,7 +1024,7 @@ docker compose pull SERVICE_NAME
    # Exemplo de correção:
    # ❌ Errado: image: n8nio/n8n:v1.63.0
    # ✅ Correto: image: n8nio/n8n:1.63.0
-   ```text
+   ```
 
 2. **Verificar se versão foi deprecated/removed:**
    ```bash
@@ -1033,7 +1033,7 @@ docker compose pull SERVICE_NAME
 
    # Se removida, usar versão alternativa
    # Exemplo: Se 1.63.0 foi removida, usar 1.63.1 ou 1.64.0
-   ```text
+   ```
 
 3. **Usar versão "latest" temporariamente:**
    ```bash
@@ -1052,7 +1052,7 @@ docker compose pull SERVICE_NAME
    # Pinar versão específica baseado no latest
    # Exemplo: latest = 1.65.3
    # Editar docker-compose.yml: image: n8nio/n8n:1.65.3
-   ```text
+   ```
 
 **Exemplo Prático:** Tag versioning differences between services
 
@@ -1076,7 +1076,7 @@ Diferentes serviços usam diferentes convenções de tags:
 ❌ pgvector/pgvector:v18
 
 # Sempre verificar no Docker Hub!
-```text
+```
 
 ---
 
@@ -1103,7 +1103,7 @@ Esta seção documenta como monitorar e ser notificado sobre atualizações disp
 ```bash
 # Verificar se há atualizações disponíveis
 docker compose pull --dry-run 2>&1 | grep "Pulling"
-```text
+```
 
 Este comando simula o pull de novas imagens sem realmente baixá-las, mostrando quais serviços têm atualizações disponíveis.
 
@@ -1123,7 +1123,7 @@ Este comando simula o pull de novas imagens sem realmente baixá-las, mostrando 
  ✔ n8n Pulled                                   0.0s
  ✔ chatwoot Pulled                              0.0s
 # Significa que todos já estão atualizados
-```text
+```
 
 **Integração com verificação semanal:**
 
@@ -1132,7 +1132,7 @@ Adicione ao script `scripts/weekly-check.sh`:
 # Adicionar ao final do arquivo
 echo -e "\n🔄 Verificando Atualizações Disponíveis:"
 docker compose pull --dry-run 2>&1 | grep -E "Pulling|Pulled"
-```text
+```
 
 ---
 
@@ -1154,7 +1154,7 @@ O BorgStack inclui o script `scripts/check-updates.sh` que:
 
 # Verificar e enviar email se houver atualizações
 ./scripts/check-updates.sh --email
-```text
+```
 
 **Output exemplo:**
 ```
@@ -1191,7 +1191,7 @@ To update a service:
 
 Example:
   ./scripts/update-service.sh n8n 1.113.0
-```text
+```
 
 **Docker Hub API Authentication (Opcional):**
 
@@ -1214,7 +1214,7 @@ Por padrão, o Docker Hub API tem limite de 100 requisições / 6 horas. Para au
 
    # Usar com o script
    DOCKER_HUB_TOKEN="dckr_pat_xxxxxxxxxxxx" ./scripts/check-updates.sh
-   ```text
+   ```
 
 **Rate Limiting e Fallback:**
 
@@ -1236,7 +1236,7 @@ echo "BORGSTACK_ADMIN_EMAIL=admin@seudominio.com.br" >> .env
 
 # 3. Testar notificação
 ./scripts/check-updates.sh --email
-```text
+```
 
 **Agendamento via Cron:**
 
@@ -1248,7 +1248,7 @@ crontab -e
 
 # Adicionar linha: toda segunda-feira às 9h
 0 9 * * 1 cd /home/usuario/borgstack && ./scripts/check-updates.sh --email >> /var/log/borgstack-update-check.log 2>&1
-```text
+```
 
 Isso enviará email toda segunda-feira se houver atualizações disponíveis.
 
@@ -1306,7 +1306,7 @@ Configure filtros no email para não perder releases importantes:
 De: notifications@github.com
 Assunto: [n8n-io/n8n] Release
 Label: Important
-```text
+```
 
 ---
 
@@ -1346,7 +1346,7 @@ docker scout cves n8nio/n8n:1.112.6
 
 # Verificar recomendações de atualização
 docker scout recommendations n8nio/n8n:1.112.6
-```text
+```
 
 **Processo para Updates de Segurança Emergenciais:**
 
@@ -1356,31 +1356,31 @@ Quando um CVE crítico é anunciado:
    ```bash
    # Verificar se serviço está afetado
    docker scout cves IMAGE:TAG | grep CVE-XXXX-XXXXX
-   ```text
+   ```
 
 2. **Backup Rápido:**
    ```bash
    ./scripts/backup-now.sh
-   ```text
+   ```
 
 3. **Aplicar Update Imediatamente:**
    ```bash
    # Pular staging para security patches críticos
    ./scripts/update-service.sh SERVICE NEW_VERSION
-   ```text
+   ```
 
 4. **Verificar Funcionalidade:**
    ```bash
    # Teste rápido de smoke test
    docker compose ps
    curl -f https://SERVICE.seudominio.com.br/health
-   ```text
+   ```
 
 5. **Documentar:**
    ```bash
    # Registrar em changelog
    echo "$(date): Emergency security update - SERVICE $OLD_VERSION -> $NEW_VERSION (CVE-XXXX-XXXXX)" >> CHANGELOG.md
-   ```text
+   ```
 
 **Recomendação:** Updates de segurança críticos (CVSS >= 9.0) devem ser aplicados dentro de 24-48 horas.
 
@@ -1408,7 +1408,7 @@ services:
 services:
   n8n:
     image: n8nio/n8n:1.112.6  # Versão específica, controlada
-```text
+```
 
 **Rationale:**
 - **Reproduzibilidade:** Mesmo comando sempre produz mesmo resultado
@@ -1435,7 +1435,7 @@ git commit -m "Update n8n from 1.112.6 to 1.113.0"
 # 4. Aplicar em produção
 git push
 ssh prod "cd borgstack && git pull && docker compose up -d --force-recreate n8n"
-```text
+```
 
 **Referência:** Para mais detalhes sobre version pinning, consulte [docs/architecture/coding-standards.md](../architecture/coding-standards.md).
 
@@ -1470,7 +1470,7 @@ ssh prod "cd borgstack && git pull && docker compose up -d --force-recreate n8n"
 # ✅ CORRETO: Atualizar PostgreSQL primeiro
 ./scripts/update-service.sh postgresql 18.1
 ./scripts/update-service.sh n8n 1.113.0  # Agora sim!
-```text
+```
 
 **Rationale:**
 - Aplicações dependem de features específicas da infraestrutura
@@ -1506,7 +1506,7 @@ cp docker-compose.yml docker-compose.yml.backup_$(date +%Y%m%d)
 
 # Backup do .env
 cp .env .env.backup_$(date +%Y%m%d)
-```text
+```
 
 **Backup completo (major updates):**
 ```bash
@@ -1517,7 +1517,7 @@ cp .env .env.backup_$(date +%Y%m%d)
 docker compose exec postgresql pg_dumpall -U postgres -c > /backups/postgres_all_$(date +%Y%m%d).sql
 docker compose exec mongodb mongodump --archive=/backups/mongodb_all_$(date +%Y%m%d).archive --gzip
 sudo tar -czf /backups/volumes_$(date +%Y%m%d).tar.gz -C /var/lib/docker/volumes/ $(docker volume ls -q | grep borgstack)
-```text
+```
 
 **Referência:** Procedimento completo de backup documentado em [seção 2.2 passo 3](#22-procedimento-de-atualização-segura).
 
@@ -1556,7 +1556,7 @@ docker compose -f docker-compose.yml -f docker-compose.staging.yml up -d --force
 
 # 4. Validar
 ./scripts/test-connections.sh
-```text
+```
 
 **Checklist de testes em staging:**
 - ✅ Serviço inicia sem erros
@@ -1585,7 +1585,7 @@ docker compose -f docker-compose.yml -f docker-compose.staging.yml up -d --force
    docker compose logs caddy --since 7d | grep -o "[0-9]\{2\}:[0-9]\{2\}" | cut -d: -f1 | sort | uniq -c | sort -n
 
    # Típico: Domingo 2h-4h AM
-   ```text
+   ```
 
 2. **Notificar usuários com antecedência:**
    ```
@@ -1613,7 +1613,7 @@ docker compose -f docker-compose.yml -f docker-compose.staging.yml up -d --force
    echo "2. nano docker-compose.yml # Reverter para image: n8nio/n8n:1.112.6" >> /tmp/rollback-plan.txt
    echo "3. docker compose exec -T postgresql psql -U postgres n8n_db < /backups/n8n_db_20251015.sql" >> /tmp/rollback-plan.txt
    echo "4. docker compose up -d n8n" >> /tmp/rollback-plan.txt
-   ```text
+   ```
 
 4. **Executar update durante janela:**
    ```bash
@@ -1623,7 +1623,7 @@ docker compose -f docker-compose.yml -f docker-compose.staging.yml up -d --force
    # Monitorar atentamente
    watch docker compose ps
    docker compose logs -f n8n
-   ```text
+   ```
 
 5. **Validar pós-update:**
    ```bash
@@ -1631,7 +1631,7 @@ docker compose -f docker-compose.yml -f docker-compose.staging.yml up -d --force
    ./scripts/test-all-services.sh
 
    # Notificar usuários quando completo
-   ```text
+   ```
 
 ---
 
@@ -1646,7 +1646,7 @@ docker compose -f docker-compose.yml -f docker-compose.staging.yml up -d --force
 curl -s https://api.github.com/repos/n8n-io/n8n/releases/latest | \
   jq -r '.body' | \
   grep -iE "BREAKING|MIGRATION|DEPRECATED|SECURITY|CVE" --color
-```text
+```
 
 **Checklist de análise de changelog:**
 
@@ -1742,7 +1742,7 @@ docker compose ps duplicati
 # 3. Source Data: /backups (mapeado para volumes)
 # 4. Schedule: Daily at 2 AM
 # 5. Retention: 7 daily, 4 weekly, 12 monthly
-```text
+```
 
 #### Backup Manual Completo
 
@@ -1804,7 +1804,7 @@ rm -f "$BACKUP_DIR"/*_$DATE.{sql.gz,archive.gz,rdb,tar.gz}
 sha256sum "$BACKUP_DIR/full_backup_$DATE.tar.gz.gpg" > "$BACKUP_DIR/full_backup_$DATE.tar.gz.gpg.sha256"
 
 echo "=== Backup Complete: $BACKUP_DIR/full_backup_$DATE.tar.gz.gpg ==="
-```text
+```
 
 ### 3.3. Teste de Restauração
 
@@ -1842,7 +1842,7 @@ sha256sum -c $(basename $BACKUP_FILE).sha256
 rm -rf $TEST_DIR
 
 echo "=== Restore Test Complete ==="
-```text
+```
 
 ### 3.4. Retenção de Backups
 
@@ -1868,13 +1868,13 @@ echo "Remaining backups:"
 ls -lh $BACKUP_DIR
 
 echo "=== Cleanup Complete ==="
-```text
+```
 
 Automatizar limpeza:
 ```bash
 # Executar todo domingo às 4h
 0 4 * * 0 /home/usuario/borgstack/scripts/cleanup-old-backups.sh >> /var/log/borgstack-cleanup.log 2>&1
-```text
+```
 
 ---
 
@@ -1902,7 +1902,7 @@ sudo systemctl restart docker
 # Recriar containers para aplicar
 docker compose down
 docker compose up -d
-```text
+```
 
 ### 4.2. Exportar Logs para Análise
 
@@ -1915,7 +1915,7 @@ gzip /tmp/logs_$(date +%Y%m).txt
 
 # Mover para arquivo
 mv /tmp/logs_$(date +%Y%m).txt.gz /var/log/borgstack/
-```text
+```
 
 ### 4.3. Alertas por E-mail
 
@@ -1930,13 +1930,13 @@ if [ $ERRORS -gt 10 ]; then
   echo "⚠️  ALERT: $ERRORS errors found in the last 24 hours" | \
     mail -s "BorgStack Error Alert" admin@seudominio.com.br
 fi
-```text
+```
 
 Automatizar:
 ```bash
 # Executar todo dia às 9h
 0 9 * * * /home/usuario/borgstack/scripts/alert-on-error.sh
-```text
+```
 
 ---
 
@@ -1961,7 +1961,7 @@ nano docker-compose.yml
 
 # Aplicar
 docker compose up -d --force-recreate postgresql
-```text
+```
 
 ### 5.2. Scaling Horizontal (Mais Workers)
 
@@ -1987,7 +1987,7 @@ nano docker-compose.yml
 
 # Aplicar
 docker compose up -d
-```text
+```
 
 ---
 

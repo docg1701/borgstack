@@ -23,14 +23,14 @@ O arquivo `.env` é o coração da configuração do BorgStack. Ele contém toda
 
 O arquivo `.env` está organizado em seções lógicas:
 
-```text
+```
 .env
 ├── PostgreSQL Database (5 senhas)
 ├── MongoDB Database (2 senhas)
 ├── Redis Cache (1 senha)
 ├── Caddy Reverse Proxy (domínio, email, CORS)
 └── Serviços Individuais (n8n, Chatwoot, Evolution API, etc.)
-```text
+```
 
 ### Segurança do Arquivo .env
 
@@ -50,7 +50,7 @@ cat .gitignore | grep .env
 
 # 4. NUNCA commitar ao Git
 # O .env já está listado no .gitignore do projeto
-```text
+```
 
 **Práticas Recomendadas:**
 
@@ -133,7 +133,7 @@ CHATWOOT_SECRET_KEY_BASE=qR1sT3uV5wX7yZ9aB2cD4eF6gH8iJ0kL
 # Lowcoder
 LOWCODER_DB_ENCRYPTION_PASSWORD=mN1oP3qR5sT7uV9wX2yZ4aB6cD8eF0gH
 LOWCODER_DB_ENCRYPTION_SALT=iJ1kL3mN5oP7qR9sT2uV4wX6yZ8aB0cD
-```text
+```
 
 ---
 
@@ -145,7 +145,7 @@ O BorgStack usa um modelo de **subdomínios** para organizar os serviços. Todos
 
 **Estrutura recomendada: `servico.seudominio.com.br`**
 
-```text
+```
 Domínio Base: mycompany.com.br
 
 Subdomínios dos Serviços:
@@ -157,7 +157,7 @@ Subdomínios dos Serviços:
 ├── fileflows.mycompany.com.br  → Processamento de mídia
 ├── duplicati.mycompany.com.br  → Sistema de backup
 └── seaweedfs.mycompany.com.br  → Armazenamento S3
-```text
+```
 
 ### Configurar Variável DOMAIN
 
@@ -169,7 +169,7 @@ DOMAIN=mycompany.com.br
 
 # Email para notificações do Let's Encrypt
 EMAIL=admin@mycompany.com.br
-```text
+```
 
 **⚠️ IMPORTANTE:** A variável `DOMAIN` é usada em TODOS os serviços. Não inclua `http://`, `https://` ou qualquer subdomínio aqui.
 
@@ -196,13 +196,13 @@ Você precisa criar **8 registros DNS tipo A** no seu provedor de DNS (Cloudflar
 
 **Exemplo prático (Cloudflare):**
 
-```text
+```
 Tipo: A
 Nome: n8n
 Conteúdo: 198.51.100.42
 Proxy: Desabilitado (nuvem cinza, não laranja)
 TTL: 5 minutos (300 segundos)
-```text
+```
 
 **💡 Dica:** Use TTL 300 (5 minutos) durante a configuração inicial para mudanças rápidas. Após tudo funcionar, aumente para 3600 (1 hora) para melhor cache DNS.
 
@@ -217,7 +217,7 @@ dig n8n.mycompany.com.br
 # Deve retornar seu IP na seção ANSWER:
 # ;; ANSWER SECTION:
 # n8n.mycompany.com.br. 300 IN A 198.51.100.42
-```text
+```
 
 **Verificar todos de uma vez:**
 ```bash
@@ -226,7 +226,7 @@ for service in n8n chatwoot evolution lowcoder directus fileflows duplicati seaw
   dig +short $service.mycompany.com.br
   echo ""
 done
-```text
+```
 
 **Ferramentas online para verificação global:**
 - https://dnschecker.org/ (verifica propagação em múltiplos países)
@@ -263,7 +263,7 @@ sudo ufw status | grep -E "80|443"
 # 3. Caddy rodando e saudável
 docker compose ps caddy
 # Deve mostrar: Up X minutes (healthy)
-```text
+```
 
 **Verificar certificado SSL:**
 
@@ -276,7 +276,7 @@ docker compose ps caddy
 # Verificar via comando
 openssl s_client -connect n8n.mycompany.com.br:443 -servername n8n.mycompany.com.br < /dev/null 2>&1 | grep -A 2 "Verify return code"
 # Deve mostrar: Verify return code: 0 (ok)
-```text
+```
 
 ### Solução de Problemas DNS/SSL
 
@@ -289,7 +289,7 @@ openssl s_client -connect n8n.mycompany.com.br:443 -servername n8n.mycompany.com
 # - Nome é correto ("n8n", não "n8n.mycompany.com.br")
 # - Valor é o IP público do servidor (não IP privado 192.168.x.x ou 10.x.x.x)
 # - Proxy está DESABILITADO (se Cloudflare)
-```text
+```
 
 **Problema: SSL não gera**
 
@@ -301,7 +301,7 @@ docker compose logs caddy --tail 100 | grep acme
 # - "acme: error: 403": DNS não aponta para seu servidor
 # - "timeout": Porta 80 bloqueada
 # - "too many certificates": Limite Let's Encrypt atingido (5 por semana)
-```text
+```
 
 ### Domínios Alternativos
 
@@ -314,7 +314,7 @@ N8N_HOST=workflows.mycompany.net
 CHATWOOT_HOST=suporte.mycompany.com
 EVOLUTION_HOST=whatsapp-api.mycompany.io
 # ... etc
-```text
+```
 
 **⚠️ ATENÇÃO:** Se usar domínios diferentes, você precisa configurar DNS A record para CADA domínio separadamente.
 
@@ -348,7 +348,7 @@ O PostgreSQL hospeda **4 bancos de dados isolados**:
 
 **Diagrama de Isolamento:**
 
-```text
+```
 ┌─────────────────────────────────────────┐
 │     PostgreSQL Container (pg18)         │
 │  ┌────────────┐  ┌─────────────────┐   │
@@ -379,7 +379,7 @@ O PostgreSQL hospeda **4 bancos de dados isolados**:
 │  │ Owner: evolution_user           │   │
 │  └─────────────────────────────────┘   │
 └─────────────────────────────────────────┘
-```text
+```
 
 **Strings de Conexão:**
 
@@ -406,7 +406,7 @@ DB_PASSWORD=${DIRECTUS_DB_PASSWORD}
 
 # Evolution API
 DATABASE_CONNECTION_URI=postgres://evolution_user:${EVOLUTION_DB_PASSWORD}@postgresql:5432/evolution_db
-```text
+```
 
 **Acessar PostgreSQL via CLI:**
 
@@ -425,7 +425,7 @@ docker compose exec postgresql psql -U postgres -c "\du"
 
 # Verificar tamanho dos bancos
 docker compose exec postgresql psql -U postgres -c "SELECT pg_database.datname, pg_size_pretty(pg_database_size(pg_database.datname)) FROM pg_database ORDER BY pg_database_size(pg_database.datname) DESC;"
-```text
+```
 
 **Tuning de Performance:**
 
@@ -439,7 +439,7 @@ maintenance_work_mem = 2GB
 work_mem = 20MB
 max_connections = 200
 random_page_cost = 1.1            # Otimizado para SSD
-```text
+```
 
 **Alterar configuração de performance:**
 
@@ -452,7 +452,7 @@ docker compose restart postgresql
 
 # 3. Verificar configuração aplicada
 docker compose exec postgresql psql -U postgres -c "SHOW shared_buffers;"
-```text
+```
 
 ### MongoDB: Banco NoSQL para Lowcoder
 
@@ -464,7 +464,7 @@ docker compose exec postgresql psql -U postgres -c "SHOW shared_buffers;"
 
 **Organização:**
 
-```text
+```
 MongoDB Container (7.0)
 ├── Database: admin (sistema)
 │   └── User: admin (root) → MONGODB_ROOT_PASSWORD
@@ -472,7 +472,7 @@ MongoDB Container (7.0)
 └── Database: lowcoder
     └── User: lowcoder_user → LOWCODER_DB_PASSWORD
         Permissions: readWrite + dbAdmin (lowcoder DB apenas)
-```text
+```
 
 **Por que MongoDB separado?**
 
@@ -485,7 +485,7 @@ MongoDB Container (7.0)
 ```bash
 # Lowcoder usa esta URI
 LOWCODER_MONGODB_URL=mongodb://lowcoder_user:${LOWCODER_DB_PASSWORD}@mongodb:27017/lowcoder?authSource=lowcoder
-```text
+```
 
 **Acessar MongoDB via CLI:**
 
@@ -501,7 +501,7 @@ docker compose exec mongodb mongosh -u admin -p ${MONGODB_ROOT_PASSWORD} --authe
 
 # Ver estatísticas do banco lowcoder
 docker compose exec mongodb mongosh -u admin -p ${MONGODB_ROOT_PASSWORD} --authenticationDatabase admin --eval "db.getSiblingDB('lowcoder').stats()"
-```text
+```
 
 ### Redis: Cache e Fila Compartilhados
 
@@ -546,7 +546,7 @@ LOWCODER_REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
 REDIS_HOST=redis
 REDIS_PORT=6379
 REDIS_PASSWORD=${REDIS_PASSWORD}
-```text
+```
 
 **Acessar Redis via CLI:**
 
@@ -560,7 +560,7 @@ redis> INFO memory         # Uso de memória
 redis> DBSIZE              # Número de chaves
 redis> KEYS n8n:*          # Listar chaves do n8n (cuidado em produção!)
 redis> MONITOR             # Ver comandos em tempo real (debug)
-```text
+```
 
 **Monitoramento de Performance:**
 
@@ -576,7 +576,7 @@ docker compose exec redis redis-cli -a ${REDIS_PASSWORD} INFO stats | grep insta
 
 # Clientes conectados
 docker compose exec redis redis-cli -a ${REDIS_PASSWORD} INFO clients | grep connected_clients
-```text
+```
 
 **Benchmark de Performance:**
 
@@ -587,7 +587,7 @@ docker compose exec redis redis-benchmark -h localhost -p 6379 -a ${REDIS_PASSWO
 # Saída esperada:
 # SET: 65000.00 requests per second
 # GET: 70000.00 requests per second
-```text
+```
 
 ---
 
@@ -641,7 +641,7 @@ graph TB
     Lowcoder --> RedisDB
     Directus --> PG
     Directus --> RedisDB
-```text
+```
 
 ### Rede 1: borgstack_external
 
@@ -653,7 +653,7 @@ networks:
   external:
     driver: bridge
     name: borgstack_external
-```text
+```
 
 **Serviços Conectados:**
 - ✅ Caddy (único serviço com portas 80/443 expostas ao host)
@@ -675,7 +675,7 @@ networks:
     driver: bridge
     name: borgstack_internal
     internal: false  # Permite saída para internet (para downloads, APIs externas)
-```text
+```
 
 **Serviços Conectados:**
 - ✅ PostgreSQL, MongoDB, Redis (bancos de dados)
@@ -736,7 +736,7 @@ docker network inspect borgstack_internal --format '{{range .Containers}}{{.Name
 
 # Verificar que PostgreSQL NÃO está em external
 docker network inspect borgstack_external --format '{{range .Containers}}{{.Name}} {{end}}' | grep -q postgresql && echo "❌ ERRO: PostgreSQL em external!" || echo "✅ OK: PostgreSQL isolado"
-```text
+```
 
 ### Comunicação Entre Serviços
 
@@ -753,7 +753,7 @@ Port: 6379
 
 # Directus se conecta a SeaweedFS Filer API
 URL: http://seaweedfs:8888/
-```text
+```
 
 **⚠️ IMPORTANTE:** Use sempre nomes de serviços do docker-compose.yml, NUNCA IPs!
 
@@ -768,7 +768,7 @@ docker compose exec chatwoot sh -c 'nc -zv redis 6379'
 
 # De dentro do Directus, testar SeaweedFS
 docker compose exec directus wget -qO- http://seaweedfs:8888/
-```text
+```
 
 ---
 
@@ -812,7 +812,7 @@ docker volume inspect borgstack_postgresql_data
 # Ver caminho físico no host
 docker volume inspect borgstack_postgresql_data --format '{{.Mountpoint}}'
 # Saída: /var/lib/docker/volumes/borgstack_postgresql_data/_data
-```text
+```
 
 **⚠️ ATENÇÃO:** NÃO edite arquivos diretamente em `/var/lib/docker/volumes/`. Use sempre comandos Docker ou acesse via container.
 
@@ -826,7 +826,7 @@ O Duplicati já está configurado para fazer backup automático de todos os volu
 # Ver configuração de backup
 # Acesse: https://duplicati.mycompany.com.br
 # Login com credenciais configuradas durante instalação
-```text
+```
 
 Ver `docs/03-services/duplicati.md` para guia completo.
 
@@ -844,7 +844,7 @@ docker run --rm \
 
 # Reiniciar serviço
 docker compose start postgresql
-```text
+```
 
 **Método 3: Backup do Banco via pg_dump (PostgreSQL)**
 
@@ -854,7 +854,7 @@ docker compose exec postgresql pg_dump -U postgres n8n_db > n8n_backup_$(date +%
 
 # Backup de TODOS os bancos
 docker compose exec postgresql pg_dumpall -U postgres > all_databases_$(date +%Y%m%d).sql
-```text
+```
 
 ### Restauração de Volumes
 
@@ -872,7 +872,7 @@ docker run --rm \
 
 # Reiniciar serviço
 docker compose start postgresql
-```text
+```
 
 **Restaurar banco PostgreSQL do SQL:**
 
@@ -882,7 +882,7 @@ docker compose exec -T postgresql psql -U postgres n8n_db < n8n_backup_20251008.
 
 # Restaurar todos os bancos
 docker compose exec -T postgresql psql -U postgres < all_databases_20251008.sql
-```text
+```
 
 ### Limpeza de Volumes
 
@@ -898,7 +898,7 @@ docker volume prune
 # Remover TODOS os volumes do BorgStack (RESET COMPLETO!)
 docker compose down -v
 # Isto remove TODOS os dados! Use apenas se quiser começar do zero.
-```text
+```
 
 ### Monitoramento de Uso de Disco
 
@@ -914,7 +914,7 @@ docker system df -v --format "table {{.Name}}\t{{.Size}}" | grep borgstack | sor
 
 # Alerta se disco > 80% cheio
 df -h / | awk 'NR==2 {if (int($5) > 80) print "⚠️  ALERTA: Disco "$5" cheio!"}'
-```text
+```
 
 ---
 
@@ -924,7 +924,7 @@ df -h / | awk 'NR==2 {if (int($5) > 80) print "⚠️  ALERTA: Disco "$5" cheio!
 
 Cada serviço tem arquivos de configuração em `config/<servico>/`:
 
-```text
+```
 config/
 ├── postgresql/
 │   ├── init-databases.sh    # Script de inicialização
@@ -938,7 +938,7 @@ config/
 │   └── workflows/           # Workflows exemplo
 └── duplicati/
     └── backup-config.json   # Jobs de backup
-```text
+```
 
 **Alterar configuração:**
 
@@ -954,7 +954,7 @@ docker compose restart postgresql
 
 # 4. Verificar logs para confirmar
 docker compose logs postgresql --tail 50
-```text
+```
 
 ### Validar Configuração Docker Compose
 
@@ -967,7 +967,7 @@ docker compose config > docker-compose-rendered.yml
 
 # Validar sintaxe
 docker compose config --quiet && echo "✅ Configuração válida" || echo "❌ Erro na configuração"
-```text
+```
 
 ### Sobrescrever Configurações (docker-compose.override.yml)
 
@@ -976,7 +976,7 @@ Para desenvolvimento ou customização local:
 ```bash
 # Criar docker-compose.override.yml
 nano docker-compose.override.yml
-```text
+```
 
 Exemplo de override para expor porta PostgreSQL em dev:
 
@@ -992,7 +992,7 @@ services:
   redis:
     ports:
       - "6379:6379"  # Expor Redis ao host (apenas dev!)
-```text
+```
 
 **⚠️ IMPORTANTE:** O `docker-compose.override.yml` é automaticamente carregado se existir. NUNCA use em produção!
 
@@ -1012,13 +1012,13 @@ services:
         reservations:
           cpus: '2'
           memory: 8G
-```text
+```
 
 **Aplicar limites:**
 
 ```bash
 docker compose up -d
-```text
+```
 
 ### Variáveis de Ambiente Adicionais
 
@@ -1030,14 +1030,14 @@ Algumas configurações avançadas via variáveis de ambiente:
 N8N_LOG_LEVEL=debug           # Logs detalhados
 N8N_DIAGNOSTICS_ENABLED=false # Desabilitar telemetria
 N8N_METRICS=true              # Habilitar métricas Prometheus
-```text
+```
 
 **Chatwoot:**
 ```bash
 # .env
 RAILS_LOG_LEVEL=warn          # Reduzir verbosidade de logs
 RAILS_MAX_THREADS=5           # Threads de processamento
-```text
+```
 
 **Redis:**
 ```bash
@@ -1045,7 +1045,7 @@ RAILS_MAX_THREADS=5           # Threads de processamento
 maxmemory 8gb
 maxmemory-policy allkeys-lru  # Política de eviction
 save 900 1                    # Snapshot a cada 15min se 1+ key mudou
-```text
+```
 
 ### CORS (Cross-Origin Resource Sharing)
 
@@ -1058,7 +1058,7 @@ CORS_ALLOWED_ORIGINS=*
 
 # Produção (apenas domínios específicos)
 CORS_ALLOWED_ORIGINS=https://app.mycompany.com.br,https://admin.mycompany.com.br
-```text
+```
 
 Afeta:
 - Evolution API (WhatsApp Business API)
@@ -1090,7 +1090,7 @@ docker compose logs n8n --tail 100
 
 # 6. Testar funcionamento
 # Acessar https://n8n.mycompany.com.br
-```text
+```
 
 ### Recarregar Configuração Sem Downtime
 
@@ -1105,7 +1105,7 @@ docker compose exec caddy caddy reload --config /etc/caddy/Caddyfile
 
 # OU reiniciar (breve downtime ~1s)
 docker compose restart caddy
-```text
+```
 
 **PostgreSQL (recarregar postgresql.conf):**
 
@@ -1118,7 +1118,7 @@ docker compose exec postgresql pg_ctl reload
 
 # Verificar configuração foi aplicada
 docker compose exec postgresql psql -U postgres -c "SHOW shared_buffers;"
-```text
+```
 
 ---
 

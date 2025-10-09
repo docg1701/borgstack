@@ -40,7 +40,7 @@ graph TD
     E --> E1[Logs Centralizados]
     E --> E2[Alertas Automáticos]
     E --> E3[Trilha de Auditoria]
-```text
+```
 
 ### Camadas de Segurança
 
@@ -68,7 +68,7 @@ networks:
     driver: bridge
     internal: true  # SEM acesso à internet
     # Rede interna para comunicação entre serviços
-```text
+```
 
 **Serviços APENAS na rede interna** (sem acesso direto externo):
 - PostgreSQL
@@ -133,7 +133,7 @@ done
 
 echo ""
 echo "=== Verificação completa ==="
-```text
+```
 
 ### 1.3. Configurar Firewall UFW
 
@@ -164,7 +164,7 @@ sudo ufw --force enable
 
 # Status
 sudo ufw status verbose
-```text
+```
 
 ### 1.4. Configurar Rate Limiting no Caddy
 
@@ -192,7 +192,7 @@ evolution.borgstack.local {
     import rate_limit
     reverse_proxy evolution-api:8080
 }
-```text
+```
 
 ### 1.5. Bloquear IPs Maliciosos
 
@@ -213,7 +213,7 @@ for IP in "${BLOCKED_IPS[@]}"; do
 done
 
 sudo ufw reload
-```text
+```
 
 ---
 
@@ -237,7 +237,7 @@ if git ls-files | grep -q "^\.env$"; then
     echo "⚠️  ALERTA: .env está versionado no Git!"
     echo "Execute: git rm --cached .env && git commit -m 'Remove .env from git'"
 fi
-```text
+```
 
 **Permissões corretas**:
 
@@ -246,7 +246,7 @@ fi
 chmod 600 .env
 ls -l .env
 # Output esperado: -rw------- 1 user user ... .env
-```text
+```
 
 ### 2.2. Usar Docker Secrets (Swarm)
 
@@ -267,7 +267,7 @@ services:
 secrets:
   postgres_password:
     external: true
-```text
+```
 
 ### 2.3. Criptografia de Backups
 
@@ -310,7 +310,7 @@ tar czf - \
 
 echo "✅ Backups criptografados criados"
 echo "🔑 Guarde a chave em local seguro: $ENCRYPTION_KEY"
-```text
+```
 
 **Restaurar backup criptografado**:
 
@@ -325,7 +325,7 @@ openssl enc -d -aes-256-cbc -pbkdf2 -pass file:/secure/backup-encryption.key \
 openssl enc -d -aes-256-cbc -pbkdf2 -pass file:/secure/backup-encryption.key \
     -in mongodb_20251008.archive.gz.enc | \
     docker compose exec -T mongodb mongorestore --archive --gzip
-```text
+```
 
 ### 2.4. Criptografia de Banco de Dados
 
@@ -351,7 +351,7 @@ openssl req -new -x509 -days 365 -nodes -text \
     -subj "/CN=postgresql.borgstack.local"
 
 chmod 600 config/postgresql/server.key
-```text
+```
 
 #### MongoDB: Criptografia WiredTiger
 
@@ -365,13 +365,13 @@ services:
       --encryptionKeyFile /etc/mongodb/encryption.key
     volumes:
       - ./config/mongodb/encryption.key:/etc/mongodb/encryption.key:ro
-```text
+```
 
 ```bash
 # Criar chave de criptografia MongoDB (uma vez)
 openssl rand -base64 32 > config/mongodb/encryption.key
 chmod 600 config/mongodb/encryption.key
-```text
+```
 
 ### 2.5. Criptografia de Dados Sensíveis em Aplicações
 
@@ -384,7 +384,7 @@ LOWCODER_DB_ENCRYPTION_SALT=$(openssl rand -base64 16)
 
 echo "LOWCODER_DB_ENCRYPTION_PASSWORD=$LOWCODER_DB_ENCRYPTION_PASSWORD" >> .env
 echo "LOWCODER_DB_ENCRYPTION_SALT=$LOWCODER_DB_ENCRYPTION_SALT" >> .env
-```text
+```
 
 #### Directus: Hash de Senhas
 
@@ -396,7 +396,7 @@ docker compose exec postgresql psql -U directus -d directus -c \
   "SELECT email, password FROM directus_users LIMIT 1;"
 
 # Output esperado: password deve começar com $2b$ (bcrypt)
-```text
+```
 
 ---
 
@@ -426,7 +426,7 @@ echo "DIRECTUS_SECRET=$(openssl rand -hex 32)"
 echo "EVOLUTION_AUTHENTICATION_API_KEY=$(generate_password)"
 echo "LOWCODER_DB_ENCRYPTION_PASSWORD=$(generate_password)"
 echo "LOWCODER_DB_ENCRYPTION_SALT=$(openssl rand -base64 16)"
-```text
+```
 
 **Política de senhas recomendada**:
 - Mínimo 16 caracteres para senhas administrativas
@@ -446,7 +446,7 @@ EVOLUTION_AUTHENTICATION_API_KEY=$(openssl rand -base64 32)
 # Testar autenticação
 curl -X GET https://evolution.borgstack.local/instance/list \
   -H "apikey: $EVOLUTION_AUTHENTICATION_API_KEY"
-```text
+```
 
 #### n8n: Webhook Authentication
 
@@ -459,7 +459,7 @@ curl -X GET https://evolution.borgstack.local/instance/list \
     "value": "Bearer {{ $env.N8N_WEBHOOK_SECRET }}"
   }
 }
-```text
+```
 
 #### Directus: JWT Tokens
 
@@ -471,7 +471,7 @@ DIRECTUS_ACCESS_TOKEN_TTL="15m"
 DIRECTUS_REFRESH_TOKEN_TTL="7d"
 DIRECTUS_REFRESH_TOKEN_COOKIE_SECURE="true"
 DIRECTUS_REFRESH_TOKEN_COOKIE_SAME_SITE="lax"
-```text
+```
 
 ### 3.3. CORS - Cross-Origin Resource Sharing
 
@@ -499,7 +499,7 @@ directus.borgstack.local {
 
     reverse_proxy directus:8055
 }
-```text
+```
 
 #### Configurar CORS no Directus
 
@@ -512,7 +512,7 @@ DIRECTUS_CORS_ALLOWED_HEADERS="Content-Type,Authorization"
 DIRECTUS_CORS_EXPOSED_HEADERS="Content-Range"
 DIRECTUS_CORS_CREDENTIALS="true"
 DIRECTUS_CORS_MAX_AGE="3600"
-```text
+```
 
 ### 3.4. Proteção contra SQL Injection
 
@@ -529,7 +529,7 @@ const email = items[0].json.email;
 // Use PostgreSQL node com parâmetros
 // Query: SELECT * FROM users WHERE email = $1
 // Parameters: [{{ $json.email }}]
-```text
+```
 
 ### 3.5. Validação de Input
 
@@ -558,7 +558,7 @@ return {
         email: sanitize(email)
     }
 };
-```text
+```
 
 ---
 
@@ -578,7 +578,7 @@ services:
     image: n8nio/n8n:latest
     user: "node"  # Usuário não-root pré-configurado
     # ...
-```text
+```
 
 **Verificar usuário atual em containers**:
 
@@ -595,7 +595,7 @@ for service in $(docker compose ps --services); do
     docker compose exec -T $service id 2>/dev/null || echo "  (não suporta id)"
     echo ""
 done
-```text
+```
 
 ### 4.2. Limites de Recursos
 
@@ -621,7 +621,7 @@ services:
           cpus: '1.0'
           memory: 2G
           pids: 200          # Limitar processos (fork bomb protection)
-```text
+```
 
 **Monitorar uso de recursos**:
 
@@ -631,7 +631,7 @@ docker stats
 
 # Ver limites configurados
 docker compose config | grep -A 5 "resources:"
-```text
+```
 
 ### 4.3. Health Checks de Segurança
 
@@ -654,7 +654,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-```text
+```
 
 ### 4.4. Opções de Segurança do Docker
 
@@ -675,7 +675,7 @@ services:
     read_only: false            # Filesystem somente leitura (quando possível)
     tmpfs:
       - /tmp                    # Montar /tmp como tmpfs
-```text
+```
 
 ### 4.5. Scan de Vulnerabilidades
 
@@ -710,7 +710,7 @@ for IMAGE in $IMAGES; do
 done
 
 echo "✅ Scan completo"
-```text
+```
 
 ---
 
@@ -740,7 +740,7 @@ n8n.borgstack.local {
 chatwoot.borgstack.local {
     reverse_proxy chatwoot:3000
 }
-```text
+```
 
 ### 5.2. Monitorar Expiração de Certificados
 
@@ -786,7 +786,7 @@ for DOMAIN in "${DOMAINS[@]}"; do
 
     echo ""
 done
-```text
+```
 
 ### 5.3. Forçar HTTPS
 
@@ -801,7 +801,7 @@ n8n.borgstack.local {
     header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
     reverse_proxy n8n:5678
 }
-```text
+```
 
 ### 5.4. Configurar TLS Mínimo e Ciphers
 
@@ -814,7 +814,7 @@ n8n.borgstack.local {
     # Ciphers modernos (opcional, Caddy já usa defaults seguros)
     # tls_ciphers TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384 TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
 }
-```text
+```
 
 ### 5.5. Renovação Manual de Certificados
 
@@ -829,7 +829,7 @@ docker compose logs caddy | grep -i "renew\|certificate"
 
 # Ver certificados gerenciados
 docker compose exec caddy ls -lah /data/caddy/certificates/acme-v02.api.letsencrypt.org-directory/
-```text
+```
 
 ---
 
@@ -872,7 +872,7 @@ WHERE status = 'resolved'
 -- Deletar mensagens de conversas deletadas
 DELETE FROM messages
 WHERE conversation_id NOT IN (SELECT id FROM conversations);
-```text
+```
 
 ```javascript
 // n8n - Workflow para limpeza automática
@@ -891,7 +891,7 @@ return {
         query: cleanupQuery
     }
 };
-```text
+```
 
 ### 6.2. Logs de Auditoria
 
@@ -915,7 +915,7 @@ audit_log "LOGIN" "admin@example.com" "Login successful from IP 192.168.1.100"
 audit_log "DATA_ACCESS" "user@example.com" "Accessed customer data ID 12345"
 audit_log "DATA_EXPORT" "admin@example.com" "Exported 1000 records to CSV"
 audit_log "CONFIG_CHANGE" "root" "Modified .env file"
-```text
+```
 
 **Integrar com n8n para auditoria automática**:
 
@@ -938,7 +938,7 @@ return { json: auditEntry };
 // PostgreSQL node - INSERT
 // INSERT INTO audit_logs (timestamp, event_type, user_email, ip_address, details, service)
 // VALUES ($1, $2, $3, $4, $5, $6)
-```text
+```
 
 ### 6.3. Relatório de Conformidade
 
@@ -1009,7 +1009,7 @@ echo "════════════════════════�
 
 echo "✅ Relatório salvo em: $REPORT_FILE"
 cat "$REPORT_FILE"
-```text
+```
 
 ---
 
@@ -1060,7 +1060,7 @@ echo ""
 echo "5. Containers reiniciados (últimas 24h):"
 docker compose ps --format json | \
     jq -r 'select(.Status | contains("Restarting")) | "\(.Name): \(.Status)"'
-```text
+```
 
 ### 7.2. Alertas de Segurança via Email
 
@@ -1100,7 +1100,7 @@ EOF
 
     echo "⚠️  ALERTA enviado para $ALERT_EMAIL"
 fi
-```text
+```
 
 ### 7.3. Integração com n8n para Monitoramento
 
@@ -1145,7 +1145,7 @@ Timestamp: {{ $json.timestamp }}
 
 Verifique os logs imediatamente.
 */
-```text
+```
 
 ---
 
@@ -1173,7 +1173,7 @@ graph TD
     J --> K[Validar Segurança]
     K --> L[Retomar Operação]
     L --> M[Post-Mortem]
-```text
+```
 
 ### 8.2. Procedimento de Isolamento
 
@@ -1212,7 +1212,7 @@ echo "1. Investigar logs: ls -lt volumes/*/logs/"
 echo "2. Analisar backups: ls -lt /backups/"
 echo "3. Verificar integridade: ./scripts/verify-integrity.sh"
 echo "4. Restaurar quando seguro: docker compose up -d"
-```text
+```
 
 ### 8.3. Análise Forense
 
@@ -1268,7 +1268,7 @@ echo ""
 echo "PRESERVAR EVIDÊNCIAS:"
 echo "  cp $FORENSICS_DIR.tar.gz /secure/location/"
 echo "  chmod 400 /secure/location/forensics-*.tar.gz"
-```text
+```
 
 ---
 
@@ -1322,7 +1322,7 @@ echo "  chmod 400 /secure/location/forensics-*.tar.gz"
 - [ ] Termos de uso criados
 - [ ] Política de retenção de dados definida
 - [ ] Processo de exclusão de dados documentado
-```text
+```
 
 ### 9.2. Checklist Mensal de Segurança
 
@@ -1363,7 +1363,7 @@ echo "  chmod 400 /secure/location/forensics-*.tar.gz"
 - [ ] Revisar logs de auditoria
 - [ ] Gerar relatório de conformidade
 - [ ] Executar limpeza de dados antigos
-```text
+```
 
 ### 9.3. Checklist Trimestral de Segurança
 
@@ -1398,7 +1398,7 @@ echo "  chmod 400 /secure/location/forensics-*.tar.gz"
 - [ ] Revisar conformidade LGPD
 - [ ] Atualizar documentação de compliance
 - [ ] Gerar relatório executivo de segurança
-```text
+```
 
 ---
 

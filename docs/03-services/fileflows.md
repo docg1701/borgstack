@@ -135,9 +135,9 @@ Fluxos são pipelines visuais de processamento: **Entrada** → **Etapas de Proc
 
 ### Estrutura Básica de Fluxo
 
-```text
+```
 [Arquivo de Entrada] → [Filtro de Arquivo] → [Processar FFmpeg] → [Mover Arquivo] → [Saída]
-```text
+```
 
 ---
 
@@ -172,7 +172,7 @@ Fluxos são pipelines visuais de processamento: **Entrada** → **Etapas de Proc
 **Testar Fluxo:**
 ```bash
 docker compose cp teste-video.mp4 fileflows:/input/
-```text
+```
 
 Monitore o processamento em **Processamento** → **Trabalhos Ativos**
 
@@ -274,7 +274,7 @@ FileFlows integra-se com outros serviços BorgStack através de fluxos de trabal
     "flow_id": "video-h264-transcode"
   }
 }
-```text
+```
 
 ---
 
@@ -301,7 +301,7 @@ Durante o processamento, monitore o uso de CPU/RAM do container:
 
 ```bash
 docker stats fileflows
-```text
+```
 
 Observe as colunas **CPU %** e **USO DE MEM**.
 
@@ -318,7 +318,7 @@ Observe as colunas **CPU %** e **USO DE MEM**.
 **Verificar logs:**
 ```bash
 docker compose logs fileflows --tail=100
-```text
+```
 
 **Problemas comuns:**
 - **Erros de permissão:** Verifique se PUID/PGID correspondem ao usuário do host (`id -u && id -g`)
@@ -357,7 +357,7 @@ docker compose logs fileflows --tail=100
 **Verificar permissões de arquivo:**
 ```bash
 docker compose exec fileflows ls -la /input
-```text
+```
 
 Os arquivos devem ser legíveis pelo usuário do container (PUID/PGID).
 
@@ -366,19 +366,19 @@ Os arquivos devem ser legíveis pelo usuário do container (PUID/PGID).
 **Verificar roteamento do Caddy:**
 ```bash
 docker compose logs caddy | grep fileflows
-```text
+```
 
 **Verificar saúde do container FileFlows:**
 ```bash
 docker compose ps fileflows
-```text
+```
 
 Status esperado: `Up (healthy)`
 
 **Testar acesso direto ao container:**
 ```bash
 docker compose exec caddy curl http://fileflows:5000/
-```text
+```
 
 Resposta esperada: Página HTML (interface do FileFlows)
 
@@ -411,7 +411,7 @@ Resposta esperada: Página HTML (interface do FileFlows)
 
 # AV1 (melhor compressão futura, muito lento)
 -c:v libaom-av1 -crf 30 -b:v 0
-```text
+```
 
 ### Codecs de Áudio Comuns
 
@@ -427,7 +427,7 @@ Resposta esperada: Página HTML (interface do FileFlows)
 
 # FLAC (sem perdas)
 -c:a flac
-```text
+```
 
 ### Filtros Comuns
 
@@ -446,7 +446,7 @@ Resposta esperada: Página HTML (interface do FileFlows)
 
 # Redução de ruído de vídeo
 -vf hqdn3d
-```text
+```
 
 ---
 

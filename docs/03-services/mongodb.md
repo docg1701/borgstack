@@ -39,7 +39,7 @@ docker compose logs -f mongodb
 
 # Verificar status
 docker compose ps mongodb
-```text
+```
 
 ### Banco de Dados do Lowcoder
 
@@ -53,7 +53,7 @@ lowcoder
 # - user: Usuários do Lowcoder
 # - organization: Organizações
 # - folder: Pastas de organização
-```text
+```
 
 ### Credenciais e Conexão
 
@@ -68,7 +68,7 @@ MONGODB_ROOT_PASSWORD=senha_super_segura_mongodb
 LOWCODER_MONGODB_DATABASE=lowcoder
 LOWCODER_MONGODB_USER=lowcoder_user
 LOWCODER_MONGODB_PASSWORD=senha_lowcoder
-```text
+```
 
 ### Conectar ao MongoDB
 
@@ -89,7 +89,7 @@ docker compose exec mongodb mongosh -u root -p --authenticationDatabase admin --
 
 # Listar coleções
 docker compose exec mongodb mongosh -u lowcoder_user -p lowcoder --eval "show collections"
-```text
+```
 
 #### Connection String
 
@@ -101,7 +101,7 @@ mongodb://lowcoder_user:senha_lowcoder@mongodb:27017/lowcoder?authSource=lowcode
 
 # Root (admin)
 mongodb://root:senha_root@mongodb:27017/admin?authSource=admin
-```text
+```
 
 ---
 
@@ -127,7 +127,7 @@ use meu_database
 // Deletar database (CUIDADO!)
 use meu_database
 db.dropDatabase()
-```text
+```
 
 ### 2. Collection
 
@@ -168,7 +168,7 @@ db.createCollection("usuarios", {
 
 // Deletar coleção
 db.minhaColecao.drop()
-```text
+```
 
 ### 3. Document
 
@@ -197,7 +197,7 @@ db.usuarios.insertMany([
 
 // Ver estrutura de um documento
 db.usuarios.findOne()
-```text
+```
 
 ### 4. Queries
 
@@ -225,7 +225,7 @@ db.usuarios.find().skip(10).limit(10)
 
 // Contar documentos
 db.usuarios.countDocuments({idade: {$gte: 30}})
-```text
+```
 
 ### 5. Updates
 
@@ -266,7 +266,7 @@ db.usuarios.updateOne(
     {email: "joao@example.com"},
     {$pull: {tags: "backend"}}
 )
-```text
+```
 
 ### 6. Deletes
 
@@ -279,7 +279,7 @@ db.usuarios.deleteMany({idade: {$lt: 18}})
 
 // Deletar todos os documentos (CUIDADO!)
 db.usuarios.deleteMany({})
-```text
+```
 
 ### 7. Indexes
 
@@ -306,7 +306,7 @@ db.usuarios.dropIndex("email_1")
 
 // Analisar performance de query
 db.usuarios.find({email: "joao@example.com"}).explain("executionStats")
-```text
+```
 
 ---
 
@@ -326,7 +326,7 @@ docker compose logs --tail=50 mongodb
 
 # Conectividade (via mongosh)
 docker compose exec mongodb mongosh --eval "db.adminCommand('ping')"
-```text
+```
 
 ### Passo 2: Explorar Database do Lowcoder
 
@@ -335,7 +335,7 @@ docker compose exec mongodb mongosh --eval "db.adminCommand('ping')"
 docker compose exec mongodb mongosh -u lowcoder_user -p lowcoder
 
 # Dentro do mongosh:
-```text
+```
 
 ```javascript
 // Ver coleções
@@ -355,7 +355,7 @@ db.datasource.find()
 
 // Ver organizações
 db.organization.find()
-```text
+```
 
 ### Passo 3: Consultar Dados
 
@@ -383,7 +383,7 @@ db.datasource.aggregate([
     }},
     {$sort: {count: -1}}
 ])
-```text
+```
 
 ### Passo 4: Monitorar Performance
 
@@ -402,7 +402,7 @@ db.killOp(opId)
 
 // Ver profiler (queries lentas)
 db.system.profile.find().limit(10).sort({ts: -1})
-```text
+```
 
 ---
 
@@ -435,7 +435,7 @@ docker compose exec mongodb mongodump \
 
 # Copiar backup comprimido
 docker cp mongodb:/tmp/lowcoder.archive ./backups/lowcoder_$(date +%Y%m%d).archive.gz
-```text
+```
 
 #### Backup de Todas as Databases
 
@@ -449,7 +449,7 @@ docker compose exec mongodb mongodump \
 
 # Copiar do container
 docker cp mongodb:/tmp/full_backup ./backups/full_$(date +%Y%m%d)
-```text
+```
 
 #### Backup Direto para Arquivo Local
 
@@ -462,7 +462,7 @@ docker compose exec -T mongodb mongodump \
     --db lowcoder \
     --archive \
     --gzip > ./backups/lowcoder_$(date +%Y%m%d).archive.gz
-```text
+```
 
 ### Restore com mongorestore
 
@@ -489,7 +489,7 @@ docker compose exec mongodb mongorestore \
     --authenticationDatabase lowcoder \
     --archive=/tmp/lowcoder.archive.gz \
     --gzip
-```text
+```
 
 #### Restore Direto de Arquivo Local
 
@@ -501,7 +501,7 @@ docker compose exec -T mongodb mongorestore \
     --authenticationDatabase lowcoder \
     --archive \
     --gzip < ./backups/lowcoder_20250108.archive.gz
-```text
+```
 
 #### Restore com Drop (Substituir Dados Existentes)
 
@@ -514,7 +514,7 @@ docker compose exec mongodb mongorestore \
     --db lowcoder \
     --drop \
     /tmp/restore_data/lowcoder
-```text
+```
 
 ### Script de Backup Automatizado
 
@@ -555,7 +555,7 @@ echo "Cleaning old backups (older than $RETENTION_DAYS days)..."
 find "$BACKUP_DIR" -name "*.archive.gz" -mtime +$RETENTION_DAYS -delete
 
 echo "✅ Backup process completed successfully!"
-```text
+```
 
 ---
 
@@ -617,7 +617,7 @@ db.application.aggregate([
     }},
     {$limit: 10}
 ])
-```text
+```
 
 ---
 
@@ -646,7 +646,7 @@ db.application.getIndexes()
 
 // Estatísticas de uso de indexes
 db.application.aggregate([{$indexStats: {}}])
-```text
+```
 
 ### Analisar Queries
 
@@ -659,7 +659,7 @@ db.application.find({organizationId: "123"}).explain().queryPlanner.winningPlan
 
 // Ver tempo de execução
 db.application.find({organizationId: "123"}).explain("executionStats").executionStats.executionTimeMillis
-```text
+```
 
 ### Profiler de Performance
 
@@ -675,7 +675,7 @@ db.system.profile.find({millis: {$gt: 100}}).sort({ts: -1}).limit(10)
 
 // Desabilitar profiler
 db.setProfilingLevel(0)
-```text
+```
 
 ---
 
@@ -688,7 +688,7 @@ O Lowcoder já está pré-configurado via variáveis de ambiente:
 ```bash
 # docker-compose.yml - lowcoder-api-service
 LOWCODER_MONGODB_URL=mongodb://lowcoder_user:senha_lowcoder@mongodb:27017/lowcoder?authSource=lowcoder
-```text
+```
 
 ### Queries Comuns do Lowcoder
 
@@ -716,7 +716,7 @@ db.user.find({
 db.sessions.deleteMany({
     expiresAt: {$lt: new Date()}
 })
-```text
+```
 
 ### Backup Antes de Atualizar Lowcoder
 
@@ -743,7 +743,7 @@ docker compose up -d lowcoder-api-service lowcoder-node-service lowcoder-fronten
 
 # 5. Verificar logs
 docker compose logs -f lowcoder-api-service
-```text
+```
 
 ---
 
@@ -772,7 +772,7 @@ db.adminCommand({getCmdLineOpts: 1})
 
 // Ver log do MongoDB
 db.adminCommand({getLog: "global"})
-```text
+```
 
 ### Manutenção
 
@@ -788,7 +788,7 @@ db.application.validate()
 
 // Repair database (apenas se necessário)
 db.repairDatabase()
-```text
+```
 
 ### Monitoramento
 
@@ -807,7 +807,7 @@ docker compose exec mongodb ps aux | grep mongo
 
 # Uso de disco do volume
 docker system df -v | grep mongodb
-```text
+```
 
 ---
 
@@ -850,7 +850,7 @@ db.createUser({
     roles: [{role: 'readWrite', db: 'lowcoder'}]
 })
 "
-```text
+```
 
 ### 2. Database Está Lento
 
@@ -882,7 +882,7 @@ db.user.stats()
 
 // Compact collections grandes
 db.runCommand({compact: "application"})
-```text
+```
 
 ```bash
 # Verificar uso de recursos
@@ -891,7 +891,7 @@ docker stats mongodb
 # Se memória alta: aumentar cache
 # Editar docker-compose.yml:
 # command: --wiredTigerCacheSizeGB 2
-```text
+```
 
 ### 3. Disco Cheio
 
@@ -924,7 +924,7 @@ db.runCommand({compact: 'datasource'})
 
 # Limpar logs antigos (se habilitado)
 docker compose exec mongodb sh -c "find /var/log/mongodb -name '*.log' -mtime +7 -delete"
-```text
+```
 
 ### 4. Backup Falha
 
@@ -955,7 +955,7 @@ docker compose exec mongodb mongodump \
     --authenticationDatabase admin \
     --db lowcoder \
     --out /tmp/backup
-```text
+```
 
 ### 5. Restore Falha
 
@@ -992,7 +992,7 @@ docker compose exec mongodb mongorestore \
     --db lowcoder \
     --drop \
     /tmp/backup/lowcoder
-```text
+```
 
 ### 6. Lowcoder Não Conecta ao MongoDB
 
@@ -1017,7 +1017,7 @@ docker compose logs -f lowcoder-api-service | grep -i mongo
 
 # Reiniciar Lowcoder
 docker compose restart lowcoder-api-service lowcoder-node-service
-```text
+```
 
 ### 7. Container Reinicia Constantemente
 
@@ -1039,7 +1039,7 @@ docker stats mongodb
 # docker compose down mongodb
 # docker volume rm borgstack_mongodb_data
 # docker compose up -d mongodb
-```text
+```
 
 ---
 
@@ -1109,7 +1109,7 @@ LOWCODER_MONGODB_PASSWORD=senha_lowcoder
 
 # Connection String (Lowcoder)
 LOWCODER_MONGODB_URL=mongodb://lowcoder_user:senha_lowcoder@mongodb:27017/lowcoder?authSource=lowcoder
-```text
+```
 
 ### Portas
 
@@ -1122,7 +1122,7 @@ LOWCODER_MONGODB_URL=mongodb://lowcoder_user:senha_lowcoder@mongodb:27017/lowcod
 ```yaml
 volumes:
   borgstack_mongodb_data:  # Dados do MongoDB (/data/db)
-```text
+```
 
 ### Limites e Configurações
 

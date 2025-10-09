@@ -25,7 +25,7 @@ sequenceDiagram
     n8n->>Directus: PATCH /items/directus_files/{id}
     Directus->>Directus: Update (processed_url, processing_status: completed)
     Directus-->>User: Processed media available
-```text
+```
 
 ### Fluxo de Dados
 
@@ -73,7 +73,7 @@ DIRECTUS_API_TOKEN=<gerar-no-directus-admin>
 # Opcional
 FILEFLOWS_DELETE_ORIGINALS=false
 DIRECTUS_MEDIA_RETENTION_DAYS=30
-```text
+```
 
 ---
 
@@ -188,7 +188,7 @@ curl -X POST "https://directus.${DOMAIN}/files" \
     "processing_status": "pending"
   }
 }
-```text
+```
 
 ### Monitorar Processamento
 
@@ -239,7 +239,7 @@ curl -X GET "https://directus.${DOMAIN}/items/directus_files/abc123-uuid" \
     }
   }
 }
-```text
+```
 
 **Servir Arquivo Processado:**
 
@@ -252,7 +252,7 @@ media.${DOMAIN} {
   root * /output
   file_server browse
 }
-```text
+```
 
 **Opção 2: Migração para SeaweedFS (Story 5.1)**
 - Arquivos processados serão armazenados em SeaweedFS
@@ -284,7 +284,7 @@ docker compose logs fileflows | grep -A 10 "Processing:"
 
 # Cancel stuck job (via FileFlows UI)
 # https://fileflows.${DOMAIN} → Processing → Cancel
-```text
+```
 
 #### 2. **Formato de Arquivo Não Suportado**
 
@@ -313,7 +313,7 @@ docker compose exec fileflows find /output -type f -mtime +30 -delete
 
 # Enable automatic cleanup (edit .env)
 FILEFLOWS_DELETE_ORIGINALS=true
-```text
+```
 
 #### 4. **Falha de API Directus (500)**
 
@@ -336,7 +336,7 @@ docker compose restart directus
 
 # Replay failed update (via n8n UI)
 # https://n8n.${DOMAIN} → Executions → Retry
-```text
+```
 
 #### 5. **Webhook Não Entregue**
 
@@ -357,7 +357,7 @@ curl -X GET "https://directus.${DOMAIN}/items/directus_files?filter[processing_s
 
 # Manually trigger processing
 # Re-upload file or copy to /input again
-```text
+```
 
 ---
 
@@ -387,10 +387,10 @@ curl -X GET "https://directus.${DOMAIN}/items/directus_files?filter[processing_s
 3. Adicionar servidor FileFlows secundário (future enhancement)
 
 **Configurar Max Concurrent Jobs:**
-```text
+```
 FileFlows UI → Settings → Processing Nodes → Local Server
 Max Concurrent Flows: 3-5 (para servidor 8 vCPU)
-```text
+```
 
 ### Otimização de Armazenamento
 
@@ -416,7 +416,7 @@ docker compose exec directus find /directus/uploads -type f -mtime +30 -delete
 
 # Delete failed processing files
 docker compose exec fileflows find /input -type f -mtime +7 -delete
-```text
+```
 
 ---
 
@@ -439,7 +439,7 @@ docker compose ps n8n
 curl -X POST https://n8n.${DOMAIN}/webhook/directus-upload \
   -H "Content-Type: application/json" \
   -d '{"payload":{"id":"test","filename_disk":"test.jpg","type":"image/jpeg"}}'
-```text
+```
 
 ### Arquivo Não Copiado para FileFlows
 
@@ -457,7 +457,7 @@ docker compose exec fileflows id
 
 # 4. Test manual copy
 docker compose exec n8n cp /directus/uploads/test.jpg /fileflows/input/test.jpg
-```text
+```
 
 ### FileFlows Não Detecta Arquivo
 
@@ -474,7 +474,7 @@ docker compose logs fileflows | grep -i "detecting\|watching"
 
 # 4. Verify Flow is active (via FileFlows UI)
 # https://fileflows.${DOMAIN} → Flows → Verify enabled
-```text
+```
 
 ### Directus Não Atualiza Após Processamento
 
@@ -494,7 +494,7 @@ curl -X POST https://n8n.${DOMAIN}/webhook/fileflows-complete \
 # 4. Verify Directus API token valid
 curl -X GET "https://directus.${DOMAIN}/users/me" \
   -H "Authorization: Bearer ${DIRECTUS_API_TOKEN}"
-```text
+```
 
 ---
 
@@ -506,7 +506,7 @@ Ver: `tests/integration/test-directus-fileflows.sh`
 ```bash
 chmod +x tests/integration/test-directus-fileflows.sh
 ./tests/integration/test-directus-fileflows.sh
-```text
+```
 
 **Testes Incluídos:**
 1. ✅ Workflows n8n ativos

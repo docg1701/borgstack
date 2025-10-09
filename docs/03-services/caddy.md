@@ -35,7 +35,7 @@ docker compose logs -f caddy
 
 # Verificar status
 docker compose ps caddy
-```text
+```
 
 ### Estrutura do Caddyfile no BorgStack
 
@@ -88,7 +88,7 @@ duplicati.exemplo.com.br {
 s3.exemplo.com.br {
     reverse_proxy seaweedfs:8333
 }
-```text
+```
 
 ### Verificando Configuração
 
@@ -101,7 +101,7 @@ docker compose exec caddy caddy reload --config /etc/caddy/Caddyfile
 
 # Verificar certificados SSL
 docker compose exec caddy caddy list-certificates
-```text
+```
 
 ---
 
@@ -121,7 +121,7 @@ exemplo.com.br {
     encode gzip
     log
 }
-```text
+```
 
 **Características**:
 - Formato declarativo e hierárquico
@@ -157,7 +157,7 @@ exemplo.com.br {
     # Frontend requests
     reverse_proxy frontend:3000
 }
-```text
+```
 
 ### 3. Automatic HTTPS
 
@@ -173,7 +173,7 @@ exemplo.com.br {
 :8080 {
     reverse_proxy backend:8080
 }
-```text
+```
 
 **Processo**:
 1. Caddy detecta domínio no Caddyfile
@@ -203,7 +203,7 @@ exemplo.com.br {
     # Fallback (sem matcher)
     reverse_proxy frontend:3000
 }
-```text
+```
 
 ### 5. Placeholders
 
@@ -222,7 +222,7 @@ exemplo.com.br {
         header_up X-Forwarded-Proto {http.request.scheme}
     }
 }
-```text
+```
 
 **Placeholders comuns**:
 - `{http.request.host}`: Domínio da requisição
@@ -253,7 +253,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-```text
+```
 
 **Importante**: Serviços **não** devem expor portas (`ports:`) nem estar na rede `borgstack_external`.
 
@@ -266,18 +266,18 @@ Edite `config/caddy/Caddyfile`:
 meu-servico.exemplo.com.br {
     reverse_proxy meu-servico:8080
 }
-```text
+```
 
 ### Passo 3: Configurar DNS
 
 Adicione registro A no seu provedor DNS:
 
-```text
+```
 Type: A
 Name: meu-servico
 Value: SEU_IP_PUBLICO
 TTL: 3600
-```text
+```
 
 Verificar propagação:
 
@@ -288,7 +288,7 @@ dig meu-servico.exemplo.com.br
 # Verificar resposta correta
 # ;; ANSWER SECTION:
 # meu-servico.exemplo.com.br. 3600 IN A SEU_IP_PUBLICO
-```text
+```
 
 ### Passo 4: Recarregar Caddy
 
@@ -301,7 +301,7 @@ docker compose exec caddy caddy reload --config /etc/caddy/Caddyfile
 
 # Verificar logs
 docker compose logs -f caddy
-```text
+```
 
 ### Passo 5: Verificar Certificado SSL
 
@@ -314,13 +314,13 @@ docker compose exec caddy caddy list-certificates
 
 # Testar acesso HTTPS
 curl -I https://meu-servico.exemplo.com.br
-```text
+```
 
 **Resposta esperada**:
-```text
+```
 HTTP/2 200
 server: Caddy
-```text
+```
 
 ---
 
@@ -363,7 +363,7 @@ chatwoot.exemplo.com.br {
     import security_headers
     reverse_proxy chatwoot:3000
 }
-```text
+```
 
 ### Configuração de CORS
 
@@ -392,7 +392,7 @@ api.exemplo.com.br {
 
     reverse_proxy backend-api:8080
 }
-```text
+```
 
 ### Compressão de Respostas
 
@@ -409,7 +409,7 @@ exemplo.com.br {
 
     reverse_proxy backend:8080
 }
-```text
+```
 
 ### Rate Limiting
 
@@ -428,7 +428,7 @@ api.exemplo.com.br {
 
     reverse_proxy backend-api:8080
 }
-```text
+```
 
 ### WebSocket Support
 
@@ -446,7 +446,7 @@ websocket.exemplo.com.br {
         header_up X-Real-IP {http.request.remote.host}
     }
 }
-```text
+```
 
 ### Múltiplos Domínios para Mesmo Serviço
 
@@ -459,7 +459,7 @@ exemplo.com.br, www.exemplo.com.br {
 
     reverse_proxy backend:8080
 }
-```text
+```
 
 ### Health Checks e Load Balancing
 
@@ -487,7 +487,7 @@ api.exemplo.com.br {
         unhealthy_status 500 502 503
     }
 }
-```text
+```
 
 ### Logging Customizado
 
@@ -506,7 +506,7 @@ exemplo.com.br {
 
     reverse_proxy backend:8080
 }
-```text
+```
 
 ---
 
@@ -520,7 +520,7 @@ docker compose exec caddy caddy list-certificates
 
 # Verificar validade de um certificado específico
 echo | openssl s_client -connect exemplo.com.br:443 2>/dev/null | openssl x509 -noout -dates
-```text
+```
 
 ### Forçar Renovação de Certificado
 
@@ -536,7 +536,7 @@ docker compose start caddy
 
 # Verificar logs de renovação
 docker compose logs -f caddy | grep "certificate"
-```text
+```
 
 ### Usar Staging Environment (Testes)
 
@@ -550,7 +550,7 @@ Para evitar rate limits durante testes:
 }
 
 # Seus sites aqui...
-```text
+```
 
 **Importante**: Remover `acme_ca` em produção para obter certificados válidos.
 
@@ -581,7 +581,7 @@ Para múltiplos subdomínios:
         }
     }
 }
-```text
+```
 
 ### Monitorar Renovação Automática
 
@@ -592,7 +592,7 @@ docker compose exec caddy caddy list-certificates | grep -A 5 "exemplo.com.br"
 # Caddy renova automaticamente 30 dias antes da expiração
 # Verificar logs de renovação
 docker compose logs caddy | grep "renew"
-```text
+```
 
 ---
 
@@ -620,7 +620,7 @@ n8n.exemplo.com.br {
         }
     }
 }
-```text
+```
 
 ### Chatwoot - Customer Service
 
@@ -643,7 +643,7 @@ chatwoot.exemplo.com.br {
         header_up X-Real-IP {http.request.remote.host}
     }
 }
-```text
+```
 
 ### Evolution API - WhatsApp
 
@@ -668,7 +668,7 @@ evolution.exemplo.com.br {
         }
     }
 }
-```text
+```
 
 ### Directus - Headless CMS
 
@@ -692,7 +692,7 @@ directus.exemplo.com.br {
         }
     }
 }
-```text
+```
 
 ### SeaweedFS - Object Storage
 
@@ -714,7 +714,7 @@ s3.exemplo.com.br {
         }
     }
 }
-```text
+```
 
 ---
 
@@ -736,7 +736,7 @@ admin.exemplo.com.br {
     # Bloquear outros IPs
     respond "Forbidden" 403
 }
-```text
+```
 
 ### 2. Autenticação Básica
 
@@ -749,14 +749,14 @@ interno.exemplo.com.br {
 
     reverse_proxy internal-app:8080
 }
-```text
+```
 
 Gerar hash de senha:
 
 ```bash
 # Instalar caddy localmente ou usar container
 docker run --rm caddy:2.10 caddy hash-password --plaintext 'minha_senha_segura'
-```text
+```
 
 ### 3. Rate Limiting Global
 
@@ -772,7 +772,7 @@ docker run --rm caddy:2.10 caddy hash-password --plaintext 'minha_senha_segura'
         }
     }
 }
-```text
+```
 
 ### 4. Proteção Contra Clickjacking
 
@@ -791,7 +791,7 @@ exemplo.com.br {
 
     reverse_proxy backend:8080
 }
-```text
+```
 
 ### 5. HTTPS Obrigatório
 
@@ -811,7 +811,7 @@ http://exemplo.com.br {
 https://exemplo.com.br {
     reverse_proxy backend:8080
 }
-```text
+```
 
 ---
 
@@ -846,7 +846,7 @@ sudo netstat -tulpn | grep :443
 # {
 #     acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
 # }
-```text
+```
 
 ### 2. Serviço Não É Acessível
 
@@ -872,7 +872,7 @@ docker inspect backend | grep -A 5 "Networks"
 
 # Verificar logs do backend
 docker compose logs -f backend
-```text
+```
 
 ### 3. Redirect Loop (Redirecionamento Infinito)
 
@@ -905,7 +905,7 @@ exemplo.com.br {
         }
     }
 }
-```text
+```
 
 ### 4. Configuração Não Recarrega
 
@@ -927,7 +927,7 @@ docker compose restart caddy
 
 # Verificar configuração ativa
 docker compose exec caddy caddy adapt --config /etc/caddy/Caddyfile
-```text
+```
 
 ### 5. CORS Não Funciona
 
@@ -957,7 +957,7 @@ api.exemplo.com.br {
 
     reverse_proxy backend:8080
 }
-```text
+```
 
 ### 6. Upload de Arquivo Falha
 
@@ -979,14 +979,14 @@ exemplo.com.br {
         }
     }
 }
-```text
+```
 
 Verificar também limite do backend:
 ```bash
 # nginx: client_max_body_size
 # node/express: body-parser limit
 # etc.
-```text
+```
 
 ### 7. WebSocket Não Conecta
 
@@ -1016,7 +1016,7 @@ exemplo.com.br {
     # Requisições HTTP normais
     reverse_proxy backend:8080
 }
-```text
+```
 
 ---
 
@@ -1033,7 +1033,7 @@ docker compose exec caddy caddy list-certificates --id exemplo.com.br
 
 # Forçar renovação (apenas se necessário)
 docker compose exec caddy caddy reload --force
-```text
+```
 
 ### Diagnóstico
 
@@ -1052,7 +1052,7 @@ curl -v https://exemplo.com.br 2>&1 | grep -i "^<"
 
 # Testar com IP específico (ignorar DNS)
 curl -H "Host: exemplo.com.br" https://SEU_IP_PUBLICO
-```text
+```
 
 ### Logs e Monitoramento
 
@@ -1071,7 +1071,7 @@ docker compose logs caddy | grep "exemplo.com.br"
 
 # Estatísticas de uso
 docker stats caddy
-```text
+```
 
 ---
 
@@ -1138,7 +1138,7 @@ Depois de configurar o Caddy, você pode:
 environment:
   - CADDY_ADMIN=0.0.0.0:2019  # API de administração
   - ACME_AGREE=true            # Aceitar termos Let's Encrypt
-```text
+```
 
 ### Portas e Endpoints
 
@@ -1159,7 +1159,7 @@ environment:
 volumes:
   borgstack_caddy_data:   # Certificados SSL e configuração
   borgstack_caddy_config: # Estado interno do Caddy
-```text
+```
 
 **Backup**: Incluir `borgstack_caddy_data` no backup do Duplicati para preservar certificados.
 

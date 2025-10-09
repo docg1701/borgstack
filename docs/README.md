@@ -453,14 +453,14 @@ Todos os exemplos de código são testados e funcionais. Você pode copiar e col
 ```bash
 # Este é um exemplo de comando bash
 docker compose ps
-```text
+```
 
 ```yaml
 # Este é um exemplo de configuração YAML
 services:
   example:
     image: example:latest
-```text
+```
 
 ---
 

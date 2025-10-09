@@ -43,7 +43,7 @@ docker compose logs -f postgresql
 
 # Verificar status
 docker compose ps postgresql
-```text
+```
 
 ### Organização dos Bancos de Dados
 
@@ -61,7 +61,7 @@ directus_db
 
 -- Evolution API (WhatsApp)
 evolution_db
-```text
+```
 
 **Estratégia de Isolamento**:
 - Cada serviço tem seu próprio database
@@ -97,7 +97,7 @@ DIRECTUS_DB_PASSWORD=senha_directus
 EVOLUTION_DB_NAME=evolution_db
 EVOLUTION_DB_USER=evolution_user
 EVOLUTION_DB_PASSWORD=senha_evolution
-```text
+```
 
 ### Conectar ao PostgreSQL
 
@@ -118,7 +118,7 @@ docker compose exec postgresql psql -U postgres -c "\l"
 
 # Listar usuários (roles)
 docker compose exec postgresql psql -U postgres -c "\du"
-```text
+```
 
 #### Connection String
 
@@ -136,7 +136,7 @@ postgresql://directus_user:senha_directus@postgresql:5432/directus_db
 
 # Evolution API
 postgresql://evolution_user:senha_evolution@postgresql:5432/evolution_db
-```text
+```
 
 ---
 
@@ -158,7 +158,7 @@ CREATE DATABASE meu_database;
 
 -- Deletar database (CUIDADO!)
 DROP DATABASE meu_database;
-```text
+```
 
 ### 2. Schema
 
@@ -176,7 +176,7 @@ SET search_path TO meu_schema, public;
 
 -- Ver search_path atual
 SHOW search_path;
-```text
+```
 
 ### 3. Tables
 
@@ -199,7 +199,7 @@ CREATE TABLE usuarios (
 
 -- Ver dados
 SELECT * FROM usuarios LIMIT 10;
-```text
+```
 
 ### 4. Roles (Usuários)
 
@@ -222,7 +222,7 @@ REVOKE DELETE ON ALL TABLES IN SCHEMA public FROM meu_usuario;
 
 -- Alterar senha
 ALTER ROLE meu_usuario WITH PASSWORD 'nova_senha';
-```text
+```
 
 ### 5. Indexes
 
@@ -246,7 +246,7 @@ CREATE INDEX idx_usuarios_nome_email ON usuarios(nome, email);
 
 -- Analisar uso de index
 EXPLAIN ANALYZE SELECT * FROM usuarios WHERE email = 'teste@example.com';
-```text
+```
 
 ### 6. Views
 
@@ -267,7 +267,7 @@ SELECT * FROM usuarios_ativos;
 
 -- Deletar view
 DROP VIEW usuarios_ativos;
-```text
+```
 
 ### 7. Transactions
 
@@ -286,7 +286,7 @@ COMMIT;
 
 -- Ou reverter (cancelar)
 ROLLBACK;
-```text
+```
 
 ---
 
@@ -306,7 +306,7 @@ docker compose logs --tail=50 postgresql
 
 # Conectividade
 docker compose exec postgresql pg_isready -U postgres
-```text
+```
 
 ### Passo 2: Explorar Databases Existentes
 
@@ -332,7 +332,7 @@ ORDER BY pg_database_size(pg_database.datname) DESC;
 
 # Ver estrutura de uma tabela
 \d workflow_entity
-```text
+```
 
 ### Passo 3: Consultar Dados
 
@@ -363,7 +363,7 @@ LIMIT 20;
 SELECT collection, note, archived
 FROM directus_collections
 WHERE archived = false;
-```text
+```
 
 ### Passo 4: Monitorar Conexões Ativas
 
@@ -399,7 +399,7 @@ FROM pg_stat_activity
 WHERE state <> 'idle'
     AND now() - query_start > interval '1 minute'
 ORDER BY duration DESC;
-```text
+```
 
 ### Passo 5: Analisar Performance
 
@@ -430,7 +430,7 @@ SELECT
     sum(heap_blks_hit) as heap_hit,
     sum(heap_blks_hit) / (sum(heap_blks_hit) + sum(heap_blks_read)) * 100 AS cache_hit_ratio
 FROM pg_statio_user_tables;
-```text
+```
 
 ---
 
@@ -452,7 +452,7 @@ docker compose exec postgresql pg_dump -U postgres -Fc directus_db > backups/dir
 
 # Backup do database Evolution API
 docker compose exec postgresql pg_dump -U postgres -Fc evolution_db > backups/evolution_db_$(date +%Y%m%d).dump
-```text
+```
 
 #### Usando pg_dump (Formato SQL)
 
@@ -462,7 +462,7 @@ docker compose exec postgresql pg_dump -U postgres n8n_db > backups/n8n_db_$(dat
 
 # Backup com compressão gzip
 docker compose exec postgresql pg_dump -U postgres n8n_db | gzip > backups/n8n_db_$(date +%Y%m%d).sql.gz
-```text
+```
 
 #### Backup Paralelo (Mais Rápido)
 
@@ -472,7 +472,7 @@ docker compose exec postgresql pg_dump -U postgres -j 4 -Fd -f /tmp/n8n_backup n
 
 # Copiar do container
 docker cp postgresql:/tmp/n8n_backup ./backups/n8n_backup_$(date +%Y%m%d)
-```text
+```
 
 ### Backup de Todos os Databases
 
@@ -482,7 +482,7 @@ docker compose exec postgresql pg_dumpall -U postgres > backups/cluster_full_$(d
 
 # Backup apenas de roles e tablespaces (sem dados)
 docker compose exec postgresql pg_dumpall -U postgres --globals-only > backups/globals_$(date +%Y%m%d).sql
-```text
+```
 
 ### Restore de Database
 
@@ -497,7 +497,7 @@ docker compose exec postgresql pg_restore -U postgres -d n8n_db_restore /path/to
 
 # Restore com jobs paralelos (mais rápido)
 docker compose exec postgresql pg_restore -U postgres -j 4 -d n8n_db_restore /path/to/backup.dump
-```text
+```
 
 #### Restore com psql (Formato SQL)
 
@@ -510,7 +510,7 @@ docker compose exec postgresql psql -U postgres -d n8n_db_restore < backups/n8n_
 
 # Restore de arquivo gzip
 gunzip -c backups/n8n_db_20250108.sql.gz | docker compose exec -T postgresql psql -U postgres -d n8n_db_restore
-```text
+```
 
 #### Restore Completo (Recrear Database)
 
@@ -528,7 +528,7 @@ docker compose exec postgresql pg_restore -U postgres -C -d postgres /path/to/ba
 
 # Reiniciar serviços
 docker compose start n8n
-```text
+```
 
 ### Restore Seletivo
 
@@ -546,7 +546,7 @@ docker compose exec postgresql pg_restore -U postgres -d n8n_db --section=pre-da
 
 # Restore apenas dados (sem schema)
 docker compose exec postgresql pg_restore -U postgres -d n8n_db --section=data /path/to/backup.dump
-```text
+```
 
 ### Script de Backup Automatizado
 
@@ -586,7 +586,7 @@ find "$BACKUP_DIR" -name "*.dump" -mtime +$RETENTION_DAYS -delete
 find "$BACKUP_DIR" -name "*.sql" -mtime +$RETENTION_DAYS -delete
 
 echo "✅ All backups completed successfully!"
-```text
+```
 
 ---
 
@@ -642,7 +642,7 @@ shared_preload_libraries = 'pg_stat_statements'
 pg_stat_statements.max = 10000
 pg_stat_statements.track = all
 compute_query_id = on
-```text
+```
 
 Aplicar configuração:
 
@@ -656,7 +656,7 @@ docker compose restart postgresql
 # Verificar configuração ativa
 docker compose exec postgresql psql -U postgres -c "SHOW shared_buffers;"
 docker compose exec postgresql psql -U postgres -c "SHOW effective_cache_size;"
-```text
+```
 
 ### Analisar e Otimizar Queries
 
@@ -669,7 +669,7 @@ EXPLAIN ANALYZE SELECT * FROM usuarios WHERE email = 'teste@example.com';
 
 -- Ver query plan visual (formato JSON)
 EXPLAIN (FORMAT JSON) SELECT * FROM usuarios WHERE email = 'teste@example.com';
-```text
+```
 
 **Interpretando EXPLAIN**:
 - **Seq Scan**: Leitura completa da tabela (lento para tabelas grandes)
@@ -698,7 +698,7 @@ CREATE INDEX idx_dados_jsonb ON tabela USING GIN (dados_json);
 
 -- Index para full-text search
 CREATE INDEX idx_usuarios_busca ON usuarios USING GIN (to_tsvector('portuguese', nome || ' ' || email));
-```text
+```
 
 ### VACUUM e ANALYZE
 
@@ -728,7 +728,7 @@ SELECT
     n_dead_tup
 FROM pg_stat_user_tables
 ORDER BY n_dead_tup DESC;
-```text
+```
 
 ### Monitorar Locks
 
@@ -772,7 +772,7 @@ JOIN pg_catalog.pg_locks blocking_locks
     AND blocking_locks.pid != blocked_locks.pid
 JOIN pg_catalog.pg_stat_activity blocking_activity ON blocking_activity.pid = blocking_locks.pid
 WHERE NOT blocked_locks.granted;
-```text
+```
 
 ---
 
@@ -788,7 +788,7 @@ DB_POSTGRESDB_PORT=5432
 DB_POSTGRESDB_DATABASE=n8n_db
 DB_POSTGRESDB_USER=n8n_user
 DB_POSTGRESDB_PASSWORD=senha_n8n
-```text
+```
 
 **Tabelas principais**:
 - `workflow_entity`: Workflows salvos
@@ -804,7 +804,7 @@ POSTGRES_PORT=5432
 POSTGRES_DATABASE=chatwoot_db
 POSTGRES_USERNAME=chatwoot_user
 POSTGRES_PASSWORD=senha_chatwoot
-```text
+```
 
 **Tabelas principais**:
 - `conversations`: Conversas com clientes
@@ -822,7 +822,7 @@ DB_PORT=5432
 DB_DATABASE=directus_db
 DB_USER=directus_user
 DB_PASSWORD=senha_directus
-```text
+```
 
 **Tabelas principais**:
 - `directus_collections`: Coleções criadas
@@ -836,7 +836,7 @@ DB_PASSWORD=senha_directus
 # Connection string
 DATABASE_ENABLED=true
 DATABASE_CONNECTION_URI=postgresql://evolution_user:senha_evolution@postgresql:5432/evolution_db
-```text
+```
 
 **Tabelas principais**:
 - `evolution_instances`: Instâncias WhatsApp
@@ -879,7 +879,7 @@ LIMIT 10;
 
 -- Criar index para busca vetorial rápida
 CREATE INDEX ON documentos USING ivfflat (embedding vector_cosine_ops);
-```text
+```
 
 ### Outras Extensões Úteis
 
@@ -899,7 +899,7 @@ SELECT similarity('João Silva', 'Joao Silva'); -- Retorna: 0.8
 -- Crypto functions
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 SELECT crypt('minha_senha', gen_salt('bf'));
-```text
+```
 
 ---
 
@@ -934,7 +934,7 @@ psql -h localhost -U postgres
 # Conectar via docker exec (correto)
 docker compose exec postgresql psql -U postgres
 # ✅ Esperado: Conecta normalmente
-```text
+```
 
 ### 2. Database Está Lento
 
@@ -977,7 +977,7 @@ ORDER BY dead_ratio DESC;
 
 -- Executar VACUUM em tabelas problemáticas
 VACUUM ANALYZE nome_da_tabela;
-```text
+```
 
 ### 3. Disco Cheio
 
@@ -1020,7 +1020,7 @@ docker compose exec postgresql psql -U postgres -d n8n_db -c "VACUUM FULL;"
 
 # Limpar logs antigos
 docker compose exec postgresql sh -c "find /var/lib/postgresql/data/log -name '*.log' -mtime +7 -delete"
-```text
+```
 
 ### 4. Conexões Esgotadas
 
@@ -1060,7 +1060,7 @@ SELECT pg_reload_conf();
 
 -- Permanente: editar postgresql.conf
 # max_connections = 300
-```text
+```
 
 ### 5. Backup Falha
 
@@ -1085,7 +1085,7 @@ docker compose exec postgresql pg_dump -U postgres -Fc -Z 9 n8n_db > backup.dump
 
 # Backup paralelo (mais rápido, mais memória)
 docker compose exec postgresql pg_dump -U postgres -Fd -j 4 -f /tmp/backup n8n_db
-```text
+```
 
 ### 6. Restore Falha
 
@@ -1108,7 +1108,7 @@ docker compose exec postgresql pg_restore -U postgres -d n8n_db --data-only back
 
 # Restore limpando objetos existentes primeiro
 docker compose exec postgresql pg_restore -U postgres -d n8n_db --clean --if-exists backup.dump
-```text
+```
 
 ### 7. Database Corrompido
 
@@ -1133,7 +1133,7 @@ docker compose exec postgresql dropdb -U postgres n8n_db
 docker compose exec postgresql createdb -U postgres -O n8n_user n8n_db
 docker compose exec postgresql pg_restore -U postgres -d n8n_db /path/to/backup.dump
 docker compose start n8n
-```text
+```
 
 ---
 
@@ -1166,7 +1166,7 @@ SELECT
     pg_database_size(pg_database.datname) AS size_bytes
 FROM pg_database
 ORDER BY size_bytes DESC;
-```text
+```
 
 ### Monitoramento
 
@@ -1185,7 +1185,7 @@ docker compose logs postgresql | grep -i error
 
 # Ver processos PostgreSQL
 docker compose exec postgresql ps aux | grep postgres
-```text
+```
 
 ### Manutenção
 
@@ -1212,7 +1212,7 @@ SELECT
     a.query
 FROM pg_stat_progress_vacuum p
 JOIN pg_stat_activity a ON p.pid = a.pid;
-```text
+```
 
 ---
 
@@ -1316,7 +1316,7 @@ DIRECTUS_DB_PASSWORD=senha_directus
 EVOLUTION_DB_NAME=evolution_db
 EVOLUTION_DB_USER=evolution_user
 EVOLUTION_DB_PASSWORD=senha_evolution
-```text
+```
 
 ### Portas
 
@@ -1329,7 +1329,7 @@ EVOLUTION_DB_PASSWORD=senha_evolution
 ```yaml
 volumes:
   borgstack_postgresql_data:  # Dados do PostgreSQL (/var/lib/postgresql/data)
-```text
+```
 
 ### Limites e Configurações
 
