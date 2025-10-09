@@ -348,6 +348,54 @@ Body: {
 // Trigger from button: onClick → Run Query
 ```
 
+---
+
+## 🔄 Updating Components
+
+BorgStack provides automated scripts for safely updating individual services or the entire stack.
+
+### Update Individual Service
+
+```bash
+# Syntax
+./scripts/update-service.sh SERVICE_NAME VERSION
+
+# Examples
+./scripts/update-service.sh n8n 1.113.0
+./scripts/update-service.sh chatwoot v4.7.0-ce
+./scripts/update-service.sh postgresql 18.1
+```
+
+The update script automatically:
+- ✅ Validates service exists
+- ✅ Creates backup before update
+- ✅ Updates docker-compose.yml
+- ✅ Pulls new Docker image
+- ✅ Recreates container
+- ✅ Monitors health checks
+- ✅ Offers rollback on failure
+
+### Check for Available Updates
+
+```bash
+# Check all services for updates
+./scripts/check-updates.sh
+
+# Example output shows: SERVICE | CURRENT | LATEST | UPDATE_TYPE
+```
+
+### Update Best Practices
+
+1. **Always backup first** - The script does this automatically
+2. **Read changelogs** - Check for breaking changes before updating
+3. **Update infrastructure first** - PostgreSQL, Redis, MongoDB before applications
+4. **Test major updates** - Use staging environment for major version changes
+
+**For complete update procedures, troubleshooting, and best practices, see:**
+[Guia de Manutenção - Atualizações de Serviços](docs/06-manutencao.md#2-atualizações-de-serviços)
+
+---
+
 ### Troubleshooting
 
 - **View logs:** `cat /tmp/borgstack-bootstrap.log`

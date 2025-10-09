@@ -14,6 +14,8 @@ BorgStack coding standards focus on **configuration management, shell scripting,
   ```
   _Rationale: Ensures reproducible deployments; prevents unexpected breaking changes_
 
+  **For complete update procedures and best practices, see:** [Guia de Manutenção seção 2.6 (Boas Práticas de Atualização)](../06-manutencao.md#26-boas-práticas-de-atualização)
+
 - **Environment Variable Security:** Never commit `.env` files or secrets to git. Always use `.env.example` as template.
   ```bash
   # ✅ Correct - .gitignore includes

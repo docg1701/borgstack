@@ -278,6 +278,12 @@ Procedimentos de manutenção para manter o sistema saudável.
 - Checklists trimestrais (2-3h)
 - Rotação de credenciais
 - Procedimento de atualização segura
+- **NOVO:** Troubleshooting de atualizações (seção 2.4)
+- **NOVO:** Estratégia de notificação de updates (seção 2.5)
+- **NOVO:** Boas práticas de atualização (seção 2.6)
+- **NOVO:** Templates de checklist de atualização (seção 2.7)
+- **NOVO:** Notas específicas por serviço (seção 2.8)
+- **NOVO:** Referência rápida de comandos (seção 2.9)
 - Gerenciamento de backups (regra 3-2-1)
 - Teste de restauração
 - Monitoramento e logs
