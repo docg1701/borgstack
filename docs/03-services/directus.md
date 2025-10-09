@@ -203,11 +203,11 @@ Campo: status
 
 ### Armazenamento Atual
 
-**Armazenamento Local (Story 4.1):**
+**Armazenamento Local:**
 - Volume: `borgstack_directus_uploads`
 - Caminho no container: `/directus/uploads`
 
-**Futura Migração para S3 (Story 5.1):**
+**Migração Futura para S3:**
 - Armazenamento distribuído com SeaweedFS
 - API compatível com S3
 - Ver `config/directus/s3-storage.env.example` para detalhes
@@ -488,5 +488,5 @@ Ver workflows de exemplo em [docs/09-workflows-exemplo.md](../09-workflows-exemp
 
 ---
 
-**Última Atualização:** 2025-10-04 (Story 4.1)
+**Última Atualização:** 2025-10-08
 **Mantido por:** Equipe de Desenvolvimento BorgStack

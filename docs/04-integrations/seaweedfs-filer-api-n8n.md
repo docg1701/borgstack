@@ -1,8 +1,7 @@
 # SeaweedFS Filer API Integration with n8n
 
-**Story**: 5.3 Storage Integration Testing
 **Created**: 2025-10-07
-**Updated**: 2025-10-07
+**Updated**: 2025-10-08
 
 ## Visão Geral
 
@@ -342,8 +341,8 @@ curl http://localhost:8888/buckets/
 
 - **SeaweedFS Filer API**: https://github.com/seaweedfs/seaweedfs/wiki/Filer-Server-API
 - **n8n HTTP Request Node**: https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.httprequest/
-- **Story 5.1**: SeaweedFS Object Storage Setup
-- **Story 5.3**: Storage Integration Testing
+- **SeaweedFS Setup**: docs/03-services/seaweedfs.md
+- **Storage Integration Testing**: docs/04-integrations/
 
 ---
 

@@ -46,9 +46,9 @@ sequenceDiagram
 
 ### Serviços Configurados
 
-- ✅ **Directus** (Story 4.1): CMS rodando com PostgreSQL + Redis
-- ✅ **FileFlows** (Story 4.2): Processamento de mídia com FFmpeg
-- ✅ **n8n** (Story 2.1): Plataforma de workflows para orquestração
+- ✅ **Directus**: CMS rodando com PostgreSQL + Redis
+- ✅ **FileFlows**: Processamento de mídia com FFmpeg
+- ✅ **n8n**: Plataforma de workflows para orquestração
 
 ### Volumes Docker Configurados
 
@@ -254,7 +254,7 @@ media.${DOMAIN} {
 }
 ```
 
-**Opção 2: Migração para SeaweedFS (Story 5.1)**
+**Opção 2: Migração para SeaweedFS**
 - Arquivos processados serão armazenados em SeaweedFS
 - URLs S3-compatible substituirão paths locais
 - Acesso via HTTPS automaticamente configurado
@@ -407,7 +407,7 @@ Max Concurrent Flows: 3-5 (para servidor 8 vCPU)
 
 **Arquivos Processados:**
 - Manter indefinidamente (fonte primária após processamento)
-- Backup via Duplicati (Story 5.2)
+- Backup via Duplicati
 
 **Limpeza Manual:**
 ```bash
@@ -522,22 +522,7 @@ chmod +x tests/integration/test-directus-fileflows.sh
 
 ---
 
-## Próximos Passos
-
-### Migração para SeaweedFS (Story 5.1)
-
-Atualmente:
-- Directus: Local volume `borgstack_directus_uploads`
-- FileFlows: Local volumes `borgstack_fileflows_input/output`
-- Cópia manual entre volumes via n8n
-
-Após Story 5.1:
-- Ambos serviços usam SeaweedFS S3 storage
-- Acesso direto ao mesmo objeto via S3 URLs
-- Elimina necessidade de cópia de arquivos
-- Armazenamento distribuído e escalável
-
-### Recursos Avançados (Post-MVP)
+## Recursos Avançados
 
 **Horizontal Scaling:**
 - Múltiplos nós de processamento FileFlows

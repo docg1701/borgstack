@@ -80,8 +80,8 @@ Região: us-east-1
 
 **Serviços que usam S3:**
 
-- **Directus** (Story 5.3): Assets do CMS
-- **FileFlows** (Story 5.3): Mídia processada (via workflows n8n)
+- **Directus**: Assets do CMS
+- **FileFlows**: Mídia processada (via workflows n8n)
 - **Chatwoot**: Anexos de conversas
 - **n8n**: Anexos de workflows (via HTTP Request nodes)
 
@@ -360,7 +360,7 @@ SEAWEEDFS_REPLICATION=000
 
 **`000`** = Sem replicação (modo servidor único)
 
-⚠️ **Atenção**: Sem replicação, a perda do servidor = perda de dados. Use backups (Duplicati - Story 5.2).
+⚠️ **Atenção**: Sem replicação, a perda do servidor = perda de dados. Use backups com Duplicati.
 
 ### Expansão Multi-Servidor
 
@@ -391,7 +391,7 @@ Ao adicionar servidores para redundância:
 
 ## Integração com Serviços
 
-### Directus CMS (Story 5.3)
+### Directus CMS
 
 Configuração `.env` para Directus usar SeaweedFS:
 
@@ -406,7 +406,7 @@ STORAGE_S3_ENDPOINT=http://seaweedfs:8333
 STORAGE_S3_ROOT=/directus/
 ```
 
-### FileFlows (Story 5.3)
+### FileFlows
 
 FileFlows não suporta S3 nativamente. Integração via workflows n8n:
 
@@ -414,7 +414,7 @@ FileFlows não suporta S3 nativamente. Integração via workflows n8n:
 2. FileFlows processa → salva em `/output`
 3. n8n faz upload de `/output` → SeaweedFS
 
-### Chatwoot (Story 5.4)
+### Chatwoot
 
 Configuração `.env` para Chatwoot usar SeaweedFS:
 
@@ -510,7 +510,7 @@ docker compose logs seaweedfs --tail=50 | grep filer
 
 ## Backup e Recuperação
 
-Os volumes SeaweedFS são backupeados pelo Duplicati (Story 5.2). Backup manual:
+Os volumes SeaweedFS são backupeados pelo Duplicati. Backup manual:
 
 ```bash
 # Backup dos 3 volumes
@@ -544,7 +544,7 @@ docker compose exec -T seaweedfs tar czf - /data/filer > seaweedfs-filer-$(date 
    - Detecte tentativas de acesso não autorizado
 
 5. **Backups regulares**
-   - Automatizados via Duplicati (Story 5.2)
+   - Automatizados via Duplicati
    - Teste procedimentos de restauração trimestralmente
 
 6. **Atualize credenciais após mudanças de equipe**
@@ -586,12 +586,12 @@ Ver workflows de exemplo em [docs/09-workflows-exemplo.md](../09-workflows-exemp
 
 ## Próximos Passos
 
-Após implantação do SeaweedFS (Story 5.1):
+Após implantação do SeaweedFS:
 
-1. **Story 5.2**: Implantar Duplicati para backups automáticos do SeaweedFS
-2. **Story 5.3**: Migrar Directus e FileFlows de volumes locais para SeaweedFS S3
-3. **Story 5.4**: Configurar Chatwoot para usar SeaweedFS para anexos
-4. **Story 6.x**: Criar templates de workflow n8n para operações S3
+1. Implantar Duplicati para backups automáticos do SeaweedFS
+2. Migrar Directus e FileFlows de volumes locais para SeaweedFS S3
+3. Configurar Chatwoot para usar SeaweedFS para anexos
+4. Criar templates de workflow n8n para operações S3
 
 ---
 
