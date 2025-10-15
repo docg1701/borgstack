@@ -1,0 +1,2 @@
+# This file ensures the test results directory is tracked by Git
+# Test result files will be generated during CI runs and uploaded as artifacts

@@ -340,6 +340,39 @@ jobs:
           HEX_VALUE="${HEX_VALUE}0123456789abcdef0123456789abcdef"
           HEX_VALUE="${HEX_VALUE}0123456789abcdef0123456789abcdef"
           sed -i "s/CHANGE_ME_TO_A_128_CHARACTER_HEX_STRING/${HEX_VALUE}/g" .env
+          # Ensure MongoDB root password is set for CI
+          sed -i 's/MONGODB_ROOT_PASSWORD=test_password_ci_12345678/MONGODB_ROOT_PASSWORD=test_mongodb_root_password_12345678_ci_only/g' .env
+
+      - name: Validate critical environment variables
+        run: |
+          echo "Validating critical environment variables..."
+          CRITICAL_VARS=(
+            "POSTGRES_PASSWORD"
+            "MONGODB_ROOT_PASSWORD"
+            "REDIS_PASSWORD"
+            "CHATWOOT_SECRET_KEY_BASE"
+            "EVOLUTION_API_KEY"
+            "LOWCODER_ENCRYPTION_PASSWORD"
+            "LOWCODER_ENCRYPTION_SALT"
+            "DIRECTUS_SECRET"
+            "N8N_ENCRYPTION_KEY"
+          )
+
+          MISSING_VARS=()
+          for var in "${CRITICAL_VARS[@]}"; do
+            if ! grep -q "^${var}=" .env || grep -q "^${var}=CHANGE_ME" .env || grep -q "^${var}=<$" .env; then
+              MISSING_VARS+=("$var")
+            fi
+          done
+
+          if [ ${#MISSING_VARS[@]} -eq 0 ]; then
+            echo "✅ All critical environment variables are set"
+          else
+            echo "❌ Missing or unset critical environment variables:"
+            printf '%s\n' "${MISSING_VARS[@]}"
+            echo "Please check .env file configuration"
+            exit 1
+          fi
 
       - name: Pull Docker images
         run: docker compose pull

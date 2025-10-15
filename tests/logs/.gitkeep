@@ -1,0 +1,2 @@
+# This file ensures the test logs directory is tracked by Git
+# Log files will be generated during CI runs and uploaded as artifacts
