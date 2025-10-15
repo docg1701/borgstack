@@ -8,7 +8,7 @@ This section defines the **DEFINITIVE technology selection** for BorgStack. All 
 |----------|-----------|---------|---------|-----------|
 | **Core Infrastructure** |
 | Orchestration | Docker Compose | v2 (latest) | Container orchestration and service management | Industry standard for multi-container applications; simpler than Kubernetes for single-server deployments |
-| Operating System | Ubuntu Server LTS | 24.04 | Host operating system | Long-term support until 2029; excellent Docker compatibility; widespread documentation |
+| Operating System | GNU/Linux | Distribuição compatível | Host operating system | Compatibilidade com Docker; suporte a containers; ampla documentação |
 | Reverse Proxy | Caddy | 2.10-alpine | HTTPS termination and routing | Zero-configuration automatic SSL/TLS; simpler than nginx for this use case |
 | **Databases & Caching** |
 | Relational Database | PostgreSQL + pgvector | 18.0 (pgvector/pgvector:pg18) | Primary database for n8n, Chatwoot, Directus, Evolution API | Latest PostgreSQL with vector search for RAG/LLM integrations; shared to reduce infrastructure complexity |
@@ -26,7 +26,7 @@ This section defines the **DEFINITIVE technology selection** for BorgStack. All 
 | **Development & Operations** |
 | Container Runtime | Docker Engine | Latest stable | Container execution environment | Required by Docker Compose; installed by bootstrap script |
 | Version Control | Git | Latest stable | Configuration management | Tracks docker-compose.yml and configuration changes |
-| Scripting | Bash | 5.x (Ubuntu default) | Bootstrap and automation scripts | Native to Ubuntu; used for setup automation |
+| Scripting | Bash | 5.x (GNU/Linux default) | Bootstrap and automation scripts | Native to GNU/Linux; used for setup automation |
 | **Monitoring & Logging** |
 | Log Aggregation | Docker Logs | Native (docker compose logs) | Centralized log access | Built-in; no additional infrastructure needed per NFR14 |
 | Health Checks | Docker Healthcheck | Native | Container availability monitoring | Built-in Docker Compose feature |

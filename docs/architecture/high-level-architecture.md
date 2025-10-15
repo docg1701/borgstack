@@ -2,7 +2,7 @@
 
 ## Technical Summary
 
-BorgStack is a **containerized microservices infrastructure** deployed via Docker Compose on Ubuntu 24.04 LTS. The architecture integrates 13 open source components into a unified automation and customer service platform for Brazilian businesses seeking data sovereignty and zero licensing costs.
+BorgStack is a **containerized microservices infrastructure** deployed via Docker Compose on GNU/Linux. The architecture integrates 13 open source components into a unified automation and customer service platform for Brazilian businesses seeking data sovereignty and zero licensing costs.
 
 The system uses **Docker networks for service isolation**, with an internal network (`borgstack_internal`) for secure inter-service communication and Caddy reverse proxy handling external HTTPS access with automatic SSL certificate management. Core infrastructure components include PostgreSQL 18 with pgvector extension (shared by n8n, Chatwoot, Directus, Evolution API), MongoDB 7.0 (dedicated to Lowcoder), Redis 8.2 (shared caching/queuing), and SeaweedFS (S3-compatible object storage).
 
@@ -10,7 +10,7 @@ Integration occurs through **HTTP APIs and webhooks** between services, with n8n
 
 ## Platform and Infrastructure Choice
 
-**Platform:** Self-Hosted Docker Infrastructure on Ubuntu 24.04 LTS
+**Platform:** Self-Hosted Docker Infrastructure on GNU/Linux
 
 **Key Services:**
 - **Orchestration:** Docker Compose v2
@@ -40,7 +40,7 @@ borgstack/
 ├── .env.example                # Environment variable template
 ├── Caddyfile                   # Reverse proxy configuration
 ├── scripts/
-│   ├── bootstrap.sh            # Ubuntu 24.04 setup automation
+│   ├── bootstrap.sh            # GNU/Linux setup automation
 │   └── healthcheck.sh          # Deployment verification
 ├── config/                     # Service-specific configurations
 │   ├── postgresql/

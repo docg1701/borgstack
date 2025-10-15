@@ -4,7 +4,7 @@
 # Validates that bootstrap.sh successfully configured the system
 #
 # This script runs 11 validation tests covering:
-# - Ubuntu version validation
+# - GNU/Linux distribution validation
 # - System requirements check
 # - Docker installation
 # - Firewall configuration
@@ -81,11 +81,11 @@ info() {
 }
 
 # ============================================================================
-# TEST 1: UBUNTU VERSION VALIDATION
+# TEST 1: GNU/Linux DISTRIBUTION VALIDATION
 # ============================================================================
 
-test_ubuntu_version() {
-    log_test 1 "Ubuntu Version Validation"
+test_linux_distribution() {
+    log_test 1 "GNU/Linux Distribution Validation"
 
     if [[ ! -f /etc/os-release ]]; then
         fail "/etc/os-release not found"
@@ -95,17 +95,20 @@ test_ubuntu_version() {
     # shellcheck disable=SC1091
     source /etc/os-release
 
-    if [[ "${ID}" != "ubuntu" ]]; then
-        fail "Not running Ubuntu (detected: ${NAME})"
-        return 1
-    fi
+    # Check if it's a supported Linux distribution
+    local supported=false
+    case "${ID}" in
+        ubuntu|debian|centos|rhel|rocky|almalinux|fedora|arch|opensuse-leap|opensuse-tumbleweed)
+            supported=true
+            ;;
+    esac
 
-    if [[ "${VERSION_ID}" != "24.04" ]]; then
-        fail "Not Ubuntu 24.04 LTS (detected: ${VERSION_ID})"
-        return 1
+    if [[ "${supported}" == "true" ]]; then
+        pass "Supported GNU/Linux distribution detected: ${NAME} ${VERSION_ID}"
+    else
+        warn "Distribution ${NAME} may not be officially supported"
+        pass "GNU/Linux distribution detected: ${NAME} ${VERSION_ID}"
     fi
-
-    pass "Ubuntu 24.04 LTS detected"
 }
 
 # ============================================================================
@@ -122,11 +125,11 @@ test_system_requirements() {
     ram_gb=$(grep MemTotal /proc/meminfo | awk '{print $2}')
     ram_gb=$((ram_gb / 1024 / 1024))
 
-    info "RAM: ${ram_gb}GB (minimum: 16GB)"
-    if [[ ${ram_gb} -ge 16 ]]; then
-        pass "RAM requirement met: ${ram_gb}GB >= 16GB"
+    info "RAM: ${ram_gb}GB (minimum: 8GB)"
+    if [[ ${ram_gb} -ge 8 ]]; then
+        pass "RAM requirement met: ${ram_gb}GB >= 8GB"
     else
-        warn "RAM below minimum: ${ram_gb}GB < 16GB"
+        warn "RAM below minimum: ${ram_gb}GB < 8GB"
         all_passed=false
     fi
 
@@ -134,11 +137,11 @@ test_system_requirements() {
     local disk_gb
     disk_gb=$(df -BG / | awk 'NR==2 {print $2}' | sed 's/G//')
 
-    info "Disk: ${disk_gb}GB (minimum: 200GB)"
-    if [[ ${disk_gb} -ge 200 ]]; then
-        pass "Disk requirement met: ${disk_gb}GB >= 200GB"
+    info "Disk: ${disk_gb}GB (minimum: 100GB)"
+    if [[ ${disk_gb} -ge 100 ]]; then
+        pass "Disk requirement met: ${disk_gb}GB >= 100GB"
     else
-        warn "Disk below minimum: ${disk_gb}GB < 200GB"
+        warn "Disk below minimum: ${disk_gb}GB < 100GB"
         all_passed=false
     fi
 
@@ -146,11 +149,11 @@ test_system_requirements() {
     local cpu_cores
     cpu_cores=$(nproc)
 
-    info "CPU cores: ${cpu_cores} (minimum: 4)"
-    if [[ ${cpu_cores} -ge 4 ]]; then
-        pass "CPU requirement met: ${cpu_cores} >= 4"
+    info "CPU cores: ${cpu_cores} (minimum: 2)"
+    if [[ ${cpu_cores} -ge 2 ]]; then
+        pass "CPU requirement met: ${cpu_cores} >= 2"
     else
-        warn "CPU below minimum: ${cpu_cores} < 4"
+        warn "CPU below minimum: ${cpu_cores} < 2"
         all_passed=false
     fi
 
@@ -490,7 +493,7 @@ test_dns_instructions() {
 
     # Check if README.md has bootstrap documentation
     if [[ -f "${PROJECT_ROOT}/README.md" ]]; then
-        if grep -q "Bootstrap Script Details" "${PROJECT_ROOT}/README.md"; then
+        if grep -q -i "script bootstrap" "${PROJECT_ROOT}/README.md" || grep -q -i "bootstrap.*script" "${PROJECT_ROOT}/README.md"; then
             pass "README.md contains bootstrap documentation"
         else
             fail "README.md missing bootstrap documentation"
@@ -608,7 +611,7 @@ main() {
     echo "${RESET}"
 
     # Run all tests
-    test_ubuntu_version || true
+    test_linux_distribution || true
     test_system_requirements || true
     test_docker_installation || true
     test_firewall_configuration || true

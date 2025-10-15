@@ -24,7 +24,7 @@ BorgStack is a greenfield infrastructure project built from scratch. There are n
 
 ### Technical Summary
 
-BorgStack is a **containerized microservices infrastructure** deployed via Docker Compose on Ubuntu 24.04 LTS. The architecture integrates 13 open source components into a unified automation and customer service platform for Brazilian businesses seeking data sovereignty and zero licensing costs.
+BorgStack is a **containerized microservices infrastructure** deployed via Docker Compose on GNU/Linux. The architecture integrates 13 open source components into a unified automation and customer service platform for Brazilian businesses seeking data sovereignty and zero licensing costs.
 
 The system uses **Docker networks for service isolation**, with an internal network (`borgstack_internal`) for secure inter-service communication and Caddy reverse proxy handling external HTTPS access with automatic SSL certificate management. Core infrastructure components include PostgreSQL 18 with pgvector extension (shared by n8n, Chatwoot, Directus, Evolution API), MongoDB 7.0 (dedicated to Lowcoder), Redis 8.2 (shared caching/queuing), and SeaweedFS (S3-compatible object storage).
 
@@ -32,7 +32,7 @@ Integration occurs through **HTTP APIs and webhooks** between services, with n8n
 
 ### Platform and Infrastructure Choice
 
-**Platform:** Self-Hosted Docker Infrastructure on Ubuntu 24.04 LTS
+**Platform:** Self-Hosted Docker Infrastructure on GNU/Linux
 
 **Key Services:**
 - **Orchestration:** Docker Compose v2
@@ -62,7 +62,7 @@ borgstack/
 ├── .env.example                # Environment variable template
 ├── Caddyfile                   # Reverse proxy configuration
 ├── scripts/
-│   ├── bootstrap.sh            # Ubuntu 24.04 setup automation
+│   ├── bootstrap.sh            # GNU/Linux setup automation
 │   └── healthcheck.sh          # Deployment verification
 ├── config/                     # Service-specific configurations
 │   ├── postgresql/
@@ -174,7 +174,7 @@ This section defines the **DEFINITIVE technology selection** for BorgStack. All 
 |----------|-----------|---------|---------|-----------|
 | **Core Infrastructure** |
 | Orchestration | Docker Compose | v2 (latest) | Container orchestration and service management | Industry standard for multi-container applications; simpler than Kubernetes for single-server deployments |
-| Operating System | Ubuntu Server LTS | 24.04 | Host operating system | Long-term support until 2029; excellent Docker compatibility; widespread documentation |
+| Operating System | GNU/Linux | Distribuição compatível | Host operating system | Compatibilidade com Docker; suporte a containers; ampla documentação |
 | Reverse Proxy | Caddy | 2.10-alpine | HTTPS termination and routing | Zero-configuration automatic SSL/TLS; simpler than nginx for this use case |
 | **Databases & Caching** |
 | Relational Database | PostgreSQL + pgvector | 18.0 (pgvector/pgvector:pg18) | Primary database for n8n, Chatwoot, Directus, Evolution API | Latest PostgreSQL with vector search for RAG/LLM integrations; shared to reduce infrastructure complexity |
@@ -192,7 +192,7 @@ This section defines the **DEFINITIVE technology selection** for BorgStack. All 
 | **Development & Operations** |
 | Container Runtime | Docker Engine | Latest stable | Container execution environment | Required by Docker Compose; installed by bootstrap script |
 | Version Control | Git | Latest stable | Configuration management | Tracks docker-compose.yml and configuration changes |
-| Scripting | Bash | 5.x (Ubuntu default) | Bootstrap and automation scripts | Native to Ubuntu; used for setup automation |
+| Scripting | Bash | 5.x (GNU/Linux default) | Bootstrap and automation scripts | Native to GNU/Linux; used for setup automation |
 | **Monitoring & Logging** |
 | Log Aggregation | Docker Logs | Native (docker compose logs) | Centralized log access | Built-in; no additional infrastructure needed per NFR14 |
 | Health Checks | Docker Healthcheck | Native | Container availability monitoring | Built-in Docker Compose feature |
@@ -1022,12 +1022,12 @@ sequenceDiagram
 
 ### Workflow 2: Initial Deployment and Bootstrap
 
-This workflow shows the deployment process from clean Ubuntu server to running BorgStack installation.
+This workflow shows the deployment process from clean GNU/Linux server to running BorgStack installation.
 
 ```mermaid
 sequenceDiagram
     participant User
-    participant Ubuntu as Ubuntu 24.04 Server
+    participant GNU/Linux Server
     participant Bootstrap as bootstrap.sh
     participant Docker
     participant Compose as Docker Compose
@@ -1035,27 +1035,27 @@ sequenceDiagram
     participant Caddy
     participant LetsEncrypt as Let's Encrypt
 
-    User->>Ubuntu: SSH into clean server
-    User->>Ubuntu: git clone borgstack repo to ~/borgstack
+    User->>GNU/Linux: SSH into clean server
+    User->>GNU/Linux: git clone borgstack repo to ~/borgstack
     User->>Bootstrap: ./scripts/bootstrap.sh
 
     Note over Bootstrap: System preparation phase
 
-    Bootstrap->>Ubuntu: apt update && apt upgrade
-    Bootstrap->>Ubuntu: Install prerequisites:<br/>curl, git, ca-certificates
-    Bootstrap->>Ubuntu: Add Docker GPG key and repository
-    Bootstrap->>Ubuntu: apt install docker-ce docker-compose-plugin
-    Ubuntu-->>Bootstrap: Docker installed
+    Bootstrap->>GNU/Linux: apt update && apt upgrade
+    Bootstrap->>GNU/Linux: Install prerequisites:<br/>curl, git, ca-certificates
+    Bootstrap->>GNU/Linux: Add Docker GPG key and repository
+    Bootstrap->>GNU/Linux: apt install docker-ce docker-compose-plugin
+    GNU/Linux-->>Bootstrap: Docker installed
 
     Bootstrap->>Docker: docker --version (verify)
     Bootstrap->>Compose: docker compose version (verify)
     Docker-->>Bootstrap: Version confirmed
 
-    Bootstrap->>Ubuntu: usermod -aG docker $USER
+    Bootstrap->>GNU/Linux: usermod -aG docker $USER
     Bootstrap->>User: Prompt for environment variables<br/>(domains, passwords, credentials)
     User-->>Bootstrap: Provide configuration values
-    Bootstrap->>Ubuntu: Generate .env file from .env.example
-    Bootstrap->>Ubuntu: Set .env permissions to 600
+    Bootstrap->>GNU/Linux: Generate .env file from .env.example
+    Bootstrap->>GNU/Linux: Set .env permissions to 600
 
     Note over Bootstrap: Validation phase
 
@@ -1552,7 +1552,7 @@ borgstack/
 │       └── backup-config.json        # Backup job definitions
 │
 ├── scripts/
-│   ├── bootstrap.sh                  # Ubuntu 24.04 automated setup
+│   ├── bootstrap.sh                  # GNU/Linux automated setup
 │   ├── healthcheck.sh                # Post-deployment verification
 │   ├── backup-now.sh                 # Manual backup trigger
 │   ├── restore.sh                    # Disaster recovery script
@@ -1608,13 +1608,13 @@ This section defines the deployment setup and operational workflow for BorgStack
 
 ### Local Development Setup
 
-**Note:** BorgStack is designed for server deployment. "Local development" means deploying on a local Ubuntu VM or test server for learning/testing purposes before production deployment.
+**Note:** BorgStack is designed for server deployment. "Local development" means deploying on a local GNU/Linux VM or test server for learning/testing purposes before production deployment.
 
 #### Prerequisites
 
 ```bash
 # Target system requirements
-# - Ubuntu 24.04 LTS (clean installation)
+# - GNU/Linux (clean installation)
 # - 8 vCPUs (minimum 4 for testing)
 # - 36GB RAM (minimum 16GB for testing)
 # - 500GB SSD (minimum 200GB for testing)
@@ -1624,7 +1624,7 @@ This section defines the deployment setup and operational workflow for BorgStack
 lscpu | grep "CPU(s)"              # Check CPU count
 free -h                             # Check RAM
 df -h                               # Check disk space
-cat /etc/os-release                 # Verify Ubuntu 24.04
+cat /etc/os-release                 # Verify GNU/Linux
 ```
 
 #### Initial Setup
@@ -1880,7 +1880,7 @@ BorgStack uses a **single-server containerized deployment** model optimized for 
 - **Static Assets:** Each service serves its own static assets from container
 
 **Backend Deployment:**
-- **Platform:** Ubuntu 24.04 LTS server (VPS, bare metal, or private cloud)
+- **Platform:** GNU/Linux server (VPS, bare metal, or private cloud)
 - **Build Command:** `docker compose pull` (downloads pre-built images)
 - **Deployment Method:** Docker Compose orchestration
 - **Deployment Directory:** `~/borgstack` (home directory of deployment user)
@@ -1899,7 +1899,7 @@ BorgStack uses a **single-server containerized deployment** model optimized for 
 ### Deployment Checklist
 
 **Pre-Deployment:**
-- [ ] Server provisioned with Ubuntu 24.04 LTS
+- [ ] Server provisioned with GNU/Linux
 - [ ] DNS A records configured pointing to server IP
 - [ ] Firewall allows ports 80, 443, 22
 - [ ] SSH key-based authentication configured
@@ -2075,7 +2075,7 @@ BorgStack uses a **single-server containerized deployment** model optimized for 
     ```
   - 🔒 **Full disk encryption (LUKS)** for production VPS:
     ```bash
-    # During Ubuntu installation, enable LUKS encryption
+    # During GNU/Linux installation, enable LUKS encryption
     # Or for existing volumes:
     cryptsetup luksFormat /dev/vdb
     cryptsetup luksOpen /dev/vdb borgstack_encrypted

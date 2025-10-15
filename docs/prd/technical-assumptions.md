@@ -15,7 +15,7 @@ The project will use a monorepo structure with `docker-compose.yml` as the cente
 **Testing Level: Unit + Integration**
 - Unit tests for configuration validation and bootstrapping scripts
 - Integration tests for inter-service communication
-- End-to-end deployment testing on clean Ubuntu environments
+- End-to-end deployment testing on clean GNU/Linux environments
 - Manual testing procedures for user documentation validation
 
 ## Additional Technical Assumptions and Requests
@@ -62,7 +62,7 @@ The project will use a monorepo structure with `docker-compose.yml` as the cente
 - Consistent naming conventions across all components
 
 **Infrastructure Requirements:**
-- Ubuntu 24.04 LTS as target deployment platform
+- GNU/Linux as target deployment platform
 - Docker Compose v2 with official images only
 - Static IP and domain name required for SSL certificates
 

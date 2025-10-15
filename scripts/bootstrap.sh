@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # BorgStack Bootstrap Script
-# Automated setup for Ubuntu 24.04 LTS
+# Automated setup for GNU/Linux
 #
 # This script:
 # 1. Validates system requirements (OS, RAM, CPU, disk)
@@ -24,12 +24,12 @@ PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 LOG_FILE="/tmp/borgstack-bootstrap.log"
 
 # System requirements
-MIN_RAM_GB=16
-RECOMMENDED_RAM_GB=36
-MIN_DISK_GB=200
-RECOMMENDED_DISK_GB=500
-MIN_CPU_CORES=4
-RECOMMENDED_CPU_CORES=8
+MIN_RAM_GB=8
+RECOMMENDED_RAM_GB=18
+MIN_DISK_GB=100
+RECOMMENDED_DISK_GB=250
+MIN_CPU_CORES=2
+RECOMMENDED_CPU_CORES=4
 
 # ============================================================================
 # COLOR OUTPUT FUNCTIONS
@@ -115,30 +115,33 @@ get_cpu_cores() {
 # VALIDATION FUNCTIONS
 # ============================================================================
 
-validate_ubuntu_version() {
-    log_section "Validating Ubuntu Version"
+validate_linux_distribution() {
+    log_section "Validating Linux Distribution"
 
     if [[ ! -f /etc/os-release ]]; then
         log_error "Cannot detect OS version. /etc/os-release not found."
-        log_error "This script requires Ubuntu 24.04 LTS."
+        log_error "This script requires a GNU/Linux distribution."
         exit 1
     fi
 
     # shellcheck disable=SC1091
     source /etc/os-release
 
-    if [[ "${ID}" != "ubuntu" ]]; then
-        log_error "This script requires Ubuntu. Detected: ${NAME}"
-        exit 1
+    if [[ "${ID}" == "ubuntu" ]]; then
+        log_success "GNU/Linux (Ubuntu ${VERSION_ID}) detected"
+    elif [[ "${ID}" == "debian" ]]; then
+        log_success "Debian ${VERSION_ID} detected"
+    elif [[ "${ID}" == "centos" ]] || [[ "${ID}" == "rhel" ]] || [[ "${ID}" == "rocky" ]] || [[ "${ID}" == "almalinux" ]]; then
+        log_success "${NAME} ${VERSION_ID} detected"
+    elif [[ "${ID}" == "fedora" ]]; then
+        log_success "Fedora ${VERSION_ID} detected"
+    elif [[ "${ID}" == "arch" ]]; then
+        log_success "Arch Linux detected"
+    elif [[ "${ID}" =~ ^opensuse ]]; then
+        log_success "${NAME} detected"
+    else
+        log_warning "${NAME} detected - Docker installation may require manual configuration"
     fi
-
-    if [[ "${VERSION_ID}" != "24.04" ]]; then
-        log_error "This script requires Ubuntu 24.04 LTS. Detected: ${VERSION_ID}"
-        log_error "Please use Ubuntu 24.04 LTS (Noble Numbat)."
-        exit 1
-    fi
-
-    log_success "Ubuntu 24.04 LTS detected"
 }
 
 validate_system_requirements() {
@@ -216,33 +219,14 @@ install_docker() {
         fi
     fi
 
-    log_info "Installing Docker Engine..."
+    log_info "Installing Docker Engine using official script..."
 
-    # Remove old Docker versions if present
-    sudo apt-get remove -y docker docker-engine docker.io containerd runc >/dev/null 2>&1 || true
-
-    # Install dependencies
-    log_info "Installing dependencies..."
-    sudo apt-get update -qq
-    sudo apt-get install -y -qq ca-certificates curl gnupg
-
-    # Add Docker's official GPG key
-    log_info "Adding Docker GPG key..."
-    sudo install -m 0755 -d /etc/apt/keyrings
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-    sudo chmod a+r /etc/apt/keyrings/docker.gpg
-
-    # Add Docker APT repository
-    log_info "Adding Docker repository..."
-    echo \
-      "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
-      $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
-      sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-
-    # Install Docker Engine and Compose plugin
-    log_info "Installing Docker packages..."
-    sudo apt-get update -qq
-    sudo apt-get install -y -qq docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+    # Use Docker's official installation script for cross-platform compatibility
+    if ! curl -fsSL https://get.docker.com | sh; then
+        log_error "Failed to install Docker using official script"
+        log_error "Please install Docker manually for your distribution"
+        exit 1
+    fi
 
     # Add user to docker group
     log_info "Adding user '${USER}' to docker group..."
@@ -250,8 +234,12 @@ install_docker() {
 
     # Start and enable Docker service
     log_info "Starting Docker service..."
-    sudo systemctl start docker
-    sudo systemctl enable docker >/dev/null 2>&1
+    if command_exists systemctl; then
+        sudo systemctl start docker
+        sudo systemctl enable docker >/dev/null 2>&1
+    elif command_exists service; then
+        sudo service docker start
+    fi
 
     # Verify installation
     local docker_version compose_version
@@ -272,18 +260,33 @@ install_docker() {
 install_system_dependencies() {
     log_section "Installing System Dependencies"
 
-    log_info "Updating package index..."
-    sudo apt-get update -qq
-
-    log_info "Installing essential packages..."
-    sudo apt-get install -y -qq \
-        curl \
-        wget \
-        git \
-        ufw \
-        dnsutils \
-        htop \
-        sysstat
+    # Detect package manager and install dependencies
+    if command_exists apt-get; then
+        log_info "Using APT package manager (Debian/Ubuntu)"
+        sudo apt-get update -qq
+        sudo apt-get install -y -qq curl wget git ufw dnsutils htop sysstat
+    elif command_exists dnf; then
+        log_info "Using DNF package manager (Fedora/RHEL/CentOS)"
+        sudo dnf update -y
+        sudo dnf install -y curl wget git firewalld bind-utils htop sysstat
+    elif command_exists yum; then
+        log_info "Using YUM package manager (older RHEL/CentOS)"
+        sudo yum update -y
+        sudo yum install -y curl wget git firewalld bind-utils htop sysstat
+    elif command_exists pacman; then
+        log_info "Using Pacman package manager (Arch Linux)"
+        sudo pacman -Sy
+        sudo pacman -S --noconfirm curl wget git ufw htop
+        sudo pacman -S --noconfirm bind-tools sysstat || true
+    elif command_exists zypper; then
+        log_info "Using Zypper package manager (openSUSE)"
+        sudo zypper refresh
+        sudo zypper install -y curl wget git firewalld bind-utils htop sysstat
+    else
+        log_error "Unsupported package manager. Please install dependencies manually:"
+        log_error "Required: curl, wget, git, firewall, dnsutils, htop, sysstat"
+        exit 1
+    fi
 
     log_success "System dependencies installed"
 }
@@ -293,8 +296,21 @@ install_system_dependencies() {
 # ============================================================================
 
 configure_firewall() {
-    log_section "Configuring UFW Firewall"
+    log_section "Configuring Firewall"
 
+    # Detect available firewall tool
+    if command_exists ufw; then
+        configure_ufw
+    elif command_exists firewall-cmd; then
+        configure_firewalld
+    else
+        log_warning "No supported firewall found. Please configure firewall manually."
+        log_info "Required ports: 22/tcp (SSH), 80/tcp (HTTP), 443/tcp (HTTPS)"
+        return 0
+    fi
+}
+
+configure_ufw() {
     # Check if UFW is already enabled
     if sudo ufw status | grep -q "Status: active"; then
         log_info "UFW firewall already active"
@@ -334,6 +350,50 @@ configure_firewall() {
     # Display status
     echo ""
     sudo ufw status verbose
+    echo ""
+
+    log_success "Firewall configured"
+}
+
+configure_firewalld() {
+    # Check if firewalld is running
+    if sudo firewall-cmd --state >/dev/null 2>&1; then
+        log_info "firewalld is already running"
+
+        # Check if required services are already allowed
+        if sudo firewall-cmd --list-services | grep -q "ssh" && \
+           sudo firewall-cmd --list-services | grep -q "http" && \
+           sudo firewall-cmd --list-services | grep -q "https"; then
+            log_success "Required firewall rules already configured"
+            return 0
+        fi
+    else
+        log_info "Starting firewalld..."
+        sudo systemctl start firewalld
+        sudo systemctl enable firewalld >/dev/null 2>&1
+    fi
+
+    log_info "Configuring firewalld rules..."
+
+    # Allow SSH
+    log_info "Allowing SSH service..."
+    sudo firewall-cmd --permanent --add-service=ssh >/dev/null
+    log_warning "If you use a custom SSH port, adjust firewalld rules manually"
+
+    # Allow HTTP
+    log_info "Allowing HTTP service..."
+    sudo firewall-cmd --permanent --add-service=http >/dev/null
+
+    # Allow HTTPS
+    log_info "Allowing HTTPS service..."
+    sudo firewall-cmd --permanent --add-service=https >/dev/null
+
+    # Reload firewall to apply rules
+    sudo firewall-cmd --reload >/dev/null
+
+    # Display status
+    echo ""
+    sudo firewall-cmd --list-all
     echo ""
 
     log_success "Firewall configured"
@@ -744,7 +804,7 @@ main() {
     echo "║                                                                ║"
     echo "║                  BorgStack Bootstrap Script                    ║"
     echo "║                                                                ║"
-    echo "║            Automated Ubuntu 24.04 LTS Setup                    ║"
+    echo "║              Automated GNU/Linux Setup                        ║"
     echo "║                                                                ║"
     echo "╚════════════════════════════════════════════════════════════════╝"
     echo "${RESET}"
@@ -768,7 +828,7 @@ main() {
     fi
 
     # Execute bootstrap steps
-    validate_ubuntu_version
+    validate_linux_distribution
     validate_system_requirements
     install_system_dependencies
     install_docker

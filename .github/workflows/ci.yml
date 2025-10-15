@@ -1,3 +1,4 @@
+---
 name: BorgStack CI
 
 # Trigger CI on push to main/feature branches and pull requests
@@ -15,7 +16,7 @@ jobs:
   # Job 1: Validate Docker Compose files
   validate-docker-compose:
     name: Validate Docker Compose Configuration
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
@@ -37,7 +38,8 @@ jobs:
       - name: Validate docker-compose.override.yml syntax
         run: |
           echo "Validating docker-compose.override.yml..."
-          if docker compose -f docker-compose.yml -f docker-compose.override.yml config --quiet; then
+          if docker compose -f docker-compose.yml \
+             -f docker-compose.override.yml config --quiet; then
             echo "✅ docker-compose.override.yml is valid"
           else
             echo "❌ docker-compose.override.yml validation failed"
@@ -47,7 +49,8 @@ jobs:
       - name: Validate docker-compose.prod.yml syntax
         run: |
           echo "Validating docker-compose.prod.yml..."
-          if docker compose -f docker-compose.yml -f docker-compose.prod.yml config --quiet; then
+          if docker compose -f docker-compose.yml \
+             -f docker-compose.prod.yml config --quiet; then
             echo "✅ docker-compose.prod.yml is valid"
           else
             echo "❌ docker-compose.prod.yml validation failed"
@@ -57,7 +60,8 @@ jobs:
       - name: Check for 'latest' tags in docker-compose.yml
         run: |
           echo "Checking for 'latest' image tags (not allowed per coding standards)..."
-          if grep -n "image:.*:latest" docker-compose.yml docker-compose.override.yml docker-compose.prod.yml 2>/dev/null; then
+          if grep -n "image:.*:latest" docker-compose.yml \
+             docker-compose.override.yml docker-compose.prod.yml 2>/dev/null; then
             echo "❌ Found 'latest' tag(s) in Docker Compose files"
             echo "Per coding standards, all images must use pinned versions"
             exit 1
@@ -68,13 +72,17 @@ jobs:
       - name: Verify network naming conventions
         run: |
           echo "Verifying network naming follows Docker Compose best practices..."
-          INTERNAL_NAME=$(grep -A 1 "^  internal:" docker-compose.yml | grep "name:" | awk '{print $2}' || echo "")
-          EXTERNAL_NAME=$(grep -A 1 "^  external:" docker-compose.yml | grep "name:" | awk '{print $2}' || echo "")
+          INTERNAL_NAME=$(grep -A 1 "^  internal:" docker-compose.yml \
+                         | grep "name:" | awk '{print $2}' || echo "")
+          EXTERNAL_NAME=$(grep -A 1 "^  external:" docker-compose.yml \
+                         | grep "name:" | awk '{print $2}' || echo "")
 
-          if [ "$INTERNAL_NAME" = "borgstack_internal" ] && [ "$EXTERNAL_NAME" = "borgstack_external" ]; then
-            echo "✅ Network naming conventions verified (short keys, full names in 'name:' field)"
+          if [ "$INTERNAL_NAME" = "borgstack_internal" ] && \
+             [ "$EXTERNAL_NAME" = "borgstack_external" ]; then
+            echo "✅ Network naming verified (short keys, full names in 'name:' field)"
           else
-            echo "❌ Network naming incorrect. Expected: internal->borgstack_internal, external->borgstack_external"
+            echo "❌ Network naming incorrect. Expected: internal->borgstack_internal"
+            echo "   external->borgstack_external"
             echo "  Found: internal->$INTERNAL_NAME, external->$EXTERNAL_NAME"
             exit 1
           fi
@@ -82,7 +90,9 @@ jobs:
       - name: Verify volume naming conventions
         run: |
           echo "Verifying volume naming follows 'borgstack_' prefix convention..."
-          if docker compose -f docker-compose.yml config 2>/dev/null | awk '/^volumes:/,/^[^ ]/' | grep "name:" | grep -v "name: borgstack_"; then
+          if docker compose -f docker-compose.yml config 2>/dev/null \
+             | awk '/^volumes:/,/^[^ ]/' | grep "name:" \
+             | grep -v "name: borgstack_"; then
             echo "❌ Found volume(s) not following 'borgstack_' prefix convention"
             exit 1
           else
@@ -98,7 +108,7 @@ jobs:
   # Job 2: Verify repository structure
   verify-structure:
     name: Verify Repository Structure
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
@@ -187,7 +197,7 @@ jobs:
   # Job 3: Service Validation (Matrix Strategy - Replaces 13 separate jobs!)
   validate-services:
     name: Validate ${{ matrix.service }}
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
 
     strategy:
       fail-fast: false
@@ -308,7 +318,7 @@ jobs:
   # Job 4: Integration Tests
   integration-tests:
     name: Integration Tests (Story 6.1)
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     needs: [validate-docker-compose, verify-structure, validate-services]
 
@@ -323,9 +333,13 @@ jobs:
         run: |
           cp .env.example .env
           # Use test credentials for CI
-          sed -i 's/CHANGE_ME_TO_A_SECURE_PASSWORD_MIN_32_CHARS/test_password_ci_environment_12345678/g' .env
+          sed -i 's/CHANGE_ME_TO_A_SECURE_PASSWORD_MIN_32_CHARS/test_password_ci_12345678/g' .env
           sed -i 's/CHANGE_ME_TO_A_SECURE_KEY_MIN_32_CHARS/test_key_ci_environment_1234567890/g' .env
-          sed -i 's/CHANGE_ME_TO_A_128_CHARACTER_HEX_STRING/0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef/g' .env
+          # Replace the 128-char hex string with test value
+          HEX_VALUE="0123456789abcdef0123456789abcdef0123456789abcdef"
+          HEX_VALUE="${HEX_VALUE}0123456789abcdef0123456789abcdef"
+          HEX_VALUE="${HEX_VALUE}0123456789abcdef0123456789abcdef"
+          sed -i "s/CHANGE_ME_TO_A_128_CHARACTER_HEX_STRING/${HEX_VALUE}/g" .env
 
       - name: Pull Docker images
         run: docker compose pull
@@ -338,8 +352,10 @@ jobs:
           echo "Waiting for services to become healthy (max 10 minutes)..."
           timeout 600 bash -c "
             while true; do
-              HEALTHY=\$(docker compose ps --format json | jq -s '[.[] | select(.Health == \"healthy\")] | length')
-              TOTAL=\$(docker compose ps --format json | jq -s '[.[] | select(.Health != null)] | length')
+              HEALTHY=\$(docker compose ps --format json \
+                         | jq -s '[.[] | select(.Health == \"healthy\")] | length')
+              TOTAL=\$(docker compose ps --format json \
+                       | jq -s '[.[] | select(.Health != null)] | length')
               echo \"Healthy: \$HEALTHY/\$TOTAL\"
               if [ \"\$HEALTHY\" -eq \"\$TOTAL\" ] && [ \"\$HEALTHY\" -gt 0 ]; then
                 echo \"✅ All services healthy!\"

@@ -254,7 +254,7 @@ Este documento descreve a estratégia de backup do BorgStack e procedimentos det
 **Tempo estimado**: 4-8 horas (dependendo do tamanho dos dados)
 
 **Pré-requisitos**:
-- ✅ Novo servidor provisionado (Ubuntu 24.04)
+- ✅ Novo servidor provisionado (GNU/Linux)
 - ✅ Acesso SSH ao servidor
 - ✅ DNS apontando para novo servidor
 - ✅ Credenciais de backup disponíveis

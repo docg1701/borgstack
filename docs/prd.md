@@ -24,7 +24,7 @@ BorgStack addresses the need for a cost-effective automation solution for Portug
 
 FR1: The system shall provide a unified Docker Compose configuration that deploys all 13 components (PostgreSQL, MongoDB, Redis, SeaweedFS, n8n, Evolution API, Chatwoot, Lowcoder, Directus, Caddy, FileFlows, Duplicati), requiring manual configuration and environment setup.
 
-FR2: The system shall include a bootstrap script that automatically prepares Ubuntu 24.04 LTS servers with all required dependencies and configurations.
+FR2: The system shall include a bootstrap script that automatically prepares GNU/Linux servers with all required dependencies and configurations.
 
 FR3: The system shall provide integration capabilities between n8n, Evolution API, and Chatwoot for WhatsApp workflow automation and customer service, requiring custom HTTP node development in n8n and webhook configuration between components.
 
@@ -52,7 +52,7 @@ FR13: The system shall include intellectual property protection features includi
 
 ### Non-Functional Requirements
 
-NFR1: The system must achieve complete deployment within 4-6 hours on a clean Ubuntu 24.04 LTS VPS meeting minimum requirements (8 vCPUs, 36GB RAM, 500GB SSD), assuming no troubleshooting required.
+NFR1: The system must achieve complete deployment within 4-6 hours on a clean GNU/Linux VPS meeting minimum requirements (8 vCPUs, 36GB RAM, 500GB SSD), assuming no troubleshooting required.
 
 NFR2: The system must provide high availability on single server with automatic container restart on failure.
 
@@ -122,7 +122,7 @@ The project will use a monorepo structure with `docker-compose.yml` as the cente
 **Testing Level: Unit + Integration**
 - Unit tests for configuration validation and bootstrapping scripts
 - Integration tests for inter-service communication
-- End-to-end deployment testing on clean Ubuntu environments
+- End-to-end deployment testing on clean GNU/Linux environments
 - Manual testing procedures for user documentation validation
 
 ### Additional Technical Assumptions and Requests
@@ -169,7 +169,7 @@ The project will use a monorepo structure with `docker-compose.yml` as the cente
 - Consistent naming conventions across all components
 
 **Infrastructure Requirements:**
-- Ubuntu 24.04 LTS as target deployment platform
+- GNU/Linux as target deployment platform
 - Docker Compose v2 with official images only
 - Static IP and domain name required for SSL certificates
 
@@ -261,7 +261,7 @@ As a DevOps engineer, I want Caddy 2.10 configured as reverse proxy with automat
 6. Caddyfile properly structured for maintainability
 
 #### Story 1.6 Bootstrap Script Development
-As a deployment specialist, I want an automated bootstrap script for Ubuntu 24.04 LTS, so that users can deploy the entire stack with minimal manual intervention.
+As a deployment specialist, I want an automated bootstrap script for GNU/Linux, so that users can deploy the entire stack with minimal manual intervention.
 
 **Acceptance Criteria:**
 1. Bootstrap script checks system requirements
@@ -444,7 +444,7 @@ Note: Advanced performance testing, load testing, and security vulnerability ass
 As a technical writer, I want comprehensive Portuguese documentation covering all aspects of the system, so that Brazilian users can successfully deploy and use BorgStack.
 
 **Acceptance Criteria:**
-1. Installation guide for Ubuntu 24.04 LTS
+1. Installation guide for GNU/Linux
 2. Configuration documentation for all components
 3. Integration guides for common workflows
 4. Troubleshooting section with common issues
@@ -477,8 +477,8 @@ As a system administrator, I want documented procedures for updating individual 
 As a deployment engineer, I want a final verification that the complete stack deploys successfully, so that I can confidently deliver on the core project promise.
 
 **Acceptance Criteria:**
-1. Clean Ubuntu 24.04 LTS deployment tested
-2. Deployment within 4-6 hours verified on clean Ubuntu 24.04
+1. Clean GNU/Linux deployment tested
+2. Deployment within 4-6 hours verified on clean GNU/Linux
 3. All components functional after deployment
 4. Basic workflows tested and working
 5. Performance metrics within expected ranges
@@ -532,7 +532,7 @@ As a deployment engineer, I want a final verification that the complete stack de
 ### Technical Readiness
 **Technical constraints clearly defined:**
 - Docker Compose v2 requirement
-- Ubuntu 24.04 LTS target platform
+- GNU/Linux target platform
 - Internal network communication requirements
 - Component version specifications
 

@@ -13,7 +13,7 @@ BorgStack uses a **single-server containerized deployment** model optimized for 
 - **Static Assets:** Each service serves its own static assets from container
 
 **Backend Deployment:**
-- **Platform:** Ubuntu 24.04 LTS server (VPS, bare metal, or private cloud)
+- **Platform:** GNU/Linux server (VPS, bare metal, or private cloud)
 - **Build Command:** `docker compose pull` (downloads pre-built images)
 - **Deployment Method:** Docker Compose orchestration
 - **Deployment Directory:** `~/borgstack` (home directory of deployment user)
@@ -32,7 +32,7 @@ BorgStack uses a **single-server containerized deployment** model optimized for 
 ## Deployment Checklist
 
 **Pre-Deployment:**
-- [ ] Server provisioned with Ubuntu 24.04 LTS
+- [ ] Server provisioned with GNU/Linux
 - [ ] DNS A records configured pointing to server IP
 - [ ] Firewall allows ports 80, 443, 22
 - [ ] SSH key-based authentication configured

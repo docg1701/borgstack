@@ -68,7 +68,7 @@ As a DevOps engineer, I want Caddy 2.10 configured as reverse proxy with automat
 6. Caddyfile properly structured for maintainability
 
 ### Story 1.6 Bootstrap Script Development
-As a deployment specialist, I want an automated bootstrap script for Ubuntu 24.04 LTS, so that users can deploy the entire stack with minimal manual intervention.
+As a deployment specialist, I want an automated bootstrap script for GNU/Linux, so that users can deploy the entire stack with minimal manual intervention.
 
 **Acceptance Criteria:**
 1. Bootstrap script checks system requirements
@@ -251,7 +251,7 @@ Note: Advanced performance testing, load testing, and security vulnerability ass
 As a technical writer, I want comprehensive Portuguese documentation covering all aspects of the system, so that Brazilian users can successfully deploy and use BorgStack.
 
 **Acceptance Criteria:**
-1. Installation guide for Ubuntu 24.04 LTS
+1. Installation guide for GNU/Linux
 2. Configuration documentation for all components
 3. Integration guides for common workflows
 4. Troubleshooting section with common issues
@@ -284,8 +284,8 @@ As a system administrator, I want documented procedures for updating individual 
 As a deployment engineer, I want a final verification that the complete stack deploys successfully, so that I can confidently deliver on the core project promise.
 
 **Acceptance Criteria:**
-1. Clean Ubuntu 24.04 LTS deployment tested
-2. Deployment within 4-6 hours verified on clean Ubuntu 24.04
+1. Clean GNU/Linux deployment tested
+2. Deployment within 4-6 hours verified on clean GNU/Linux
 3. All components functional after deployment
 4. Basic workflows tested and working
 5. Performance metrics within expected ranges

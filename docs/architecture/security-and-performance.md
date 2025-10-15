@@ -137,7 +137,7 @@
     ```
   - 🔒 **Full disk encryption (LUKS)** for production VPS:
     ```bash
-    # During Ubuntu installation, enable LUKS encryption
+    # During GNU/Linux installation, enable LUKS encryption
     # Or for existing volumes:
     cryptsetup luksFormat /dev/vdb
     cryptsetup luksOpen /dev/vdb borgstack_encrypted

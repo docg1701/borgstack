@@ -127,12 +127,12 @@ sequenceDiagram
 
 ## Workflow 2: Initial Deployment and Bootstrap
 
-This workflow shows the deployment process from clean Ubuntu server to running BorgStack installation.
+This workflow shows the deployment process from clean GNU/Linux server to running BorgStack installation.
 
 ```mermaid
 sequenceDiagram
     participant User
-    participant Ubuntu as Ubuntu 24.04 Server
+    participant Linux as GNU/Linux Server
     participant Bootstrap as bootstrap.sh
     participant Docker
     participant Compose as Docker Compose
@@ -140,27 +140,27 @@ sequenceDiagram
     participant Caddy
     participant LetsEncrypt as Let's Encrypt
 
-    User->>Ubuntu: SSH into clean server
-    User->>Ubuntu: git clone borgstack repo to ~/borgstack
+    User->>Linux: SSH into clean server
+    User->>Linux: git clone borgstack repo to ~/borgstack
     User->>Bootstrap: ./scripts/bootstrap.sh
 
     Note over Bootstrap: System preparation phase
 
-    Bootstrap->>Ubuntu: apt update && apt upgrade
-    Bootstrap->>Ubuntu: Install prerequisites:<br/>curl, git, ca-certificates
-    Bootstrap->>Ubuntu: Add Docker GPG key and repository
-    Bootstrap->>Ubuntu: apt install docker-ce docker-compose-plugin
-    Ubuntu-->>Bootstrap: Docker installed
+    Bootstrap->>Linux: apt update && apt upgrade
+    Bootstrap->>Linux: Install prerequisites:<br/>curl, git, ca-certificates
+    Bootstrap->>Linux: Add Docker GPG key and repository
+    Bootstrap->>Linux: apt install docker-ce docker-compose-plugin
+    Linux-->>Bootstrap: Docker installed
 
     Bootstrap->>Docker: docker --version (verify)
     Bootstrap->>Compose: docker compose version (verify)
     Docker-->>Bootstrap: Version confirmed
 
-    Bootstrap->>Ubuntu: usermod -aG docker $USER
+    Bootstrap->>Linux: usermod -aG docker $USER
     Bootstrap->>User: Prompt for environment variables<br/>(domains, passwords, credentials)
     User-->>Bootstrap: Provide configuration values
-    Bootstrap->>Ubuntu: Generate .env file from .env.example
-    Bootstrap->>Ubuntu: Set .env permissions to 600
+    Bootstrap->>Linux: Generate .env file from .env.example
+    Bootstrap->>Linux: Set .env permissions to 600
 
     Note over Bootstrap: Validation phase
 

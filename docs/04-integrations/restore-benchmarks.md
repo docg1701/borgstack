@@ -14,7 +14,7 @@ Os benchmarks foram estabelecidos baseados em um servidor de referência com as 
 | RAM | 36 GB |
 | Armazenamento | SSD NVMe (leitura: 3500 MB/s, escrita: 3000 MB/s) |
 | Rede | 1 Gbps simétrico (125 MB/s download/upload) |
-| Sistema Operacional | Ubuntu Server 24.04 LTS |
+| Sistema Operacional | GNU/Linux |
 | Docker | Docker Engine 24.x + Docker Compose v2 |
 
 ### Fatores que Afetam o Tempo de Restauração

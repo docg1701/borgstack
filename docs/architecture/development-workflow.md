@@ -4,13 +4,13 @@ This section defines the deployment setup and operational workflow for BorgStack
 
 ## Local Development Setup
 
-**Note:** BorgStack is designed for server deployment. "Local development" means deploying on a local Ubuntu VM or test server for learning/testing purposes before production deployment.
+**Note:** BorgStack is designed for server deployment. "Local development" means deploying on a local GNU/Linux VM or test server for learning/testing purposes before production deployment.
 
 ### Prerequisites
 
 ```bash
 # Target system requirements
-# - Ubuntu 24.04 LTS (clean installation)
+# - GNU/Linux (clean installation)
 # - 8 vCPUs (minimum 4 for testing)
 # - 36GB RAM (minimum 16GB for testing)
 # - 500GB SSD (minimum 200GB for testing)
@@ -20,7 +20,7 @@ This section defines the deployment setup and operational workflow for BorgStack
 lscpu | grep "CPU(s)"              # Check CPU count
 free -h                             # Check RAM
 df -h                               # Check disk space
-cat /etc/os-release                 # Verify Ubuntu 24.04
+cat /etc/os-release                 # Verify GNU/Linux
 ```
 
 ### Initial Setup

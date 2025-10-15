@@ -8,10 +8,10 @@
 
 ### Requisitos do Sistema
 
-- **Sistema Operacional:** Ubuntu Server 24.04 LTS
-- **CPU:** 8 núcleos vCPU (mínimo)
-- **RAM:** 36 GB (mínimo)
-- **Armazenamento:** 500 GB SSD (recomendado)
+- **Sistema Operacional:** GNU/Linux (Ubuntu, Debian, CentOS, RHEL, Fedora, Arch, openSUSE)
+- **CPU:** 4 núcleos vCPU (mínimo, 8 recomendado)
+- **RAM:** 8 GB (mínimo, 18 GB recomendado)
+- **Armazenamento:** 100 GB SSD (mínimo, 250 GB recomendado)
 - **Rede:** Endereço IP público com portas 80 e 443 acessíveis
 - **Docker:** Docker Engine com Compose V2
 
@@ -29,7 +29,7 @@
    ```
 
    O script de bootstrap irá:
-   - Validar requisitos do sistema (Ubuntu 24.04, RAM, CPU, disco)
+   - Validar requisitos do sistema (GNU/Linux, RAM, CPU, disco)
    - Instalar Docker Engine e Docker Compose v2
    - Configurar firewall UFW (portas 22, 80, 443)
    - Gerar arquivo `.env` com senhas fortes
@@ -60,15 +60,15 @@
 
 ## 🎯 Detalhes do Script Bootstrap
 
-O script de bootstrap automatizado (`scripts/bootstrap.sh`) cuida de todo o processo de configuração para servidores Ubuntu 24.04 LTS.
+O script de bootstrap automatizado (`scripts/bootstrap.sh`) cuida de todo o processo de configuração para servidores GNU/Linux.
 
 ### O Que Ele Faz
 
 1. **Validação do Sistema:**
-   - Verifica versão do Ubuntu (requer 24.04 LTS)
-   - Valida RAM (mínimo 16GB, recomendado 36GB)
-   - Valida espaço em disco (mínimo 200GB, recomendado 500GB)
-   - Valida núcleos de CPU (mínimo 4, recomendado 8)
+   - Verifica distribuição GNU/Linux compatível
+   - Valida RAM (mínimo 8GB, recomendado 18GB)
+   - Valida espaço em disco (mínimo 100GB, recomendado 250GB)
+   - Valida núcleos de CPU (mínimo 2, recomendado 4)
 
 2. **Instalação de Software:**
    - Instala Docker Engine (última versão estável)
@@ -96,7 +96,7 @@ O script de bootstrap automatizado (`scripts/bootstrap.sh`) cuida de todo o proc
 
 ### Pré-requisitos
 
-- Servidor Ubuntu 24.04 LTS novo
+- Servidor GNU/Linux com distribuição compatível
 - Usuário não-root com privilégios sudo
 - Conexão com internet
 - Endereço IP público (para certificados SSL)

@@ -4,7 +4,7 @@
 
 FR1: The system shall provide a unified Docker Compose configuration that deploys all 13 components (PostgreSQL, MongoDB, Redis, SeaweedFS, n8n, Evolution API, Chatwoot, Lowcoder, Directus, Caddy, FileFlows, Duplicati), requiring manual configuration and environment setup.
 
-FR2: The system shall include a bootstrap script that automatically prepares Ubuntu 24.04 LTS servers with all required dependencies and configurations.
+FR2: The system shall include a bootstrap script that automatically prepares GNU/Linux servers with all required dependencies and configurations.
 
 FR3: The system shall provide integration capabilities between n8n, Evolution API, and Chatwoot for WhatsApp workflow automation and customer service, requiring custom HTTP node development in n8n and webhook configuration between components.
 
@@ -32,7 +32,7 @@ FR13: The system shall include intellectual property protection features includi
 
 ## Non-Functional Requirements
 
-NFR1: The system must achieve complete deployment within 4-6 hours on a clean Ubuntu 24.04 LTS VPS meeting minimum requirements (8 vCPUs, 36GB RAM, 500GB SSD), assuming no troubleshooting required.
+NFR1: The system must achieve complete deployment within 4-6 hours on a clean GNU/Linux VPS meeting minimum requirements (8 vCPUs, 36GB RAM, 500GB SSD), assuming no troubleshooting required.
 
 NFR2: The system must provide high availability on single server with automatic container restart on failure.
 

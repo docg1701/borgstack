@@ -97,13 +97,13 @@ BorgStack delivers a pre-integrated, production-ready stack of 12 open source to
 - Cloud marketplace deployments
 
 ### MVP Success Criteria
-Successful MVP enables any technical user to deploy the complete stack on a clean Ubuntu VPS within 30 minutes, with WhatsApp automation, basic customer service, and workflow capabilities functional.
+Successful MVP enables any technical user to deploy the complete stack on a clean GNU/Linux VPS within 30 minutes, with WhatsApp automation, basic customer service, and workflow capabilities functional.
 
 
 ## Technical Considerations
 
 ### Platform Requirements
-- **Target Platforms:** Ubuntu 24.04 LTS on any VPS provider
+- **Target Platforms:** GNU/Linux on any VPS provider
 - **Browser/OS Support:** Modern web browsers for management interfaces
 - **Performance Requirements:** Minimum 4 vCPUs, 8GB RAM, 80GB SSD
 - **Network:** 100+ Mbps bandwidth, static IP, domain name
@@ -135,7 +135,7 @@ Successful MVP enables any technical user to deploy the complete stack on a clea
 
 ### Key Assumptions
 - Users have basic Linux and Docker knowledge
-- Target VPS providers support Ubuntu 24.04 LTS
+- Target VPS providers support GNU/Linux
 - Component APIs remain stable during development
 - Community will provide support via GitHub/Discord
 - Brazilian companies prioritize data sovereignty over convenience

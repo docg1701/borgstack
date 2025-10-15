@@ -46,7 +46,7 @@
 ## Technical Readiness
 **Technical constraints clearly defined:**
 - Docker Compose v2 requirement
-- Ubuntu 24.04 LTS target platform
+- GNU/Linux target platform
 - Internal network communication requirements
 - Component version specifications
 

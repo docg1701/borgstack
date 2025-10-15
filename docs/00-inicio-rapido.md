@@ -120,9 +120,9 @@ Antes de começar, verifique se você tem os seguintes recursos disponíveis:
 
 | Recurso | Mínimo | Recomendado | Verificar |
 |---------|--------|-------------|-----------|
-| **CPU** | 4 vCPUs | 8 vCPUs | `nproc` |
-| **RAM** | 16 GB | 36 GB | `free -h` |
-| **Disco** | 200 GB SSD | 500 GB SSD | `df -h /` |
+| **CPU** | 2 vCPUs | 4 vCPUs | `nproc` |
+| **RAM** | 8 GB | 18 GB | `free -h` |
+| **Disco** | 100 GB SSD | 250 GB SSD | `df -h /` |
 
 **💡 Dica:** Os requisitos mínimos são adequados para testes e desenvolvimento. Para produção, sempre use as especificações recomendadas.
 
@@ -130,27 +130,27 @@ Antes de começar, verifique se você tem os seguintes recursos disponíveis:
 ```bash
 # Verificar CPU
 nproc
-# Output esperado: 8 (recomendado) ou mínimo 4
+# Output esperado: 4 (recomendado) ou mínimo 2
 
 # Verificar RAM
 free -h
-# Output esperado: Total >= 36GB (recomendado) ou >= 16GB (mínimo)
+# Output esperado: Total >= 18GB (recomendado) ou >= 8GB (mínimo)
 
 # Verificar disco
 df -h /
-# Output esperado: Avail >= 500GB (recomendado) ou >= 200GB (mínimo)
+# Output esperado: Avail >= 250GB (recomendado) ou >= 100GB (mínimo)
 ```
 
 ### ✅ Checklist de Software
 
 | Recurso | Requerido | Como Obter |
 |---------|-----------|------------|
-| **Sistema Operacional** | Ubuntu Server 24.04 LTS | [Download oficial](https://ubuntu.com/download/server) |
+| **Sistema Operacional** | GNU/Linux (Ubuntu, Debian, CentOS, RHEL, Fedora, Arch, openSUSE) | [Distribuições suportadas](https://en.wikipedia.org/wiki/Linux_distribution) |
 | **Endereço IP público** | Sim | Provedor de VPS (DigitalOcean, AWS, Hetzner, etc.) |
 | **Acesso SSH** | Sim | `ssh usuario@seu-servidor.com` |
 | **Domínio** | Sim (8 subdomínios) | Registrar domínio (Registro.br, Namecheap, etc.) |
 
-**⚠️ IMPORTANTE:** Este guia é específico para **Ubuntu 24.04 LTS**. Outras distribuições ou versões não são suportadas pelo script de bootstrap automatizado.
+**⚠️ IMPORTANTE:** Este guia suporta múltiplas distribuições **GNU/Linux** (Ubuntu, Debian, CentOS, RHEL, Fedora, Arch, openSUSE). O script de bootstrap automatizado detecta e instala os pacotes apropriados para cada distribuição.
 
 ### ✅ Checklist de Rede e DNS
 
@@ -209,7 +209,7 @@ O script `bootstrap.sh` automatiza toda a instalação do BorgStack, desde a val
 
 ### Passo 1: Conectar ao Servidor
 
-Conecte-se ao seu servidor Ubuntu 24.04 via SSH:
+Conecte-se ao seu servidor GNU/Linux via SSH:
 
 ```bash
 ssh usuario@seu-servidor.com
@@ -234,7 +234,17 @@ cd borgstack
 
 **⚠️ Se o Git não estiver instalado:**
 ```bash
+# Para sistemas baseados em Debian/Ubuntu:
 sudo apt-get update && sudo apt-get install -y git
+
+# Para sistemas baseados em Red Hat/CentOS/Fedora:
+sudo dnf install -y git  # ou: sudo yum install -y git
+
+# Para Arch Linux:
+sudo pacman -S git
+
+# Para openSUSE:
+sudo zypper install -y git
 ```
 
 ### Passo 3: Executar o Script de Bootstrap
@@ -256,10 +266,10 @@ O script verifica se seu sistema atende aos requisitos mínimos:
 Validating System Requirements
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-✓ Ubuntu 24.04 LTS detected
-✓ RAM sufficient: 36GB (required: 16GB)
-✓ Disk space sufficient: 500GB (required: 200GB)
-✓ CPU cores sufficient: 8 (required: 4)
+✓ GNU/Linux distribution detected
+✓ RAM sufficient: 18GB (required: 8GB)
+✓ Disk space sufficient: 250GB (required: 100GB)
+✓ CPU cores sufficient: 4 (required: 2)
 ✓ All system requirements validated
 ```
 

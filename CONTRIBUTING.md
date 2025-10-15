@@ -72,7 +72,7 @@ Descrição clara do que aconteceu.
 O que deveria acontecer.
 
 **Ambiente**
-- OS: Ubuntu 24.04 LTS
+- OS: GNU/Linux
 - BorgStack Version: v1.0.0
 - Docker Version: 27.3.1
 - Docker Compose Version: v2.29.7

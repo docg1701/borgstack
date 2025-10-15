@@ -1,6 +1,6 @@
 # Guia de Instalação do BorgStack
 
-Guia completo para instalação do BorgStack em Ubuntu Server 24.04 LTS.
+Guia completo para instalação do BorgStack em distribuições GNU/Linux.
 
 ---
 
@@ -23,9 +23,9 @@ O BorgStack requer recursos robustos para executar 14 containers simultaneamente
 
 | Componente | Mínimo | Recomendado | Observações |
 |------------|--------|-------------|-------------|
-| **CPU** | 4 vCPUs | 8 vCPUs | Processadores mais recentes melhoram o desempenho |
-| **RAM** | 16 GB | 36 GB | 16GB executa o sistema, 36GB oferece desempenho de produção |
-| **Disco** | 200 GB SSD | 500 GB SSD | SSD é obrigatório para bom desempenho de banco de dados |
+| **CPU** | 2 vCPUs | 4 vCPUs | Processadores mais recentes melhoram o desempenho |
+| **RAM** | 8 GB | 18 GB | 8GB executa o sistema, 18GB oferece desempenho de produção |
+| **Disco** | 100 GB SSD | 250 GB SSD | SSD é obrigatório para bom desempenho de banco de dados |
 | **Rede** | 100 Mbps | 1 Gbps | Para integração com WhatsApp e APIs externas |
 
 **💡 Recomendação:** Para ambientes de produção, sempre use as especificações recomendadas. Os requisitos mínimos são adequados apenas para testes e desenvolvimento.
@@ -34,12 +34,12 @@ O BorgStack requer recursos robustos para executar 14 containers simultaneamente
 
 | Software | Versão | Instalação |
 |----------|--------|------------|
-| **Sistema Operacional** | Ubuntu Server 24.04 LTS | Obrigatório - versões anteriores não são suportadas |
+| **Sistema Operacional** | GNU/Linux (Ubuntu, Debian, CentOS, RHEL, Fedora, Arch, openSUSE) | Script bootstrap detecta automaticamente a distribuição |
 | **Docker Engine** | Última versão estável | Instalado automaticamente pelo bootstrap |
 | **Docker Compose** | v2 (plugin) | Instalado automaticamente pelo bootstrap |
 | **Git** | Qualquer versão recente | Para clonar o repositório |
 
-**⚠️ IMPORTANTE:** Este guia é específico para **Ubuntu 24.04 LTS (Noble Numbat)**. Outras distribuições Linux ou versões do Ubuntu não são suportadas pelo script de instalação automática.
+**⚠️ IMPORTANTE:** Este guia suporta múltiplas distribuições **GNU/Linux** (Ubuntu, Debian, CentOS, RHEL, Fedora, Arch, openSUSE). O script de instalação automática detecta automaticamente a distribuição e instala os pacotes apropriados.
 
 ### Requisitos de Rede
 
@@ -81,9 +81,9 @@ O script `bootstrap.sh` executa as seguintes etapas:
 ```mermaid
 flowchart TD
     A[Início: ./scripts/bootstrap.sh] --> B{Verificar SO}
-    B -->|Ubuntu 24.04| C[Verificar Recursos]
-    B -->|Outra versão| Z[❌ Erro: SO incorreto]
-    C -->|✓ RAM ≥ 16GB<br/>✓ Disk ≥ 200GB<br/>✓ CPU ≥ 4 cores| D[Instalar Docker]
+    B -->|GNU/Linux suportado| C[Verificar Recursos]
+    B -->|SO não suportado| Z[❌ Erro: SO incompatível]
+    C -->|✓ RAM ≥ 8GB<br/>✓ Disk ≥ 100GB<br/>✓ CPU ≥ 2 cores| D[Instalar Docker]
     C -->|✗ Recursos insuficientes| Z
     D --> E[Configurar UFW]
     E --> F[Gerar arquivo .env]
@@ -101,7 +101,7 @@ flowchart TD
 
 #### 1. Preparar o Servidor
 
-Conecte-se ao seu servidor Ubuntu 24.04 via SSH:
+Conecte-se ao seu servidor GNU/Linux via SSH:
 
 ```bash
 ssh usuario@seu-servidor.com
@@ -126,7 +126,17 @@ cd borgstack
 
 **💡 Dica:** Se você não tiver o Git instalado, instale-o primeiro:
 ```bash
+# Para sistemas baseados em Debian/Ubuntu:
 sudo apt-get update && sudo apt-get install -y git
+
+# Para sistemas baseados em Red Hat/CentOS/Fedora:
+sudo dnf install -y git  # ou: sudo yum install -y git
+
+# Para Arch Linux:
+sudo pacman -S git
+
+# Para openSUSE:
+sudo zypper install -y git
 ```
 
 #### 3. Executar o Script de Bootstrap
@@ -142,21 +152,21 @@ Execute o script de instalação automatizada:
 **Etapa 1: Validação do Sistema (1-2 minutos)**
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Validating Ubuntu Version
+Validating GNU/Linux Distribution
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-✓ Ubuntu 24.04 LTS detected
+✓ GNU/Linux distribution detected
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Validating System Requirements
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-ℹ RAM: 36GB (min: 16GB, recommended: 36GB)
-✓ RAM sufficient: 36GB
-ℹ Disk: 500GB (min: 200GB, recommended: 500GB)
-✓ Disk space sufficient: 500GB
-ℹ CPU cores: 8 (min: 4, recommended: 8)
-✓ CPU cores sufficient: 8
+ℹ RAM: 18GB (min: 8GB, recommended: 18GB)
+✓ RAM sufficient: 18GB
+ℹ Disk: 250GB (min: 100GB, recommended: 250GB)
+✓ Disk space sufficient: 250GB
+ℹ CPU cores: 4 (min: 2, recommended: 4)
+✓ CPU cores sufficient: 4
 ✓ All system requirements validated
 ```
 
@@ -307,60 +317,77 @@ Se você preferir instalar manualmente ou está usando um ambiente personalizado
 Verifique se seu servidor atende aos requisitos mínimos:
 
 ```bash
-# Verificar versão do Ubuntu
-cat /etc/os-release | grep VERSION_ID
-# Deve retornar: VERSION_ID="24.04"
+# Verificar distribuição GNU/Linux
+cat /etc/os-release | grep -E "^ID=" | cut -d= -f2
+# Deve retornar: ubuntu, debian, centos, rhel, rocky, almalinux, fedora, arch, opensuse-leap, ou opensuse-tumbleweed
 
 # Verificar RAM (em GB)
 free -g | grep Mem: | awk '{print $2}'
-# Deve retornar: 16 ou mais
+# Deve retornar: 8 ou mais
 
 # Verificar espaço em disco (em GB)
 df -BG / | awk 'NR==2 {print $2}' | sed 's/G//'
-# Deve retornar: 200 ou mais
+# Deve retornar: 100 ou mais
 
 # Verificar CPU cores
 nproc
-# Deve retornar: 4 ou mais
+# Deve retornar: 2 ou mais
 ```
 
 ### 2. Instalar Docker Engine
 
-Remova versões antigas do Docker (se existirem):
+Use o script de instalação oficial do Docker (funciona em todas as distribuições GNU/Linux):
 
 ```bash
-sudo apt-get remove -y docker docker-engine docker.io containerd runc
+# Baixar e executar script de instalação oficial
+curl -fsSL https://get.docker.com | sh
 ```
 
-Instale as dependências necessárias:
+Este script automaticamente:
+- Detecta sua distribuição GNU/Linux
+- Configura o repositório Docker apropriado
+- Instala Docker Engine e Docker Compose v2
+- Inicia e habilita o serviço Docker
 
+**Alternativa: Instalação manual (se o script oficial falhar)**
+
+Para distribuições baseadas em Debian/Ubuntu:
 ```bash
+# Remover versões antigas
+sudo apt-get remove -y docker docker-engine docker.io containerd runc
+
+# Instalar dependências
 sudo apt-get update
 sudo apt-get install -y ca-certificates curl gnupg
-```
 
-Adicione a chave GPG oficial do Docker:
-
-```bash
+# Adicionar repositório Docker
 sudo install -m 0755 -d /etc/apt/keyrings
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
 sudo chmod a+r /etc/apt/keyrings/docker.gpg
-```
 
-Adicione o repositório Docker ao APT:
-
-```bash
 echo \
   "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
   $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
   sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-```
 
-Atualize o índice de pacotes e instale o Docker:
-
-```bash
+# Instalar Docker
 sudo apt-get update
 sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+```
+
+Para distribuições baseadas em Red Hat/CentOS/Fedora:
+```bash
+# Remover versões antigas
+sudo dnf remove -y docker docker-client docker-client-latest docker-common docker-latest docker-latest-logrotate docker-logrotate docker-engine
+
+# Instalar dependências
+sudo dnf install -y yum-utils
+
+# Adicionar repositório Docker
+sudo dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+
+# Instalar Docker
+sudo dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 ```
 
 Adicione seu usuário ao grupo docker:
@@ -392,13 +419,34 @@ docker compose version
 
 Instale utilitários essenciais:
 
+**Para sistemas baseados em Debian/Ubuntu:**
 ```bash
+sudo apt-get update
 sudo apt-get install -y curl wget git ufw dnsutils htop sysstat
 ```
 
-### 4. Configurar o Firewall UFW
+**Para sistemas baseados em Red Hat/CentOS/Fedora:**
+```bash
+sudo dnf install -y curl wget git firewalld bind-utils htop sysstat
+# ou para sistemas mais antigos:
+sudo yum install -y curl wget git firewalld bind-utils htop sysstat
+```
+
+**Para Arch Linux:**
+```bash
+sudo pacman -Syu curl wget git ufw bind-tools htop sysstat
+```
+
+**Para openSUSE:**
+```bash
+sudo zypper install -y curl wget git firewalld bind-tools htop sysstat
+```
+
+### 4. Configurar o Firewall
 
 Configure as regras básicas do firewall:
+
+**Opção A: UFW (Uncomplicated Firewall) - Para Debian/Ubuntu/Arch/openSUSE:**
 
 ```bash
 # Definir políticas padrão
@@ -435,7 +483,44 @@ To                         Action      From
 443/tcp                    ALLOW IN    Anywhere
 ```
 
-**⚠️ ATENÇÃO:** Se você usa uma porta SSH personalizada (diferente de 22), ajuste a regra do UFW antes de habilitar o firewall, ou você perderá acesso SSH!
+**Opção B: firewalld - Para Red Hat/CentOS/Fedora:**
+
+```bash
+# Iniciar e habilitar firewalld
+sudo systemctl start firewalld
+sudo systemctl enable firewalld
+
+# Adicionar serviços à zona padrão (public)
+sudo firewall-cmd --permanent --add-service=ssh
+sudo firewall-cmd --permanent --add-service=http
+sudo firewall-cmd --permanent --add-service=https
+
+# Recarregar configuração
+sudo firewall-cmd --reload
+
+# Verificar status
+sudo firewall-cmd --list-all
+```
+
+**Saída esperada:**
+```
+public (active)
+  target: default
+  icmp-block-inversion: no
+  interfaces:
+  sources:
+  services: ssh http https
+  ports:
+  protocols:
+  forward: no
+  masquerade: no
+  forward-ports:
+  source-ports:
+  icmp-blocks:
+  rich rules:
+```
+
+**⚠️ ATENÇÃO:** Se você usa uma porta SSH personalizada (diferente de 22), ajuste as regras do firewall antes de habilitar, ou você perderá acesso SSH!
 
 ### 5. Clonar o Repositório
 
@@ -800,33 +885,36 @@ Use este checklist para confirmar que tudo está funcionando:
 
 ### Problema: Bootstrap falha com "Insufficient RAM"
 
-**Causa:** Servidor tem menos de 16GB de RAM.
+**Causa:** Servidor tem menos de 8GB de RAM.
 
 **Solução:**
 ```bash
 # Verificar RAM disponível
 free -h
 
-# Se você tem menos de 16GB, você tem 3 opções:
-# 1. Fazer upgrade do servidor para 16GB+ (recomendado)
+# Se você tem menos de 8GB, você tem 3 opções:
+# 1. Fazer upgrade do servidor para 8GB+ (recomendado)
 # 2. Reduzir serviços no docker-compose.yml (não recomendado)
 # 3. Usar instalação manual e ajustar memory limits (avançado)
 ```
 
 ### Problema: Docker installation fails
 
-**Causa:** Repositório Docker não acessível ou versão antiga do Ubuntu.
+**Causa:** Repositório Docker não acessível ou distribuição GNU/Linux não suportada.
 
 **Solução:**
 ```bash
-# Verificar versão do Ubuntu
-cat /etc/os-release
+# Verificar distribuição GNU/Linux
+cat /etc/os-release | grep -E "^ID="
 
-# Deve mostrar VERSION_ID="24.04"
-# Se não for 24.04, faça upgrade do sistema operacional
+# Deve retornar uma distribuição suportada:
+# ubuntu, debian, centos, rhel, rocky, almalinux, fedora, arch, opensuse-leap, ou opensuse-tumbleweed
 
-# Se for 24.04, verifique conectividade com o repositório Docker:
-curl -I https://download.docker.com/linux/ubuntu/dists/noble/stable/
+# Tentar script oficial (funciona na maioria das distribuições)
+curl -fsSL https://get.docker.com | sh
+
+# Verificar conectividade com o repositório Docker:
+curl -I https://download.docker.com
 # Deve retornar HTTP/1.1 200 OK
 ```
 
@@ -1032,6 +1120,6 @@ Após a instalação bem-sucedida:
 
 ---
 
-**Última atualização:** 2025-10-08
-**Versão do guia:** 1.0
-**Compatível com:** BorgStack v4+, Ubuntu 24.04 LTS
+**Última atualização:** 2025-10-14
+**Versão do guia:** 1.1
+**Compatível com:** BorgStack v4+, GNU/Linux (Ubuntu, Debian, CentOS, RHEL, Fedora, Arch, openSUSE)

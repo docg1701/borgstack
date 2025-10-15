@@ -429,13 +429,13 @@ docker compose exec postgresql psql -U postgres -c "SELECT pg_database.datname, 
 
 **Tuning de Performance:**
 
-O PostgreSQL está otimizado para servidor com **36GB RAM**:
+O PostgreSQL está otimizado para servidor com **18GB RAM**:
 
 ```conf
 # config/postgresql/postgresql.conf
-shared_buffers = 8GB              # 25% da RAM
-effective_cache_size = 24GB       # 66% da RAM
-maintenance_work_mem = 2GB
+shared_buffers = 4GB              # 25% da RAM
+effective_cache_size = 12GB       # 66% da RAM
+maintenance_work_mem = 1GB
 work_mem = 20MB
 max_connections = 200
 random_page_cost = 1.1            # Otimizado para SSD
@@ -509,7 +509,7 @@ docker compose exec mongodb mongosh -u admin -p ${MONGODB_ROOT_PASSWORD} --authe
 - **Imagem:** `redis:8.2-alpine`
 - **Rede:** `borgstack_internal`
 - **Volume:** `borgstack_redis_data`
-- **Memória:** 8GB (configurável)
+- **Memória:** 4GB (configurável)
 
 **Uso por Serviço:**
 
@@ -1042,7 +1042,7 @@ RAILS_MAX_THREADS=5           # Threads de processamento
 **Redis:**
 ```bash
 # config/redis/redis.conf
-maxmemory 8gb
+maxmemory 4gb
 maxmemory-policy allkeys-lru  # Política de eviction
 save 900 1                    # Snapshot a cada 15min se 1+ key mudou
 ```
@@ -1142,6 +1142,6 @@ Após configurar o sistema:
 
 ---
 
-**Última atualização:** 2025-10-08
-**Versão do guia:** 1.0
-**Compatível com:** BorgStack v4+, Ubuntu 24.04 LTS
+**Última atualização:** 2025-10-14
+**Versão do guia:** 1.1
+**Compatível com:** BorgStack v4+, GNU/Linux (Ubuntu, Debian, CentOS, RHEL, Fedora, Arch, openSUSE)

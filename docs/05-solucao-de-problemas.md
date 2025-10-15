@@ -81,10 +81,10 @@ docker compose logs -f
 **Sintomas**:
 ```bash
 $ ./scripts/bootstrap.sh
-ERROR: Insufficient RAM. Found: 8GB, Required: 16GB minimum
+ERROR: Insufficient RAM. Found: 4GB, Required: 8GB minimum
 ```
 
-**Causa**: Servidor com menos de 16GB de RAM.
+**Causa**: Servidor com menos de 8GB de RAM.
 
 **Diagnóstico**:
 ```bash
@@ -101,8 +101,8 @@ free -h | grep Mem:
 **Opção 1: Upgrade de Hardware** (Recomendado)
 ```bash
 # Adicionar mais RAM ao servidor
-# Mínimo: 16GB (funcional)
-# Recomendado: 36GB (produção)
+# Mínimo: 8GB (funcional)
+# Recomendado: 18GB (produção)
 ```
 
 **Opção 2: Reduzir Serviços**
@@ -126,8 +126,8 @@ docker compose up -d
 
 **Opção 3: Configurar Swap** (Temporário, não ideal)
 ```bash
-# Criar 8GB de swap (use com cautela, degrada performance)
-sudo fallocate -l 8G /swapfile
+# Criar 4GB de swap (use com cautela, degrada performance)
+sudo fallocate -l 4G /swapfile
 sudo chmod 600 /swapfile
 sudo mkswap /swapfile
 sudo swapon /swapfile
@@ -138,33 +138,37 @@ echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
 
 ---
 
-### Problema 2.2: "Docker installation fails on Ubuntu 22.04"
+### Problema 2.2: "Docker installation fails on unsupported distribution"
 
 **Sintomas**:
 ```bash
-ERROR: Wrong OS detected. Ubuntu 24.04 LTS required.
-Current: Ubuntu 22.04 LTS
+ERROR: Unsupported GNU/Linux distribution detected.
+Current: centos
+Supported: ubuntu, debian, centos, rhel, rocky, almalinux, fedora, arch, opensuse-leap, opensuse-tumbleweed
 ```
 
-**Causa**: Bootstrap script requer Ubuntu 24.04 LTS.
+**Causa**: Bootstrap script requer distribuição GNU/Linux suportada.
 
 **Soluções**:
 
-**Opção 1: Upgrade para Ubuntu 24.04** (Recomendado)
+**Opção 1: Usar distribuição suportada** (Recomendado)
 ```bash
 # Backup completo primeiro!
 
-# Atualizar sistema
-sudo apt update && sudo apt upgrade -y
+# Atualizar sistema (use comando adequado para sua distribuição)
+# Debian/Ubuntu: sudo apt update && sudo apt upgrade -y
+# Red Hat/CentOS/Fedora: sudo dnf upgrade -y
+# Arch Linux: sudo pacman -Syu
+# openSUSE: sudo zypper update
 
-# Executar upgrade
-sudo do-release-upgrade
+# Migrar para distribuição suportada se necessário
+# (consulte documentação da sua distribuição)
 
-# Verificar versão
-lsb_release -a
+# Verificar distribuição
+cat /etc/os-release | grep -E "^ID="
 ```
 
-**Opção 2: Instalação Manual no Ubuntu 22.04**
+**Opção 2: Instalação Manual em distribuição não suportada**
 ```bash
 # AVISO: Não suportado oficialmente, use por sua conta e risco
 
@@ -487,7 +491,7 @@ dmesg | grep -i "out of memory"
 #### Solução 1: Aumentar RAM do Servidor
 ```bash
 # Upgrade de hardware (solução ideal)
-# Recomendado: 36GB RAM para todos os serviços
+# Recomendado: 18GB RAM para todos os serviços
 ```
 
 #### Solução 2: Configurar Limites de Memória
@@ -532,7 +536,7 @@ docker compose restart chatwoot n8n
 #### Solução 4: Configurar Swap (Emergência)
 ```bash
 # Criar 8GB swap
-sudo fallocate -l 8G /swapfile
+sudo fallocate -l 4G /swapfile
 sudo chmod 600 /swapfile
 sudo mkswap /swapfile
 sudo swapon /swapfile
@@ -1585,11 +1589,11 @@ tar -czf borgstack-debug-$(date +%Y%m%d).tar.gz \
 [O que está acontecendo]
 
 ## Ambiente
-- OS: Ubuntu 24.04 LTS
+- OS: GNU/Linux (especifique distribuição e versão)
 - Docker: 24.0.7
 - Docker Compose: 2.21.0
-- RAM: 32GB
-- BorgStack Version: v1.0
+- RAM: 16GB
+- BorgStack Version: v1.1
 
 ## Logs Relevantes
 ```
@@ -1623,6 +1627,6 @@ tar -czf borgstack-debug-$(date +%Y%m%d).tar.gz \
 
 ---
 
-**Última atualização**: 2025-10-08
+**Última atualização**: 2025-10-14
 **Versão do guia**: 1.0
 **Compatibilidade**: BorgStack v1.0

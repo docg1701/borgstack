@@ -28,7 +28,7 @@ borgstack/
 │       └── backup-config.json        # Backup job definitions
 │
 ├── scripts/
-│   ├── bootstrap.sh                  # Ubuntu 24.04 automated setup
+│   ├── bootstrap.sh                  # GNU/Linux automated setup
 │   ├── healthcheck.sh                # Post-deployment verification
 │   ├── backup-now.sh                 # Manual backup trigger
 │   ├── restore.sh                    # Disaster recovery script
