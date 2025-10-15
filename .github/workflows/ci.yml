@@ -335,6 +335,9 @@ jobs:
           # Use test credentials for CI
           sed -i 's/CHANGE_ME_TO_A_SECURE_PASSWORD_MIN_32_CHARS/test_password_ci_12345678/g' .env
           sed -i 's/CHANGE_ME_TO_A_SECURE_KEY_MIN_32_CHARS/test_key_ci_environment_1234567890/g' .env
+          sed -i 's/CHANGE_ME_TO_A_SECURE_API_KEY_MIN_32_CHARS/test_evolution_api_key_12345678_ci_only/g' .env
+          sed -i 's/CHANGE_ME_TO_A_32_CHAR_ALPHANUMERIC_KEY/test_lowcoder_encryption_12345678_ci_only/g' .env
+          sed -i 's/CHANGE_ME_TO_A_32_CHAR_ALPHANUMERIC_SALT/test_lowcoder_salt_12345678_ci_only/g' .env
           # Replace the 128-char hex string with test value
           HEX_VALUE="0123456789abcdef0123456789abcdef0123456789abcdef"
           HEX_VALUE="${HEX_VALUE}0123456789abcdef0123456789abcdef"
