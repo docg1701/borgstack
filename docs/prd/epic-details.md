@@ -280,17 +280,6 @@ As a system administrator, I want documented procedures for updating individual 
 5. Common update issues and solutions documented
 6. Update notification strategy defined
 
-### Story 6.5 Final Deployment Verification
-As a deployment engineer, I want a final verification that the complete stack deploys successfully, so that I can confidently deliver on the core project promise.
-
-**Acceptance Criteria:**
-1. Clean GNU/Linux deployment tested
-2. Deployment within 4-6 hours verified on clean GNU/Linux
-3. All components functional after deployment
-4. Basic workflows tested and working
-5. Performance metrics within expected ranges
-6. Documentation accuracy verified
-
 ## Epic 7 Documentation Simplification
 
 **Epic Goal:** Simplify BorgStack documentation from ~32,000 lines across 29 files to ~1,400 lines in 6 essential files, eliminating redundancies, removing third-party tool documentation, and maintaining only critical information for installation, configuration, and maintenance.
