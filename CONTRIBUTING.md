@@ -55,7 +55,7 @@ Você não precisa ser desenvolvedor para contribuir! Veja as opções:
 
 ### Onde Reportar
 
-**GitHub Issues:** https://github.com/yourusername/borgstack/issues
+**GitHub Issues:** https://github.com/docg1701/borgstack/issues
 
 ### Template de Bug Report
 
@@ -102,7 +102,7 @@ docker compose logs serviço --tail 50
 
 ### Onde Sugerir
 
-**GitHub Discussions:** https://github.com/yourusername/borgstack/discussions (categoria "Ideas")
+**GitHub Discussions:** https://github.com/docg1701/borgstack/discussions (categoria "Ideas")
 
 ### Template de Feature Request
 
@@ -164,11 +164,11 @@ graph LR
 ```bash
 # Fork via GitHub interface
 # Clone seu fork
-git clone https://github.com/SEU-USERNAME/borgstack.git
+git clone https://github.com/docg1701/borgstack.git
 cd borgstack
 
 # Adicionar remote upstream
-git remote add upstream https://github.com/yourusername/borgstack.git
+git remote add upstream https://github.com/docg1701/borgstack.git
 ```
 
 **2. Criar Branch**
@@ -284,9 +284,10 @@ postgres_password=secure123  # ❌
 
 **Documentação:**
 ```markdown
-# Naming: numbered-kebab-case.md
-01-instalacao.md  # ✅
-Installation.md   # ❌
+# Naming: kebab-case.md (root) or numbered (in docs/)
+INSTALL.md  # ✅ Root level
+docs/02-example.md  # ✅ Numbered in docs/
+Installation.md   # ❌ Wrong case
 
 # Sempre especificar linguagem em code blocks
 ```bash  # ✅
@@ -308,8 +309,8 @@ Seguimos o framework **Diátaxis**:
 
 | Tipo | Propósito | Exemplo |
 |------|-----------|---------|
-| **Tutorial** | Aprender fazendo | `docs/00-inicio-rapido.md` |
-| **How-to** | Resolver problema específico | `docs/03-services/n8n.md` |
+| **Tutorial** | Aprender fazendo | `INSTALL.md` |
+| **How-to** | Resolver problema específico | `docs/services.md` |
 | **Reference** | Informação técnica | API docs, variáveis de ambiente |
 | **Explanation** | Entender conceitos | `docs/architecture/*.md` |
 
@@ -371,10 +372,11 @@ graph LR
 
 | Conteúdo | Localização |
 |----------|-------------|
-| Tutoriais gerais | `docs/00-inicio-rapido.md`, `docs/01-instalacao.md` |
-| Guias de serviços | `docs/03-services/<service>.md` |
-| Integrações | `docs/04-integrations/<integration>.md` |
-| Workflows | `docs/09-workflows-exemplo.md` |
+| Instalação | `INSTALL.md` |
+| Configuração | `CONFIGURATION.md` |
+| Serviços | `docs/services.md` |
+| Integrações | `docs/integrations.md` |
+| Manutenção | `docs/maintenance.md` |
 | Arquitetura | `docs/architecture/*.md` |
 | README principal | `README.md` (root) |
 
@@ -386,7 +388,7 @@ graph LR
 
 ```bash
 # 1. Clonar repositório
-git clone https://github.com/yourusername/borgstack.git
+git clone https://github.com/docg1701/borgstack.git
 cd borgstack
 
 # 2. Copiar .env.example
@@ -549,15 +551,15 @@ Todos os contribuidores são listados no `README.md` principal. Contribuições 
 
 ### Documentação
 
-- **[Hub de Documentação](docs/README.md)** - Índice completo
+- **[Documentação Principal](README.md)** - Visão geral do projeto
 - **[Guia de Arquitetura](docs/architecture/index.md)** - Como tudo funciona
 - **[Padrões de Código](docs/architecture/coding-standards.md)** - Detalhes completos
 
 ### Comunidade
 
-- **GitHub Discussions**: https://github.com/yourusername/borgstack/discussions
-- **Issues**: https://github.com/yourusername/borgstack/issues
-- **Pull Requests**: https://github.com/yourusername/borgstack/pulls
+- **GitHub Discussions**: https://github.com/docg1701/borgstack/discussions
+- **Issues**: https://github.com/docg1701/borgstack/issues
+- **Pull Requests**: https://github.com/docg1701/borgstack/pulls
 
 ### Contato
 
@@ -641,8 +643,8 @@ Obrigado por contribuir com o BorgStack! Cada PR, issue, ou comentário ajuda a 
 
 ## Navegação
 
-- **[← Workflows de Exemplo](docs/09-workflows-exemplo.md)**
-- **[↑ Documentação](docs/README.md)**
+- **[← README Principal](README.md)**
+- **[→ Instalação](INSTALL.md)**
 
 ---
 

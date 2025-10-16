@@ -137,7 +137,7 @@ validate_linux_distribution() {
     else
         log_error "Unsupported distribution: ${NAME}"
         log_error "This script only supports Debian and Ubuntu."
-        log_error "For other distributions, see docs/01-instalacao.md (Manual Installation)"
+        log_error "For other distributions, see INSTALL.md (Manual Installation)"
         exit 1
     fi
 }
