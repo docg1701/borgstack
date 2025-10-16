@@ -6,154 +6,38 @@
 
 ## 🚀 Início Rápido
 
-### Requisitos do Sistema
+### Requisitos Mínimos
 
-- **Sistema Operacional:** Debian ou Ubuntu (outras distros: instalação manual necessária)
-- **CPU:** 4 núcleos vCPU (mínimo, 8 recomendado)
-- **RAM:** 8 GB (mínimo, 18 GB recomendado)
-- **Armazenamento:** 100 GB SSD (mínimo, 250 GB recomendado)
-- **Rede:** Endereço IP público com portas 80 e 443 acessíveis
-- **Docker:** Docker Engine com Compose V2
+- **Sistema:** Debian ou Ubuntu (bootstrap automático) ou outra distro Linux (instalação manual)
+- **CPU:** 4 núcleos (mínimo 2)
+- **RAM:** 18 GB (mínimo 8 GB)
+- **Disco:** 250 GB SSD (mínimo 100 GB)
+- **Rede:** IP público com portas 80/443 acessíveis (modo produção) ou LAN (modo local)
 
-### Instalação
-
-1. **Clone o repositório:**
-   ```bash
-   git clone https://github.com/yourusername/borgstack.git
-   cd borgstack
-   ```
-
-2. **Execute o script de bootstrap automatizado (Recomendado):**
-   ```bash
-   ./scripts/bootstrap.sh
-   ```
-
-   O script de bootstrap oferece dois modos de instalação:
-
-   **🏠 Modo Local (LAN)** - Ideal para testes e desenvolvimento:
-   - Acesso via `http://hostname.local:8080` (mDNS automático)
-   - Instala e configura Avahi/mDNS automaticamente
-   - Sem necessidade de domínios ou SSL
-   - Portas de bancos de dados expostas para debugging
-
-   **🌐 Modo Produção** - Para uso em produção:
-   - Acesso via `https://seu-dominio.com` (SSL automático)
-   - Requer configuração de domínios/DNS
-   - Firewall e segurança otimizados
-   - Certificados Let's Encrypt automáticos
-
-   O script irá:
-   - Apresentar menu interativo para selecionar modo de instalação
-   - Validar requisitos do sistema (Debian/Ubuntu, RAM, CPU, disco)
-   - Instalar Docker Engine e Docker Compose v2
-   - Configurar firewall UFW (portas 22, 80, 443 + mDNS se modo local)
-   - Gerar arquivo `.env` com senhas fortes (diferente para cada modo)
-   - Fazer deploy de todos os serviços
-   - Validar health checks
-   - Exibir instruções específicas para o modo selecionado
-
-3. **Configuração manual (Alternativa):**
-   ```bash
-   # Copie o template de variáveis de ambiente
-   cp .env.example .env
-
-   # Edite .env com sua configuração
-   nano .env
-
-   # Inicie a stack
-   docker compose up -d
-
-   # Verifique o status dos serviços
-   docker compose ps
-   ```
-
-4. **Acesse seus serviços:**
-   - Cada serviço estará disponível em seu domínio configurado
-   - Veja `.env.example` para configuração de domínios
-
----
-
-## 🎯 Detalhes do Script Bootstrap
-
-O script de bootstrap automatizado (`scripts/bootstrap.sh`) cuida de todo o processo de configuração para servidores Debian e Ubuntu.
-
-### O Que Ele Faz
-
-1. **Validação do Sistema:**
-   - Verifica distribuição Debian ou Ubuntu
-   - Valida RAM (mínimo 8GB, recomendado 18GB)
-   - Valida espaço em disco (mínimo 100GB, recomendado 250GB)
-   - Valida núcleos de CPU (mínimo 2, recomendado 4)
-
-2. **Instalação de Software:**
-   - Instala Docker Engine (última versão estável)
-   - Instala plugin Docker Compose v2
-   - Instala utilitários do sistema (curl, wget, git, ufw, dig, htop, sysstat)
-   - Adiciona usuário ao grupo docker para acesso não-root
-
-3. **Configuração de Segurança:**
-   - Configura firewall UFW com política padrão de negar entrada
-   - Abre portas: 22 (SSH), 80 (HTTP), 443 (HTTPS)
-   - Gera senhas aleatórias fortes (32 caracteres) para todos os serviços
-   - Define permissões do arquivo .env para 600 (apenas leitura/escrita do proprietário)
-
-4. **Deploy de Serviços:**
-   - Baixa todas as imagens Docker
-   - Inicia todos os serviços via `docker compose up -d`
-   - Aguarda inicialização dos serviços
-   - Valida health checks dos serviços principais
-
-5. **Pós-Instalação:**
-   - Exibe instruções de configuração DNS
-   - Explica geração automática de SSL via Let's Encrypt
-   - Fornece URLs de acesso aos serviços
-   - Mostra comandos de troubleshooting
-
-### Pré-requisitos
-
-- Servidor Debian ou Ubuntu
-- Usuário não-root com privilégios sudo
-- Conexão com internet
-- Endereço IP público (para certificados SSL)
-
-**Nota:** Para outras distribuições Linux (CentOS, RHEL, Fedora, Arch, etc.), consulte [docs/01-instalacao.md](docs/01-instalacao.md) para instruções de instalação manual.
-
-### Uso
+### Instalação em 5 Comandos
 
 ```bash
-# Torne executável (se necessário)
-chmod +x scripts/bootstrap.sh
+# 1. Clone o repositório
+git clone https://github.com/docg1701/borgstack.git
+cd borgstack
 
-# Execute o script
+# 2. Execute o script de bootstrap automatizado
 ./scripts/bootstrap.sh
 
-# Siga os prompts interativos para:
-# - Nome do domínio (ex: exemplo.com.br)
-# - Email para notificações SSL (ex: admin@exemplo.com.br)
+# 3. Selecione modo de instalação
+#    [1] Modo Local (LAN) - acesso via http://hostname.local:8080
+#    [2] Modo Produção - acesso via https://seu-dominio.com
+
+# 4. Aguarde instalação (15-30 minutos)
+#    O script instala Docker, configura firewall, gera senhas,
+#    faz deploy dos serviços e valida health checks
+
+# 5. Acesse seus serviços
+#    Modo Local: http://hostname.local:8080/n8n
+#    Modo Produção: https://n8n.seu-dominio.com
 ```
 
-### Após o Bootstrap
-
-1. **Configurar DNS:** Adicione registros A para os 7 subdomínios apontando para o IP do seu servidor
-2. **Verificar DNS:** Aguarde 5-30 minutos para propagação, depois teste com `dig`
-3. **Acessar Serviços:** Visite `https://<serviço>.<domínio>` (SSL gerado automaticamente no primeiro acesso)
-4. **Salvar Credenciais:** Armazene senhas geradas do `.env` em um gerenciador de senhas
-5. **Segurança em Produção:** Altere `CORS_ALLOWED_ORIGINS` de `*` para origens específicas
-
-### Solução de Problemas
-
-- **Ver logs:** `cat /tmp/borgstack-bootstrap.log`
-- **Verificar serviços:** `docker compose ps`
-- **Ver logs de serviço:** `docker compose logs [nome_serviço]`
-- **Reiniciar serviço:** `docker compose restart [nome_serviço]`
-
-### Idempotência
-
-O script é seguro para executar múltiplas vezes:
-- Ignora instalação do Docker se já presente
-- Avisa antes de sobrescrever arquivo `.env` existente
-- Detecta regras de firewall existentes
-- Nenhuma operação destrutiva sem confirmação
+**Pronto!** Seu BorgStack está rodando. Consulte [INSTALL.md](INSTALL.md) para instalação detalhada, modos de instalação e troubleshooting.
 
 ---
 
@@ -161,179 +45,54 @@ O script é seguro para executar múltiplas vezes:
 
 | Serviço | Propósito | Versão |
 |---------|-----------|--------|
-| **n8n** | Plataforma de automação de fluxos de trabalho | 1.112.6 |
-| **Evolution API** | Gateway de API WhatsApp Business | v2.2.3 |
+| **n8n** | Plataforma de automação de workflows | 1.112.6 |
+| **Evolution API** | Gateway WhatsApp Business API | v2.2.3 |
 | **Chatwoot** | Comunicação omnichannel com clientes | v4.6.0-ce |
 | **Lowcoder** | Construtor de aplicativos low-code | 2.7.4 |
 | **Directus** | CMS headless e gestão de dados | 11 |
 | **FileFlows** | Processamento automatizado de mídia | 25.09 |
 | **SeaweedFS** | Armazenamento de objetos compatível com S3 | 3.97 |
 | **Duplicati** | Automação de backup criptografado | 2.1.1.102 |
-| **PostgreSQL** | Banco de dados relacional primário (com pgvector) | 18.0 |
-| **MongoDB** | Banco de dados NoSQL (apenas Lowcoder) | 7.0 |
+| **PostgreSQL** | Banco de dados relacional (com pgvector) | 18.0 |
+| **MongoDB** | Banco de dados NoSQL (Lowcoder) | 7.0 |
 | **Redis** | Cache e fila de mensagens | 8.2 |
-| **Caddy** | Proxy reverso com HTTPS automático | 2.10 |
+| **Caddy** | Proxy reverso com SSL automático | 2.10 |
 
 ---
 
 ## 📚 Documentação
 
-**Documentação completa em Português Brasileiro está disponível →** [**docs/README.md**](docs/README.md)
+### Documentação Essencial
 
-### Guias Principais
+- **[INSTALL.md](INSTALL.md)** - Guia de instalação completo (local e produção)
+- **[CONFIGURATION.md](CONFIGURATION.md)** - Configuração de variáveis de ambiente e serviços *(em breve)*
+- **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - Solução de problemas e diagnóstico *(em breve)*
 
-- 📖 **[Guia de Instalação](docs/01-instalacao.md)** - Instalação completa passo a passo
-- ⚙️ **[Guia de Configuração](docs/02-configuracao.md)** - Configuração de variáveis de ambiente e serviços
-- 🔧 **[Guias de Serviços](docs/03-services/)** - Documentação detalhada de cada serviço
-- 🔗 **[Guias de Integração](docs/04-integrations/)** - Tutoriais de integração (WhatsApp, n8n, etc.)
-- 🚨 **[Solução de Problemas](docs/05-solucao-de-problemas.md)** - Troubleshooting e diagnóstico
-- 🔐 **[Guia de Segurança](docs/07-seguranca.md)** - Hardening e melhores práticas de segurança
-- 🛠️ **[Guia de Manutenção](docs/06-manutencao.md)** - Manutenção preventiva e atualizações
-- ⚡ **[Otimização de Desempenho](docs/08-desempenho.md)** - Tuning e otimização de performance
+### Guias Detalhados
 
----
+- **[docs/services.md](docs/services.md)** - Guias específicos de cada serviço *(em breve)*
+- **[docs/integrations.md](docs/integrations.md)** - Tutoriais de integração entre serviços *(em breve)*
+- **[docs/maintenance.md](docs/maintenance.md)** - Manutenção, atualizações e backups *(em breve)*
 
-## 🔧 Configuração
+### Documentação Técnica
 
-Toda configuração é gerenciada através de variáveis de ambiente no arquivo `.env`:
+- **[docs/architecture.md](docs/architecture.md)** - Arquitetura e decisões técnicas
+- **[docs/prd.md](docs/prd.md)** - Product Requirements Document
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** - Como contribuir com o projeto
 
-```bash
-# Copie o template
-cp .env.example .env
-
-# Edite com sua configuração
-nano .env
-```
-
-**Importante:** Nunca commite seu arquivo `.env` no controle de versão. Ele contém credenciais sensíveis.
-
----
-
-## 🛠️ Development
-
-### Local Development
-
-Local development uses `docker-compose.override.yml` automatically (industry standard) with **mDNS hostname discovery** for LAN access:
-
-```bash
-# Start with local overrides (localhost:8080)
-docker compose up -d
-
-# Access services via mDNS (recommended for LAN):
-# http://hostname.local:8080/n8n
-# http://hostname.local:8080/chatwoot
-# http://hostname.local:8080/evolution
-# http://hostname.local:8080/lowcoder
-# http://hostname.local:8080/directus
-# http://hostname.local:8080/fileflows
-# http://hostname.local:8080/duplicati
-
-# Access services locally:
-# http://localhost:8080/n8n
-# http://localhost:8080/chatwoot
-# http://localhost:8080/evolution
-# http://localhost:8080/lowcoder
-# http://localhost:8080/directus
-# http://localhost:8080/fileflows
-# http://localhost:8080/duplicati
-
-# Or access services directly via exposed ports:
-# http://localhost:5678 (n8n)
-# http://localhost:3000 (chatwoot)
-# http://localhost:8081 (evolution)
-# http://localhost:3001 (lowcoder)
-# http://localhost:8055 (directus)
-# http://localhost:5000 (fileflows)
-# http://localhost:8200 (duplicati)
-
-# View logs
-docker compose logs -f
-
-# Stop services
-docker compose down
-```
-
-#### mDNS Setup (for .local access)
-
-To enable `hostname.local` access on the server:
-
-```bash
-# Install Avahi for mDNS hostname discovery
-sudo apt install avahi-daemon
-
-# Enable and start the service
-sudo systemctl enable avahi-daemon
-sudo systemctl start avahi-daemon
-
-# Test mDNS resolution
-ping $(hostname).local
-```
-
-#### Access Methods
-
-| Method | URL | Use Case |
-|--------|-----|----------|
-| **mDNS** | `http://hostname.local:8080/n8n` | LAN access from any device |
-| **IP Address** | `http://192.168.x.x:8080/n8n` | Fallback if mDNS fails |
-| **Localhost** | `http://localhost:8080/n8n` | Local access on server |
-
-### Production Deployment
-
-Production deployment uses `docker-compose.prod.yml` with explicit file loading:
-
-```bash
-# Start with production configuration
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-
-# Verify service health
-docker compose -f docker-compose.yml -f docker-compose.prod.yml ps
-
-# Access services via your configured domains:
-# https://n8n.yourdomain.com
-# https://chatwoot.yourdomain.com
-# https://evolution.yourdomain.com
-# etc.
-```
-
-### Development vs Production Comparison
-
-| Feature | Local Development (LAN + mDNS) | Production |
-|---------|----------------------------------|------------|
-| **Command** | `docker compose up -d` | `docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d` |
-| **Domain** | `hostname.local` / `localhost` | `your-domain.com` |
-| **Ports** | 8080/4433 (avoids conflicts) | 80/443 (standard) |
-| **SSL** | HTTP only (development) | HTTPS auto-generated |
-| **Database Access** | Direct (5432, 6379, 27017) | Internal only |
-| **File Mounting** | Live config editing | Production images only |
-| **Network Access** | LAN + localhost (mDNS) | Internet (DNS) |
-| **Setup Required** | `sudo apt install avahi-daemon` | DNS configuration |
+> **Nota:** Alguns guias ainda estão sendo finalizados e estarão disponíveis em breve.
 
 ---
 
 ## 🤝 Contribuindo
 
-Contribuições são bem-vindas! Por favor, siga estas diretrizes:
+Contribuições são bem-vindas! Consulte [CONTRIBUTING.md](CONTRIBUTING.md) para diretrizes de contribuição, padrões de código e processo de pull requests.
 
-### Estratégia de Branches
-
-- **Branch principal:** `main` (protegida, código pronto para produção)
-- **Branches de features:** `feature/<nome-descritivo>`
-- **Branches de correções:** `fix/<nome-descritivo>`
-
-### Formato de Mensagem de Commit
-
-Use modo imperativo para mensagens de commit:
-
-- ✅ Correto: `add health checks to all services`
-- ❌ Errado: `added health checks to all services`
-
-### Processo de Pull Request
-
-1. Faça fork do repositório
-2. Crie uma branch de feature a partir da `main`
-3. Faça suas alterações
-4. Garanta que todas as verificações de CI passem
-5. Submeta um pull request com uma descrição clara
+**Diretrizes Rápidas:**
+- Use `feature/<nome>` para novas funcionalidades
+- Use `fix/<nome>` para correções
+- Mensagens de commit em modo imperativo (ex: "add health checks")
+- Garanta que todas as verificações de CI passem antes de submeter PR
 
 ---
 
@@ -345,19 +104,22 @@ BorgStack é software de código aberto licenciado sob a [Licença MIT](LICENSE)
 
 ## 🌟 Suporte
 
-- **Issues:** Reporte bugs ou solicite recursos via [GitHub Issues](https://github.com/yourusername/borgstack/issues)
-- **Documentação:** Verifique o diretório [docs/](docs/) primeiro
-- **Comunidade:** Junte-se às nossas discussões (em breve)
+- **Issues:** Reporte bugs ou solicite recursos via [GitHub Issues](https://github.com/docg1701/borgstack/issues)
+- **Documentação:** Consulte [INSTALL.md](INSTALL.md) e [docs/](docs/) para guias detalhados
+- **Segurança:** Para vulnerabilidades de segurança, consulte [docs/architecture/security-and-performance.md](docs/architecture/security-and-performance.md)
 
 ---
 
 ## ⚠️ Segurança
 
-- Nunca commite arquivos `.env` ou secrets no controle de versão
-- Atualize regularmente as imagens Docker para corrigir vulnerabilidades de segurança
-- Siga as melhores práticas de segurança em [docs/07-security.md](docs/07-security.md)
-- Use senhas fortes e únicas para todos os serviços
-- Habilite regras de firewall para restringir acesso a portas sensíveis
+**Práticas Essenciais:**
+- ✅ Nunca commite arquivos `.env` ou secrets no controle de versão
+- ✅ Use senhas fortes e únicas para todos os serviços (script bootstrap gera automaticamente)
+- ✅ Mantenha as imagens Docker atualizadas regularmente
+- ✅ Configure firewall adequadamente (script bootstrap configura UFW automaticamente)
+- ✅ Em produção, altere `CORS_ALLOWED_ORIGINS` de `*` para origens específicas
+
+Consulte [docs/architecture/security-and-performance.md](docs/architecture/security-and-performance.md) para hardening completo de segurança.
 
 ---
 

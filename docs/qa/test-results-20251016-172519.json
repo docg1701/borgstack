@@ -1,0 +1,69 @@
+{
+  "report_date": "2025-10-16T17:35:03+00:00",
+  "execution_time_seconds": 584,
+  "system_metrics": {
+    "cpu_cores": 8,
+    "total_memory": "16Gi",
+    "used_memory": "691Mi",
+    "disk_usage": "11%"
+  },
+  "summary": {
+    "total_tests": 67,
+    "passed": 14,
+    "failed": 53,
+    "skipped": 12,
+    "pass_rate": "20.9%"
+  },
+  "test_suites": [
+    {
+      "name": "16 deployment verification scripts",
+      "total_tests": 16,
+      "passed": 4,
+      "failed": 12,
+      "skipped": 0,
+      "duration_seconds": 325,
+      "status": "PASS"
+    }
+,
+    {
+      "name": "Storage Integration Tests",
+      "total_tests": ,
+      "passed": 1,
+      "failed": 11,
+      "skipped": ,
+      "duration_seconds": 0,
+      "status": "FAIL"
+    }
+,
+    {
+      "name": "End-to-End Workflow Tests",
+      "total_tests": ,
+      "passed": ,
+      "failed": ,
+      "skipped": ,
+      "duration_seconds": 0,
+      "status": "FAIL"
+    }
+,
+    {
+      "name": "Component Integration Tests",
+      "total_tests": 36,
+      "passed": 7,
+      "failed": 22,
+      "skipped": 7,
+      "duration_seconds": 5,
+      "status": "FAIL"
+    }
+,
+    {
+      "name": "Failure Scenario Tests",
+      "total_tests": 15,
+      "passed": 2,
+      "failed": 8,
+      "skipped": 5,
+      "duration_seconds": 249,
+      "status": "FAIL"
+    }
+
+  ]
+}
