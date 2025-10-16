@@ -11,3 +11,5 @@
 **Epic 5: Storage & Backup Systems** - Configure SeaweedFS for S3-compatible object storage and Duplicati for automated backup solutions.
 
 **Epic 6: Integration & Documentation** - Create comprehensive Portuguese documentation and ensure all components work together seamlessly with proper integrations.
+
+**Epic 7: Documentation Simplification** - Refactor documentation from 29 files (~32,000 lines) to 6 essential files (~1,400 lines), removing redundancies and third-party tool documentation.

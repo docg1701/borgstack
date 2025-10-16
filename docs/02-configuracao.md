@@ -90,16 +90,20 @@ cat .gitignore | grep .env
 ### Geração Automática vs. Manual
 
 **Automático (via bootstrap.sh):**
+- ✅ **Modo Local (LAN):** Gera automaticamente configuração para `hostname.local`
+- ✅ **Modo Produção:** Solicita domínio e email interativamente
 - ✅ Todas as senhas de bancos de dados (10 senhas)
 - ✅ Chaves de encriptação (n8n, Chatwoot, Lowcoder)
 - ✅ Permissões corretas do arquivo (chmod 600)
-- ❌ Domínios (você deve configurar manualmente)
+- ✅ Instalação automática do Avahi (modo local)
+- ✅ Configuração de firewall para mDNS (modo local)
 
 **Manual (quando você copia .env.example):**
 - ❌ Todas as senhas (você deve gerar)
 - ❌ Chaves de encriptação (você deve gerar)
 - ❌ Domínios (você deve configurar)
 - ❌ Permissões do arquivo (você deve configurar)
+- ❌ Avahi/mDNS (você deve instalar manualmente se modo local)
 
 ### Exemplo de .env Mínimo Funcional
 
@@ -969,32 +973,368 @@ docker compose config > docker-compose-rendered.yml
 docker compose config --quiet && echo "✅ Configuração válida" || echo "❌ Erro na configuração"
 ```
 
-### Sobrescrever Configurações (docker-compose.override.yml)
+### Configuração de Hostname Local (mDNS/Avahi)
 
-Para desenvolvimento ou customização local:
+O BorgStack suporta **descoberta automática de hostname** via mDNS (multicast DNS) para acesso via rede local usando o padrão `hostname.local`. Esta é a abordagem recomendada para desenvolvimento local em ambientes LAN.
 
+#### O que é mDNS?
+
+**Multicast DNS (mDNS)** é um protocolo de rede zero-configuration que permite dispositivos na mesma rede local resolverem nomes de host para endereços IP sem um servidor DNS central. Combinado com **Avahi** (implementação Linux), seus serviços BorgStack se tornam acessíveis via `hostname.local` de qualquer dispositivo na rede.
+
+#### Benefícios do mDNS
+
+✅ **Acesso Memorável**: `debian13-lxc.local:8080/n8n` em vez de `192.168.1.100:8080/n8n`
+✅ **Zero Configuration**: Funciona automaticamente após instalação do Avahi
+✅ **Acesso LAN**: Qualquer dispositivo na rede pode acessar os serviços
+✅ **Profissional**: Aparência profissional comparada a acessos por IP
+✅ **Flexível**: Funciona mesmo se o IP do servidor mudar
+
+#### Instalação e Configuração do Avahi
+
+**1. Instalar Pacotes Necessários:**
 ```bash
-# Criar docker-compose.override.yml
-nano docker-compose.override.yml
+# Atualizar sistema
+sudo apt update
+
+# Instalar Avahi daemon e utilitários
+sudo apt install avahi-daemon avahi-utils
+
+# Habilitar e iniciar serviço
+sudo systemctl enable avahi-daemon
+sudo systemctl start avahi-daemon
+
+# Verificar status
+sudo systemctl status avahi-daemon
 ```
 
-Exemplo de override para expor porta PostgreSQL em dev:
+**2. Verificar Configuração:**
+```bash
+# Obter hostname do servidor
+HOSTNAME=$(hostname)
+echo "Hostname detectado: $HOSTNAME"
+
+# Testar resolução mDNS
+ping -c 3 $HOSTNAME.local
+
+# Descobrir serviços na rede
+avahi-browse -a -t
+
+# Verificar se Caddy está acessível via mDNS
+curl -I http://$HOSTNAME.local:8080
+```
+
+**3. Configurar Variáveis de Ambiente:**
+```bash
+# Editar .env para usar hostname.local
+cd ~/borgstack
+nano .env
+
+# Adicionar/configurar variáveis:
+HOSTNAME=$HOSTNAME                    # Hostname do servidor
+BORGSTACK_DOMAIN=$HOSTNAME.local     # Domínio para mDNS
+VPS_IP=$(hostname -I | awk '{print $1}')  # IP para fallback
+CADDY_EMAIL=admin@localhost          # Email para certificados locais
+```
+
+#### URLs de Acesso com mDNS
+
+**Via mDNS (Recomendado):**
+```bash
+# Acesso via hostname.local (funciona em qualquer dispositivo da rede)
+http://debian13-lxc.local:8080/n8n        # n8n automation platform
+http://debian13-lxc.local:8080/chatwoot   # Customer service platform
+http://debian13-lxc.local:8080/evolution  # WhatsApp Business API
+http://debian13-lxc.local:8080/lowcoder   # Low-code application builder
+http://debian13-lxc.local:8080/directus   # Headless CMS
+http://debian13-lxc.local:8080/fileflows  # Media processing
+http://debian13-lxc.local:8080/duplicati  # Backup system
+```
+
+**Métodos Alternativos (Fallback):**
+```bash
+# Via IP (se mDNS falhar)
+http://10.10.10.33:8080/n8n
+http://10.10.10.33:8080/chatwoot
+
+# Via localhost (acesso local no servidor)
+http://localhost:8080/n8n
+http://localhost:8080/chatwoot
+
+# Via portas diretas (para debugging)
+http://localhost:5678    # n8n (direto)
+http://localhost:3000    # Chatwoot (direto)
+http://localhost:8081    # Evolution API (direto)
+```
+
+#### Configuração de Clientes na Rede
+
+**Linux/Mac (geralmente funciona automaticamente):**
+```bash
+# Testar resolução (deve funcionar automaticamente)
+ping debian13-lxc.local
+
+# Se não funcionar, instalar Avahi/Bonjour:
+# Debian/Ubuntu: sudo apt install avahi-daemon
+# macOS: Suporte Bonjour integrado
+# Outras distribuições: Consulte a documentação da sua distro
+```
+
+**Windows (requer instalação):**
+```powershell
+# Opção 1: Instalar Bonjour Print Services (Apple)
+# Download: https://support.apple.com/kb/dl999?locale=en_US
+
+# Opção 2: Usar terceiros como "iTunes" (inclui Bonjour)
+
+# Testar resolução após instalação:
+ping debian13-lxc.local
+```
+
+**Configuração Manual via /etc/hosts (alternativa):**
+```bash
+# Se mDNS não funcionar, adicionar manualmente:
+echo "10.10.10.33 debian13-lxc debian13-lxc.local" | sudo tee -a /etc/hosts
+```
+
+#### Troubleshooting mDNS
+
+| Problema | Causa Provável | Solução |
+|----------|----------------|----------|
+| `hostname.local` não resolve | Avahi não está rodando | `sudo systemctl start avahi-daemon` |
+| Funciona no servidor mas não em outros | Firewall bloqueando mDNS | `sudo ufw allow 5353/udp` |
+| Acesso intermitente | Switch/roteador bloqueando multicast | Verificar configuração de rede |
+| Navegador não acessa mas ping funciona | Proxy do navegador bloqueando | Desabilitar proxy para .local |
+
+**Comandos de Diagnóstico:**
+```bash
+# Verificar se Avahi está rodando
+sudo systemctl status avahi-daemon
+
+# Verificar portas mDNS abertas
+sudo netstat -ulnp | grep 5353
+
+# Descobrir serviços na rede
+avahi-browse -r _http._tcp
+
+# Testar diferentes métodos de resolução
+nslookup debian13-lxc.local
+dig debian13-lxc.local
+
+# Verificar logs do Avahi
+sudo journalctl -u avahi-daemon -f
+```
+
+#### Requisitos de Rede
+
+**Para mDNS funcionar corretamente:**
+
+- ✅ **Mesma Subnet**: Dispositivos na mesma rede (ex: 192.168.1.x/24)
+- ✅ **Multicast Permitido**: Switch/roteador deve permitir tráfego multicast
+- ✅ **Porta 5353 UDP**: Não bloqueada por firewall
+- ✅ **Sem Isolamento VLAN**: Tráfego mDNS não bloqueado por VLANs
+
+**Configurar Firewall para mDNS:**
+```bash
+# Abrir porta mDNS (se necessário)
+sudo ufw allow 5353/udp comment "mDNS"
+
+# Permitir tráfego multicast (regras avançadas)
+sudo iptables -A INPUT -d 224.0.0.251 -p udp --dport 5353 -j ACCEPT
+```
+
+#### Configuração Avançada
+
+**Personalizar Hostname mDNS:**
+```bash
+# Editar configuração do Avahi
+sudo nano /etc/avahi/avahi-daemon.conf
+
+# Configuração personalizada:
+[server]
+host-name=borgstack-dev
+domain-name=local
+use-ipv4=yes
+use-ipv6=no
+publish-workstation=yes
+
+# Restart após mudanças
+sudo systemctl restart avahi-daemon
+```
+
+**Publicar Serviços Personalizados:**
+```bash
+# Criar arquivo de serviço personalizado
+sudo nano /etc/avahi/services/borgstack.service
+
+<?xml version="1.0" standalone='no'?>
+<!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+<service-group>
+  <name replace-wildcards="yes">%h - BorgStack</name>
+  <service>
+    <type>_http._tcp</type>
+    <port>8080</port>
+    <txt-record>path=/</txt-record>
+  </service>
+</service-group>
+
+# Reiniciar Avahi
+sudo systemctl restart avahi-daemon
+```
+
+### Sobrescrever Configurações (docker-compose.override.yml)
+
+O BorgStack usa o padrão **industry-standard** do Docker Compose para desenvolvimento local através do `docker-compose.override.yml`, agora com suporte completo a mDNS.
+
+#### Como Funciona
+
+```bash
+# Desenvolvimento Local (automático com mDNS)
+docker compose up -d
+# Carrega automaticamente: docker-compose.yml + docker-compose.override.yml
+# Suporte automático para hostname.local
+
+# Produção (explícito)
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# Ignora docker-compose.override.yml e configurações mDNS
+```
+
+#### Configuração Local Implementada
+
+O `docker-compose.override.yml` já está pré-configurado com:
 
 ```yaml
-# docker-compose.override.yml (NÃO commitar ao Git!)
-version: '3.8'
-
+# Modo Desenvolvimento Local
 services:
+  caddy:
+    # Portas alternativas para evitar conflitos
+    ports:
+      - "8080:80"    # HTTP na porta 8080
+      - "4433:443"   # HTTPS na porta 4433
+    # Configurações localhost
+    environment:
+      DOMAIN: localhost
+      EMAIL: admin@localhost
+      AUTO_HTTPS: "off"  # Sem SSL para localhost
+    volumes:
+      - ./config/caddy/Caddyfile.dev:/etc/caddy/Caddyfile:ro
+
+  # Acesso direto aos bancos de dados para desenvolvimento
   postgresql:
     ports:
-      - "5432:5432"  # Expor PostgreSQL ao host (apenas dev!)
+      - "5432:5432"
 
   redis:
     ports:
-      - "6379:6379"  # Expor Redis ao host (apenas dev!)
+      - "6379:6379"
+
+  mongodb:
+    ports:
+      - "27017:27017"
+
+  # Portas diretas para desenvolvimento
+  n8n:
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_LOG_LEVEL=debug
+    volumes:
+      - ./config/n8n/workflows:/home/node/.n8n/workflows
+
+  chatwoot:
+    ports:
+      - "3000:3000"
+    environment:
+      - RAILS_ENV=development
+      - RAILS_LOG_LEVEL=debug
+
+  evolution:
+    ports:
+      - "8081:8080"
+
+  lowcoder-frontend:
+    ports:
+      - "3001:3000"
+
+  directus:
+    ports:
+      - "8055:8055"
+
+  fileflows:
+    ports:
+      - "5000:5000"
+
+  duplicati:
+    ports:
+      - "8200:8200"
+
+  seaweedfs:
+    ports:
+      - "8333:8333"  # S3 API
+      - "9333:9333"  # Master
+      - "8888:8888"  # Filer
+      - "8082:8080"  # Volume
 ```
 
-**⚠️ IMPORTANTE:** O `docker-compose.override.yml` é automaticamente carregado se existir. NUNCA use em produção!
+#### Acesso em Modo Local
+
+**Via Caddy (portas 8080/4433):**
+```bash
+http://localhost:8080/n8n        # n8n
+http://localhost:8080/chatwoot   # Chatwoot
+http://localhost:8080/evolution  # Evolution API
+http://localhost:8080/lowcoder   # Lowcoder
+http://localhost:8080/directus   # Directus
+http://localhost:8080/fileflows  # FileFlows
+http://localhost:8080/duplicati  # Duplicati
+```
+
+**Acesso Direto (portas individuais):**
+```bash
+http://localhost:5678   # n8n (direto)
+http://localhost:3000   # Chatwoot (direto)
+http://localhost:8081   # Evolution API (direto)
+http://localhost:3001   # Lowcoder (direto)
+http://localhost:8055   # Directus (direto)
+http://localhost:5000   # FileFlows (direto)
+http://localhost:8200   # Duplicati (direto)
+http://localhost:5432   # PostgreSQL (ferramentas de DB)
+http://localhost:6379   # Redis (ferramentas de cache)
+http://localhost:27017  # MongoDB (ferramentas de NoSQL)
+```
+
+#### Customizar Override Local
+
+Você pode adicionar suas próprias configurações ao `docker-compose.override.yml`:
+
+```yaml
+# Adicionar no final do docker-compose.override.yml
+services:
+  n8n:
+    # Suas configurações personalizadas
+    environment:
+      - N8N_LOG_LEVEL=trace  # Logs mais detalhados
+    volumes:
+      - ./meus-workflows:/home/node/.n8n/workflows
+```
+
+**⚠️ IMPORTANTE:**
+- `docker-compose.override.yml` é **automaticamente carregado** quando existe
+- **NUNCA** use em produção
+- **NUNCA** comite alterações pessoais ao Git
+- Para produção, use sempre os arquivos explícitos: `docker-compose.yml -f docker-compose.prod.yml`
+
+#### Validar Configuração Local
+
+```bash
+# Ver configuração final (com overrides aplicados)
+docker compose config
+
+# Testar se configuração é válida
+docker compose config --quiet && echo "✅ Configuração válida" || echo "❌ Erro na configuração"
+
+# Ver apenas as configurações de um serviço
+docker compose config n8n
+```
 
 ### Limites de Recursos
 
@@ -1142,6 +1482,6 @@ Após configurar o sistema:
 
 ---
 
-**Última atualização:** 2025-10-14
-**Versão do guia:** 1.1
-**Compatível com:** BorgStack v4+, GNU/Linux (Ubuntu, Debian, CentOS, RHEL, Fedora, Arch, openSUSE)
+**Última atualização:** 2025-10-15
+**Versão do guia:** 2.0
+**Compatível com:** BorgStack em Debian e Ubuntu (outras distribuições: configuração manual)

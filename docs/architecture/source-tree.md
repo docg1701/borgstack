@@ -17,7 +17,8 @@ borgstack/
 │   ├── seaweedfs/
 │   │   └── filer.toml                # Filer configuration
 │   ├── caddy/
-│   │   └── Caddyfile                 # Reverse proxy + SSL config
+│   │   ├── Caddyfile                 # Production reverse proxy + SSL config
+│   │   └── Caddyfile.dev             # Development localhost config
 │   ├── n8n/
 │   │   └── workflows/                # Example workflow templates
 │   ├── chatwoot/
@@ -65,7 +66,8 @@ borgstack/
 │   └── deployment/                   # Deployment validation
 │       ├── check-dns.sh              # DNS configuration check
 │       ├── check-resources.sh        # RAM/disk validation
-│       └── verify-services.sh        # Health check all services
+│       ├── verify-services.sh        # Health check all services
+│       └── verify-local-override-configuration.sh  # Local development config validation
 │
 ├── .env.example                      # Environment variable template
 ├── .gitignore                        # Exclude .env, volumes, logs

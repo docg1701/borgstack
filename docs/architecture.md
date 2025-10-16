@@ -1610,6 +1610,61 @@ This section defines the deployment setup and operational workflow for BorgStack
 
 **Note:** BorgStack is designed for server deployment. "Local development" means deploying on a local GNU/Linux VM or test server for learning/testing purposes before production deployment.
 
+#### Industry-Standard Local Development with Docker Compose Override
+
+BorgStack follows Docker's official industry-standard patterns for local development using `docker-compose.override.yml`. This approach provides automatic configuration loading and seamless switching between local and production environments.
+
+**How Docker Compose Override Works:**
+
+Docker Compose automatically loads and merges `docker-compose.override.yml` when you run `docker compose up` (without explicit file arguments). This is the recommended pattern for local development per Docker's official documentation.
+
+**Local vs Production Deployment:**
+
+| Feature | Local Development (Industry Standard) | Production Deployment |
+|---------|----------------------------------------|----------------------|
+| **Command** | `docker compose up -d` | `docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d` |
+| **Configuration** | Automatic override loading | Explicit file loading |
+| **Domain** | localhost | your-domain.com |
+| **Ports** | 8080 (HTTP), 4433 (HTTPS) | 80 (HTTP), 443 (HTTPS) |
+| **SSL** | HTTP only (localhost) | HTTPS auto-generated |
+| **Database Access** | Direct ports exposed (5432, 6379, 27017) | Internal only |
+| **File Mounting** | Live config editing | Production images only |
+
+**Local Development Workflow:**
+
+```bash
+# 1. Clone and setup
+cd ~/borgstack
+git clone https://github.com/your-org/borgstack.git
+cd borgstack
+
+# 2. Generate environment for local development
+cp .env.example .env
+# Edit .env with localhost configuration:
+# BORGSTACK_DOMAIN=localhost
+# CADDY_EMAIL=admin@localhost
+# (other passwords and settings)
+
+# 3. Start local development (automatic override loading)
+docker compose up -d
+
+# 4. Access services locally
+# Via reverse proxy: http://localhost:8080/n8n, http://localhost:8080/chatwoot, etc.
+# Or direct ports: http://localhost:5678 (n8n), http://localhost:3000 (chatwoot), etc.
+
+# 5. Stop when done
+docker compose down
+```
+
+**Override Configuration Benefits:**
+
+- **Zero configuration**: Works automatically with `docker compose up`
+- **Development friendly**: Exposes database ports for debugging
+- **Local domain**: Uses localhost instead of production domains
+- **No SSL**: HTTP-only for localhost simplifies development
+- **Live editing**: Config files mounted for real-time changes
+- **Industry standard**: Follows Docker Compose best practices
+
 #### Prerequisites
 
 ```bash

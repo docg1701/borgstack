@@ -1,0 +1,109 @@
+# ============================================================================
+# BorgStack - Local Development Caddy Configuration
+# ============================================================================
+#
+# Local development configuration with HTTP-only access for LAN + localhost
+# Uses VPS IP for LAN access while maintaining security (no external internet)
+#
+# Access URLs:
+#   http://[HOSTNAME]:8080           # LAN access via DNS hostname (preferred)
+#   http://localhost:8080           # Local access on VPS
+#   http://[VPS_IP]:8080            # LAN access via IP address
+#   http://192.168.x.x:8080        # LAN access from network
+#
+# Services:
+#   n8n:        http://[HOSTNAME]:8080/n8n
+#   chatwoot:   http://[HOSTNAME]:8080/chatwoot
+#   evolution:  http://[HOSTNAME]:8080/evolution
+#   lowcoder:   http://[HOSTNAME]:8080/lowcoder
+#   directus:   http://[HOSTNAME]:8080/directus
+#   fileflows:  http://[HOSTNAME]:8080/fileflows
+#   duplicati:  http://[HOSTNAME]:8080/duplicati
+
+# ============================================================================
+# Global Options - Local Configuration
+# ============================================================================
+{
+	# Disable automatic HTTPS for localhost
+	auto_https off
+
+	# Use localhost email
+	email admin@localhost
+}
+
+# ============================================================================
+# Localhost + LAN Site Configuration
+# ============================================================================
+localhost:8080 {
+	# Handle service routing with path prefixes
+	handle /n8n* {
+		reverse_proxy n8n:5678
+	}
+
+	handle /chatwoot* {
+		reverse_proxy chatwoot:3000
+	}
+
+	handle /evolution* {
+		reverse_proxy evolution:8080
+	}
+
+	handle /lowcoder* {
+		reverse_proxy lowcoder-frontend:3000
+	}
+
+	handle /directus* {
+		reverse_proxy directus:8055
+	}
+
+	handle /fileflows* {
+		reverse_proxy fileflows:5000
+	}
+
+	handle /duplicati* {
+		reverse_proxy duplicati:8200
+	}
+
+	# Default route - could show a dashboard or redirect to n8n
+	respond "BorgStack Local Mode - Access services: /n8n, /chatwoot, /evolution, /lowcoder, /directus, /fileflows, /duplicati" 200
+}
+
+# ============================================================================
+# Optional: HTTPS with self-signed certificate
+# ============================================================================
+# Uncomment this section if you want HTTPS locally
+# You'll need to accept the self-signed certificate in your browser
+#
+# localhost:4433 {
+# 	tls internal
+#
+# 	handle /n8n* {
+# 		reverse_proxy n8n:5678
+# 	}
+#
+# 	handle /chatwoot* {
+# 		reverse_proxy chatwoot:3000
+# 	}
+#
+# 	handle /evolution* {
+# 		reverse_proxy evolution:8080
+# 	}
+#
+# 	handle /lowcoder* {
+# 		reverse_proxy lowcoder-frontend:3000
+# 	}
+#
+# 	handle /directus* {
+# 		reverse_proxy directus:8055
+# 	}
+#
+# 	handle /fileflows* {
+# 		reverse_proxy fileflows:5000
+# 	}
+#
+# 	handle /duplicati* {
+# 		reverse_proxy duplicati:8200
+# 	}
+#
+# 	respond "BorgStack Local Mode (HTTPS) - Access services: /n8n, /chatwoot, /evolution, /lowcoder, /directus, /fileflows, /duplicati" 200
+# }

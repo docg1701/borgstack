@@ -290,3 +290,99 @@ As a deployment engineer, I want a final verification that the complete stack de
 4. Basic workflows tested and working
 5. Performance metrics within expected ranges
 6. Documentation accuracy verified
+
+## Epic 7 Documentation Simplification
+
+**Epic Goal:** Simplify BorgStack documentation from ~32,000 lines across 29 files to ~1,400 lines in 6 essential files, eliminating redundancies, removing third-party tool documentation, and maintaining only critical information for installation, configuration, and maintenance.
+
+**CRITICAL: Files to NEVER modify or delete:**
+- docs/brief.md
+- docs/prd.md
+- docs/architecture.md
+- All files in docs/prd/ directory
+- All files in docs/architecture/ directory
+- All files in docs/qa/ directory
+- All files in docs/stories/ directory
+- CLAUDE.md
+- CONTRIBUTING.md
+- LICENSE
+
+**Scope:** Only modify/delete user-facing documentation files in root and docs/ (excluding protected directories above).
+
+### Story 7.1 Consolidate Installation Documentation
+As a new user, I want streamlined installation documentation, so that I can understand and deploy BorgStack in 30 minutes instead of reading 6 hours of documentation.
+
+**Files to DELETE:**
+- docs/README.md
+- docs/00-inicio-rapido.md
+- docs/01-instalacao.md
+
+**Files to CREATE/UPDATE:**
+- README.md (root) - replace existing
+- INSTALL.md (root) - create new
+
+**Acceptance Criteria:**
+1. README.md (100-150 lines) contains: project description, service list, Quick Start (5 commands), documentation links
+2. INSTALL.md (150-200 lines) contains: local mode installation, production mode installation, installation troubleshooting
+3. Zero overlap or repetition between README.md and INSTALL.md
+4. All installation commands tested and functional
+5. Old files deleted: docs/README.md, docs/00-inicio-rapido.md, docs/01-instalacao.md
+6. Protected files untouched: docs/prd/, docs/architecture/, docs/qa/, docs/stories/, CLAUDE.md, CONTRIBUTING.md, LICENSE
+
+### Story 7.2 Remove Third-Party Documentation and Consolidate Configuration
+As a system administrator, I want BorgStack-specific configuration documentation only, so that I don't waste time reading PostgreSQL/Redis tutorials that already have official documentation.
+
+**Files to DELETE:**
+- docs/02-configuracao.md
+- docs/03-services/ (entire directory with 14 files)
+
+**Files to CREATE:**
+- CONFIGURATION.md (root)
+- docs/services.md
+
+**Acceptance Criteria:**
+1. CONFIGURATION.md (100-150 lines) documents only BorgStack .env variables
+2. docs/services.md (200-300 lines) contains links to official documentation plus BorgStack-specific configurations only
+3. Zero detailed tutorials for third-party tools (PostgreSQL, Redis, MongoDB, Caddy, etc.)
+4. BorgStack-specific configurations clearly identified (e.g., POSTGRES_DATABASES, internal network names)
+5. Old files deleted: docs/02-configuracao.md, entire docs/03-services/ directory
+6. Protected files untouched: docs/prd/, docs/architecture/, docs/qa/, docs/stories/, docs/brief.md, docs/prd.md, docs/architecture.md
+
+### Story 7.3 Consolidate Operations and Complete Cleanup
+As a DevOps engineer, I want concise operational documentation, so that I can maintain BorgStack without reading hundreds of pages.
+
+**Files to DELETE:**
+- docs/04-integrations/ (entire directory)
+- docs/05-solucao-de-problemas.md
+- docs/06-manutencao.md
+- docs/07-seguranca.md
+- docs/08-desempenho.md
+- docs/09-workflows-exemplo.md
+- docs/POST_MVP_MULTI_TENANT_ARCHITECTURE.md
+
+**Files to CREATE:**
+- TROUBLESHOOTING.md (root)
+- docs/integrations.md
+- docs/maintenance.md
+
+**Files that MUST remain in docs/ after cleanup:**
+- docs/services.md (created in Story 7.2)
+- docs/integrations.md (created in this story)
+- docs/maintenance.md (created in this story)
+- docs/brief.md (PROTECTED - do not touch)
+- docs/prd.md (PROTECTED - do not touch)
+- docs/architecture.md (PROTECTED - do not touch)
+- docs/prd/ directory (PROTECTED - do not touch)
+- docs/architecture/ directory (PROTECTED - do not touch)
+- docs/qa/ directory (PROTECTED - do not touch)
+- docs/stories/ directory (PROTECTED - do not touch)
+
+**Acceptance Criteria:**
+1. TROUBLESHOOTING.md (100-150 lines) covers 10 most common BorgStack problems
+2. docs/integrations.md (150-200 lines) explains how BorgStack services integrate with each other
+3. docs/maintenance.md (100-150 lines) has concise checklists for backup, updates, basic security
+4. docs/ directory contains user-facing files (services.md, integrations.md, maintenance.md) plus protected development files
+5. All internal links updated and functional
+6. Total user-facing documentation < 1,500 lines verified
+7. Old files deleted: docs/04-integrations/, docs/05-09, docs/POST_MVP_MULTI_TENANT_ARCHITECTURE.md
+8. PROTECTED files confirmed untouched: docs/brief.md, docs/prd.md, docs/architecture.md, docs/prd/, docs/architecture/, docs/qa/, docs/stories/

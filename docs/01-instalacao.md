@@ -1,6 +1,6 @@
 # Guia de Instalação do BorgStack
 
-Guia completo para instalação do BorgStack em distribuições GNU/Linux.
+Guia completo para instalação do BorgStack em servidores Debian e Ubuntu.
 
 ---
 
@@ -9,9 +9,10 @@ Guia completo para instalação do BorgStack em distribuições GNU/Linux.
 1. [Requisitos do Sistema](#requisitos-do-sistema)
 2. [Instalação Automatizada (Recomendado)](#instalação-automatizada-recomendado)
 3. [Instalação Manual (Alternativa)](#instalação-manual-alternativa)
-4. [Configuração Pós-Instalação](#configuração-pós-instalação)
-5. [Verificação da Instalação](#verificação-da-instalação)
-6. [Solução de Problemas](#solução-de-problemas)
+4. [Instalação em Modo Local (Testes/Desenvolvimento)](#instalação-em-modo-local-testesdesenvolvimento)
+5. [Configuração Pós-Instalação](#configuração-pós-instalação)
+6. [Verificação da Instalação](#verificação-da-instalação)
+7. [Solução de Problemas](#solução-de-problemas)
 
 ---
 
@@ -34,17 +35,18 @@ O BorgStack requer recursos robustos para executar 14 containers simultaneamente
 
 | Software | Versão | Instalação |
 |----------|--------|------------|
-| **Sistema Operacional** | GNU/Linux (Ubuntu, Debian, CentOS, RHEL, Fedora, Arch, openSUSE) | Script bootstrap detecta automaticamente a distribuição |
+| **Sistema Operacional** | Debian ou Ubuntu (outras distros: instalação manual necessária) | Script bootstrap valida Debian/Ubuntu automaticamente |
 | **Docker Engine** | Última versão estável | Instalado automaticamente pelo bootstrap |
 | **Docker Compose** | v2 (plugin) | Instalado automaticamente pelo bootstrap |
 | **Git** | Qualquer versão recente | Para clonar o repositório |
 
-**⚠️ IMPORTANTE:** Este guia suporta múltiplas distribuições **GNU/Linux** (Ubuntu, Debian, CentOS, RHEL, Fedora, Arch, openSUSE). O script de instalação automática detecta automaticamente a distribuição e instala os pacotes apropriados.
+**⚠️ IMPORTANTE:** O script de instalação automática suporta **apenas Debian e Ubuntu**. Se você usa outra distribuição Linux, consulte a seção [Instalação Manual](#instalação-manual-alternativa) e siga as instruções oficiais do Docker para sua distribuição.
 
 ### Requisitos de Rede
 
-Para uma instalação completa e funcional, você precisará:
+Os requisitos de rede dependem do modo de instalação escolhido:
 
+#### Modo Produção
 **Obrigatório:**
 - ✅ Endereço IP público acessível pela internet
 - ✅ Portas 80 e 443 abertas e acessíveis (para SSL via Let's Encrypt)
@@ -66,33 +68,59 @@ duplicati.example.com   → Duplicati (sistema de backup)
 seaweedfs.example.com   → SeaweedFS (armazenamento de objetos)
 ```
 
-**💡 Dica:** Recomendamos usar um único domínio raiz com subdomínios, mas você pode usar domínios diferentes para cada serviço se preferir.
+#### Modo Local (LAN)
+**Obrigatório:**
+- ✅ Acesso à rede local (LAN)
+- ✅ Porta 22 para SSH (administração remota)
+- ✅ Avahi/mDNS funcionando na rede local (instalado automaticamente)
+
+**Opcional:**
+- 🔄 Domínios (não necessários - usa hostname.local)
+- 🔄 IP público (não necessário - acesso local apenas)
+- 🔄 Configuração DNS (não necessária)
+
+**💡 Dica:** Recomendamos usar um único domínio raiz com subdomínios para produção, mas você pode usar domínios diferentes para cada serviço se preferir.
 
 ---
 
 ## Instalação Automatizada (Recomendado)
 
-O script de bootstrap automatiza todo o processo de instalação, desde a validação de requisitos até a implantação dos serviços.
+O script de bootstrap automatiza todo o processo de instalação, desde a validação de requisitos até a implantação dos serviços, com suporte a dois modos de instalação.
+
+### Modos de Instalação Disponíveis
+
+O script `bootstrap.sh` oferece dois modos de instalação:
+
+| Característica | 🏠 Modo Local (LAN) | 🌐 Modo Produção |
+|----------------|-------------------|-----------------|
+| **Acesso** | `http://hostname.local:8080` | `https://seu-dominio.com` |
+| **SSL** | Não necessário (HTTP) | Automático (Let's Encrypt) |
+| **Domínios** | Não precisa configurar | Precisa configurar DNS |
+| **Requisitos** | Rede local apenas | IP público + DNS |
+| **Uso** | Testes, desenvolvimento, demos | Produção, acesso externo |
+| **mDNS/Avahi** | ✅ Instalado automaticamente | ❌ Não necessário |
 
 ### Visão Geral do Processo
-
-O script `bootstrap.sh` executa as seguintes etapas:
 
 ```mermaid
 flowchart TD
     A[Início: ./scripts/bootstrap.sh] --> B{Verificar SO}
-    B -->|GNU/Linux suportado| C[Verificar Recursos]
-    B -->|SO não suportado| Z[❌ Erro: SO incompatível]
-    C -->|✓ RAM ≥ 8GB<br/>✓ Disk ≥ 100GB<br/>✓ CPU ≥ 2 cores| D[Instalar Docker]
+    B -->|Debian/Ubuntu| C[Verificar Recursos]
+    B -->|Outro SO| Z[❌ Erro: Use instalação manual]
+    C -->|✓ RAM ≥ 8GB<br/>✓ Disk ≥ 100GB<br/>✓ CPU ≥ 2 cores| D{Selecionar Modo}
     C -->|✗ Recursos insuficientes| Z
-    D --> E[Configurar UFW]
-    E --> F[Gerar arquivo .env]
-    F --> G[Baixar imagens Docker]
-    G --> H[Iniciar serviços]
-    H --> I{Todos saudáveis?}
-    I -->|Sim| J[✓ Sucesso]
-    I -->|Não| K[Mostrar logs]
-    K --> L[Verificar manualmente]
+    D -->|🏠 Local LAN| E[Instalar Avahi/mDNS]
+    D -->|🌐 Produção| F[Pular Avahi]
+    E --> G[Instalar Docker]
+    F --> G
+    G --> H[Configurar UFW Firewall]
+    H --> I[Gerar .env]
+    I --> J[Baixar Imagens]
+    J --> K[Iniciar Serviços]
+    K --> L{Todos saudáveis?}
+    L -->|Sim| M[✓ Sucesso]
+    L -->|Não| N[Mostrar logs]
+    N --> O[Verificar manualmente]
 ```
 
 **Tempo estimado:** 15-30 minutos (dependendo da velocidade da internet para download das imagens Docker)
@@ -101,7 +129,7 @@ flowchart TD
 
 #### 1. Preparar o Servidor
 
-Conecte-se ao seu servidor GNU/Linux via SSH:
+Conecte-se ao seu servidor Debian/Ubuntu via SSH:
 
 ```bash
 ssh usuario@seu-servidor.com
@@ -126,17 +154,11 @@ cd borgstack
 
 **💡 Dica:** Se você não tiver o Git instalado, instale-o primeiro:
 ```bash
-# Para sistemas baseados em Debian/Ubuntu:
+# Para Debian/Ubuntu:
 sudo apt-get update && sudo apt-get install -y git
 
-# Para sistemas baseados em Red Hat/CentOS/Fedora:
-sudo dnf install -y git  # ou: sudo yum install -y git
-
-# Para Arch Linux:
-sudo pacman -S git
-
-# Para openSUSE:
-sudo zypper install -y git
+# Para outras distribuições:
+# Consulte a documentação da sua distribuição para instalar o git
 ```
 
 #### 3. Executar o Script de Bootstrap
@@ -149,13 +171,60 @@ Execute o script de instalação automatizada:
 
 **O que acontece durante a execução:**
 
+**Etapa 0: Seleção do Modo de Instalação**
+
+O script irá apresentar um menu interativo para selecionar o modo de instalação:
+
+```
+╔════════════════════════════════════════════════════════════════╗
+║                                                                ║
+║                  BorgStack Bootstrap Script                    ║
+║                                                                ║
+║              Automated GNU/Linux Setup                        ║
+║                                                                ║
+╚════════════════════════════════════════════════════════════════╝
+
+🚀 BorgStack Installation Mode
+
+Choose your installation type:
+
+1) Local Development (LAN)
+   • Access via hostname.local (e.g., debian13-lxc.local:8080/n8n)
+   • Automatic mDNS/Avahi setup
+   • HTTP only (no SSL)
+   • Database ports exposed for debugging
+   • Perfect for local development and testing
+
+2) Production Deployment
+   • Access via public domain (e.g., n8n.yourdomain.com)
+   • Requires DNS configuration
+   • Automatic HTTPS with Let's Encrypt SSL
+   • Secure configuration for production use
+
+3) Cancel - Exit the script
+
+Enter your choice (1, 2, or 3):
+```
+
+**Modo Local (LAN)** - Ideal para:
+- ✅ Testes e desenvolvimento
+- ✅ Demonstrações em rede local
+- ✅ Aprendizado sem complexidade de DNS
+- ✅ Ambientes de desenvolvimento interno
+
+**Modo Produção** - Ideal para:
+- ✅ Ambientes de produção
+- ✅ Acesso público via internet
+- ✅ SSL automático via Let's Encrypt
+- ✅ Configuração segura e otimizada
+
 **Etapa 1: Validação do Sistema (1-2 minutos)**
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Validating GNU/Linux Distribution
+Validating Linux Distribution
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-✓ GNU/Linux distribution detected
+✓ Ubuntu 22.04 detected
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Validating System Requirements
@@ -170,7 +239,29 @@ Validating System Requirements
 ✓ All system requirements validated
 ```
 
-**Etapa 2: Instalação do Docker (3-5 minutos)**
+**Etapa 2: Instalação de Dependências (Apenas Modo Local)**
+
+Se você selecionou **Modo Local (LAN)**, o script irá instalar e configurar o Avahi/mDNS:
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Installing Avahi for mDNS (Local LAN Mode)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ℹ Installing Avahi daemon for mDNS hostname discovery...
+✓ Avahi daemon installed and started successfully
+ℹ Testing mDNS resolution for debian13-lxc.local...
+✓ mDNS resolution working: debian13-lxc.local
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Configuring Firewall for mDNS (Local LAN Mode)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ℹ Configuring UFW for mDNS...
+✓ mDNS firewall rules configured
+```
+
+**Etapa 3: Instalação do Docker (3-5 minutos)**
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Installing Docker Engine and Docker Compose v2
@@ -211,16 +302,37 @@ To                         Action      From
 ```
 
 **Etapa 4: Geração do Arquivo .env (1 minuto)**
+
+O script irá gerar o arquivo `.env` de forma diferente para cada modo:
+
+**Modo Local (LAN):**
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Generating .env File
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-ℹ Generating strong passwords (32 characters each)...
-ℹ Setting secure file permissions (chmod 600)...
+ℹ Configuring for Local Development (LAN) mode...
+ℹ Using hostname: debian13-lxc
+ℹ Using domain: debian13-lxc.local
+ℹ Using email: admin@localhost
+ℹ Generating strong passwords...
 ✓ Generated .env file with strong passwords
 ⚠ IMPORTANT: Save these credentials securely!
-⚠ The .env file contains all system passwords
+```
+
+**Modo Produção:**
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Generating .env File
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ℹ Configuring for Production mode...
+ℹ Please enter your domain names:
+ℹ Enter base domain (e.g., example.com.br): mycompany.com.br
+ℹ Enter your email for SSL notifications (e.g., admin@mycompany.com.br): admin@mycompany.com.br
+ℹ Generating strong passwords...
+✓ Generated .env file with strong passwords
+⚠ IMPORTANT: Save these credentials securely!
 ```
 
 **Etapa 5: Implantação dos Serviços (5-15 minutos)**
@@ -268,40 +380,83 @@ Validating Health Checks
 
 #### 4. Revisar Informações de Instalação
 
-Após a conclusão, o script exibirá informações importantes:
+Após a conclusão, o script exibirá informações importantes específicas para cada modo:
 
+**Modo Local (LAN):**
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Installation Complete!
+Local Development (LAN) - Next Steps:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-✓ BorgStack has been successfully installed
+1. Test mDNS Resolution
+   Verify that mDNS is working properly:
+   ping debian13-lxc.local
+   curl http://debian13-lxc.local:8080
 
-Next Steps:
+2. Access Your Services
+   Your BorgStack is accessible via:
+   http://debian13-lxc.local:8080/n8n
+   http://debian13-lxc.local:8080/chatwoot
+   http://debian13-lxc.local:8080/evolution
+   http://debian13-lxc.local:8080/lowcoder
+   http://debian13-lxc.local:8080/directus
+   http://debian13-lxc.local:8080/fileflows
+   http://debian13-lxc.local:8080/duplicati
 
-1. Configure DNS A records for all service domains:
-   n8n.example.com         → YOUR_SERVER_IP
-   chatwoot.example.com    → YOUR_SERVER_IP
-   evolution.example.com   → YOUR_SERVER_IP
-   lowcoder.example.com    → YOUR_SERVER_IP
-   directus.example.com    → YOUR_SERVER_IP
-   fileflows.example.com   → YOUR_SERVER_IP
-   duplicati.example.com   → YOUR_SERVER_IP
-   seaweedfs.example.com   → YOUR_SERVER_IP
+3. First Login
+   n8n: http://debian13-lxc.local:8080/n8n → Create account
+   Chatwoot: http://debian13-lxc.local:8080/chatwoot → Create workspace
+   Directus: http://debian13-lxc.local:8080/directus/admin → Use .env credentials
 
-2. Wait for DNS propagation (usually 5-15 minutes)
-   Verify with: dig n8n.example.com
+4. Documentation for troubleshooting:
+   → docs/02-configuracao.md (Configuração de Hostname Local)
+   → docs/architecture/development-workflow.md (mDNS/Avahi Configuration)
 
-3. Access your services:
-   - n8n will automatically generate SSL certificates via Let's Encrypt
-   - First access may take 30-60 seconds for certificate generation
+5. Security Recommendations
+   ⚠ This is for local development only
+   ⚠ Do not expose to internet without proper security
+   ⚠ Save all passwords from .env to a secure password manager
+```
 
-4. Configure each service:
-   - See docs/03-services/ for service-specific setup guides
-   - See docs/02-configuracao.md for system configuration
+**Modo Produção:**
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Production Deployment - Next Steps:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-For troubleshooting, see docs/05-solucao-de-problemas.md
-Installation log saved to: /tmp/borgstack-bootstrap.log
+1. Configure DNS A Records
+   Add the following DNS records pointing to your server IP:
+   n8n.mycompany.com.br        → YOUR_SERVER_IP
+   chatwoot.mycompany.com.br   → YOUR_SERVER_IP
+   evolution.mycompany.com.br  → YOUR_SERVER_IP
+   lowcoder.mycompany.com.br   → YOUR_SERVER_IP
+   directus.mycompany.com.br   → YOUR_SERVER_IP
+   fileflows.mycompany.com.br  → YOUR_SERVER_IP
+   duplicati.mycompany.com.br  → YOUR_SERVER_IP
+   seaweedfs.mycompany.com.br  → YOUR_SERVER_IP
+
+2. Verify DNS Configuration
+   Wait for DNS propagation (5-30 minutes), then verify:
+   dig n8n.mycompany.com.br
+
+3. SSL Certificates (Automatic)
+   Caddy will automatically generate Let's Encrypt SSL certificates
+   when you first access each subdomain via HTTPS.
+
+4. Access Your Services
+   Once DNS is configured, access services at:
+   https://n8n.mycompany.com.br
+   https://chatwoot.mycompany.com.br
+   https://evolution.mycompany.com.br
+   https://lowcoder.mycompany.com.br
+   https://directus.mycompany.com.br
+   https://fileflows.mycompany.com.br
+   https://duplicati.mycompany.com.br
+
+5. Security Recommendations
+   ⚠ Change CORS_ALLOWED_ORIGINS from '*' to specific origins
+   ⚠ Save all passwords from .env to a secure password manager
+   ⚠ Consider enabling full disk encryption (LUKS) for production
 ```
 
 **⚠️ IMPORTANTE:** Salve o arquivo `.env` em local seguro! Ele contém todas as credenciais do sistema.
@@ -317,9 +472,9 @@ Se você preferir instalar manualmente ou está usando um ambiente personalizado
 Verifique se seu servidor atende aos requisitos mínimos:
 
 ```bash
-# Verificar distribuição GNU/Linux
+# Verificar distribuição (Debian ou Ubuntu)
 cat /etc/os-release | grep -E "^ID=" | cut -d= -f2
-# Deve retornar: ubuntu, debian, centos, rhel, rocky, almalinux, fedora, arch, opensuse-leap, ou opensuse-tumbleweed
+# Deve retornar: ubuntu ou debian
 
 # Verificar RAM (em GB)
 free -g | grep Mem: | awk '{print $2}'
@@ -336,7 +491,9 @@ nproc
 
 ### 2. Instalar Docker Engine
 
-Use o script de instalação oficial do Docker (funciona em todas as distribuições GNU/Linux):
+**Para Debian/Ubuntu (Recomendado: Script Oficial)**
+
+Use o script de instalação oficial do Docker:
 
 ```bash
 # Baixar e executar script de instalação oficial
@@ -344,14 +501,15 @@ curl -fsSL https://get.docker.com | sh
 ```
 
 Este script automaticamente:
-- Detecta sua distribuição GNU/Linux
+- Detecta sua distribuição (Debian ou Ubuntu)
 - Configura o repositório Docker apropriado
 - Instala Docker Engine e Docker Compose v2
 - Inicia e habilita o serviço Docker
 
-**Alternativa: Instalação manual (se o script oficial falhar)**
+**Alternativa: Instalação manual para Debian/Ubuntu**
 
-Para distribuições baseadas em Debian/Ubuntu:
+Se o script oficial falhar, você pode instalar manualmente:
+
 ```bash
 # Remover versões antigas
 sudo apt-get remove -y docker docker-engine docker.io containerd runc
@@ -375,20 +533,9 @@ sudo apt-get update
 sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 ```
 
-Para distribuições baseadas em Red Hat/CentOS/Fedora:
-```bash
-# Remover versões antigas
-sudo dnf remove -y docker docker-client docker-client-latest docker-common docker-latest docker-latest-logrotate docker-logrotate docker-engine
+**Para outras distribuições Linux:**
 
-# Instalar dependências
-sudo dnf install -y yum-utils
-
-# Adicionar repositório Docker
-sudo dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
-
-# Instalar Docker
-sudo dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-```
+Consulte a documentação oficial do Docker em https://docs.docker.com/engine/install/ para instruções específicas da sua distribuição.
 
 Adicione seu usuário ao grupo docker:
 
@@ -417,36 +564,24 @@ docker compose version
 
 ### 3. Instalar Dependências do Sistema
 
-Instale utilitários essenciais:
+Instale utilitários essenciais para Debian/Ubuntu:
 
-**Para sistemas baseados em Debian/Ubuntu:**
 ```bash
 sudo apt-get update
 sudo apt-get install -y curl wget git ufw dnsutils htop sysstat
 ```
 
-**Para sistemas baseados em Red Hat/CentOS/Fedora:**
-```bash
-sudo dnf install -y curl wget git firewalld bind-utils htop sysstat
-# ou para sistemas mais antigos:
-sudo yum install -y curl wget git firewalld bind-utils htop sysstat
-```
+**Para outras distribuições Linux:**
 
-**Para Arch Linux:**
-```bash
-sudo pacman -Syu curl wget git ufw bind-tools htop sysstat
-```
-
-**Para openSUSE:**
-```bash
-sudo zypper install -y curl wget git firewalld bind-tools htop sysstat
-```
+Consulte a documentação da sua distribuição para instalar os pacotes equivalentes:
+- `curl`, `wget`, `git` - ferramentas básicas
+- `ufw` ou firewall equivalente - gerenciamento de firewall
+- `dnsutils` ou `bind-utils` - ferramentas DNS (comando `dig`)
+- `htop`, `sysstat` - monitoramento de sistema
 
 ### 4. Configurar o Firewall
 
-Configure as regras básicas do firewall:
-
-**Opção A: UFW (Uncomplicated Firewall) - Para Debian/Ubuntu/Arch/openSUSE:**
+Configure as regras básicas do firewall usando UFW (Uncomplicated Firewall) no Debian/Ubuntu:
 
 ```bash
 # Definir políticas padrão
@@ -483,44 +618,11 @@ To                         Action      From
 443/tcp                    ALLOW IN    Anywhere
 ```
 
-**Opção B: firewalld - Para Red Hat/CentOS/Fedora:**
-
-```bash
-# Iniciar e habilitar firewalld
-sudo systemctl start firewalld
-sudo systemctl enable firewalld
-
-# Adicionar serviços à zona padrão (public)
-sudo firewall-cmd --permanent --add-service=ssh
-sudo firewall-cmd --permanent --add-service=http
-sudo firewall-cmd --permanent --add-service=https
-
-# Recarregar configuração
-sudo firewall-cmd --reload
-
-# Verificar status
-sudo firewall-cmd --list-all
-```
-
-**Saída esperada:**
-```
-public (active)
-  target: default
-  icmp-block-inversion: no
-  interfaces:
-  sources:
-  services: ssh http https
-  ports:
-  protocols:
-  forward: no
-  masquerade: no
-  forward-ports:
-  source-ports:
-  icmp-blocks:
-  rich rules:
-```
-
 **⚠️ ATENÇÃO:** Se você usa uma porta SSH personalizada (diferente de 22), ajuste as regras do firewall antes de habilitar, ou você perderá acesso SSH!
+
+**Para outras distribuições Linux:**
+
+Consulte a documentação da sua distribuição para configurar o firewall equivalente (firewalld, iptables, nftables, etc.).
 
 ### 5. Clonar o Repositório
 
@@ -615,6 +717,167 @@ borgstack-evolution-1       Up 2 minutes (healthy)
 ```
 
 **💡 Dica:** Alguns serviços levam até 90 segundos para ficarem "healthy", especialmente o Directus (migrações de banco de dados).
+
+---
+
+## Instalação em Modo Local (Testes/Desenvolvimento)
+
+O modo local permite executar o BorgStack sem necessidade de domínios configurados ou certificados SSL, ideal para:
+
+- ✅ **Testes e avaliação** do BorgStack
+- ✅ **Desenvolvimento local** de workflows e integrações
+- ✅ **Demonstrações** em ambiente controlado
+- ✅ **Aprendizado** sem complexidade de DNS
+
+### Diferenças do Modo Local vs Produção
+
+| Característica | Modo Local | Modo Produção |
+|----------------|------------|---------------|
+| **Acesso** | `http://localhost:8080` | `https://seu-dominio.com` |
+| **Portas** | 8080/4433 (evita conflitos) | 80/443 (padrão) |
+| **SSL** | Não necessário (HTTP) | Automático (Let's Encrypt) |
+| **Domínios** | Não precisa configurar | Precisa configurar DNS |
+| **Bancos de Dados** | Acesso direto via portas | Apenas rede interna |
+| **Persistência** | Mesmos volumes Docker | Mesmos volumes Docker |
+
+### Instalação Rápida (Modo Local)
+
+**Pré-requisitos simplificados:**
+- Docker Engine e Docker Compose v2
+- 8GB RAM (mínimo), 18GB recomendado
+- 100GB SSD (mínimo), 250GB recomendado
+- **Não precisa de:** IP público, domínios, configuração DNS
+
+#### Passo 1: Clonar o Repositório
+
+```bash
+# Clone o repositório
+git clone https://github.com/yourusername/borgstack.git
+cd borgstack
+```
+
+#### Passo 2: Configurar Variáveis de Ambiente Básicas
+
+Crie um arquivo `.env` simplificado para modo local:
+
+```bash
+# Copie o template
+cp .env.example .env
+
+# Edite apenas as senhas (opcional para testes)
+nano .env
+```
+
+**Modo local não precisa alterar domínios** - será configurado automaticamente para `localhost`.
+
+#### Passo 3: Iniciar em Modo Local
+
+```bash
+# Inicia automaticamente com docker-compose.override.yml
+docker compose up -d
+```
+
+Isso vai:
+1. Baixar todas as imagens Docker (8-12 GB, 10-25 minutos)
+2. Iniciar todos os 14 serviços
+3. Aplicar configurações de desenvolvimento local
+4. Expor portas para acesso direto
+
+#### Passo 4: Verificar Instalação
+
+```bash
+# Verificar status dos containers
+docker compose ps
+
+# Todos devem mostrar "Up (healthy)" após 2-3 minutos
+```
+
+#### Passo 5: Acessar Serviços Localmente
+
+**Acesso via Caddy (portas 8080/4433):**
+```bash
+# Acesso principal via localhost:8080
+http://localhost:8080/n8n        # n8n (automação)
+http://localhost:8080/chatwoot   # Chatwoot (atendimento)
+http://localhost:8080/evolution  # Evolution API (WhatsApp)
+http://localhost:8080/lowcoder   # Lowcoder (low-code)
+http://localhost:8080/directus   # Directus (CMS)
+http://localhost:8080/fileflows  # FileFlows (mídia)
+http://localhost:8080/duplicati  # Duplicati (backup)
+```
+
+**Acesso direto via portas expostas:**
+```bash
+http://localhost:5678   # n8n (direto)
+http://localhost:3000   # Chatwoot (direto)
+http://localhost:8081   # Evolution API (direto)
+http://localhost:3001   # Lowcoder (direto)
+http://localhost:8055   # Directus (direto)
+http://localhost:5000   # FileFlows (direto)
+http://localhost:8200   # Duplicati (direto)
+http://localhost:5432   # PostgreSQL (ferramentas de DB)
+http://localhost:6379   # Redis (ferramentas de cache)
+http://localhost:27017  # MongoDB (ferramentas de NoSQL)
+```
+
+#### Passo 6: Primeiro Login
+
+Crie contas de administrador nos serviços principais:
+
+**n8n:** http://localhost:8080/n8n
+- Acesse e crie primeira conta (automaticamente admin)
+
+**Chatwoot:** http://localhost:8080/chatwoot
+- Crie conta de administrador e workspace inicial
+
+**Directus:** http://localhost:8080/directus/admin
+- Use credenciais do `.env` (DIRECTUS_ADMIN_EMAIL/PASSWORD)
+
+### Comandos Úteis (Modo Local)
+
+```bash
+# Ver logs em tempo real
+docker compose logs -f
+
+# Ver logs de serviço específico
+docker compose logs -f n8n
+
+# Reiniciar serviço específico
+docker compose restart n8n
+
+# Parar todos os serviços
+docker compose down
+
+# Remover volumes (ATENÇÃO: perde dados)
+docker compose down -v
+```
+
+### Limitações do Modo Local
+
+- ⚠️ **Sem SSL:** Apenas HTTP local
+- ⚠️ **Sem Acesso Externo:** Apenas localhost
+- ⚠️ **Sem Recursos Externos:** Integrações com APIs externas podem não funcionar
+- ⚠️ **Performance:** Pode ser mais lento que produção
+
+### Alternar Entre Modos
+
+```bash
+# Mudar para modo local
+docker compose down
+# (já usa override.yml automaticamente)
+docker compose up -d
+
+# Mudar para modo produção
+docker compose down
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+```
+
+### Próximos Passos
+
+Após testar em modo local, você pode:
+1. **Fazer upgrade para produção:** Configure domínios e use modo produção
+2. **Continuar desenvolvimento:** Use modo local para desenvolver workflows
+3. **Exportar configurações:** Salve workflows e dados para migrar depois
 
 ---
 
@@ -900,22 +1163,25 @@ free -h
 
 ### Problema: Docker installation fails
 
-**Causa:** Repositório Docker não acessível ou distribuição GNU/Linux não suportada.
+**Causa:** Repositório Docker não acessível ou distribuição não suportada pelo script bootstrap.
 
 **Solução:**
 ```bash
-# Verificar distribuição GNU/Linux
+# Verificar distribuição
 cat /etc/os-release | grep -E "^ID="
 
-# Deve retornar uma distribuição suportada:
-# ubuntu, debian, centos, rhel, rocky, almalinux, fedora, arch, opensuse-leap, ou opensuse-tumbleweed
+# Deve retornar: ubuntu ou debian
+# Se retornar outra distribuição, use instalação manual
 
-# Tentar script oficial (funciona na maioria das distribuições)
+# Tentar script oficial do Docker
 curl -fsSL https://get.docker.com | sh
 
 # Verificar conectividade com o repositório Docker:
 curl -I https://download.docker.com
 # Deve retornar HTTP/1.1 200 OK
+
+# Se estiver usando outra distribuição:
+# Consulte https://docs.docker.com/engine/install/ para instalação manual
 ```
 
 ### Problema: Permission denied ao executar docker commands
@@ -1017,17 +1283,21 @@ sudo ufw status
 
 **Diagnóstico:**
 ```bash
-# 1. Verificar DNS
+# 1. Verificar DNS (produção)
 dig n8n.example.com
 # Deve retornar seu IP público
 
-# 2. Verificar Caddy está rodando
+# 2. Verificar mDNS (modo local)
+ping hostname.local
+# Deve resolver para o IP local
+
+# 3. Verificar Caddy está rodando
 docker compose ps caddy
 
-# 3. Verificar serviço está healthy
+# 4. Verificar serviço está healthy
 docker compose ps n8n
 
-# 4. Tentar acessar localmente
+# 5. Tentar acessar localmente
 curl -I http://localhost:5678  # porta do n8n
 ```
 
@@ -1039,8 +1309,89 @@ docker compose restart caddy
 # Se serviço não está healthy:
 docker compose logs nome-do-servico
 
-# Se DNS não está resolvendo:
+# Se DNS não está resolvendo (produção):
 # Aguarde propagação ou verifique configuração DNS
+
+# Se mDNS não está funcionando (modo local):
+sudo systemctl status avahi-daemon
+sudo ufw status | grep 5353  # verificar porta mDNS
+```
+
+### Problema: mDNS/hostname.local não funciona (Modo Local)
+
+**Causa:** Avahi não está rodando, firewall bloqueando mDNS, ou problemas de rede.
+
+**Sintomas:**
+- `ping hostname.local` retorna "unknown host"
+- Acesso via `hostname.local:8080` não funciona
+- Mas acesso via `localhost:8080` ou `IP:8080` funciona
+
+**Diagnóstico:**
+```bash
+# 1. Verificar se Avahi está rodando
+sudo systemctl status avahi-daemon
+
+# 2. Verificar porta mDNS está aberta
+sudo netstat -ulnp | grep 5353
+# OU
+sudo ss -ulnp | grep 5353
+
+# 3. Verificar configuração do firewall
+sudo ufw status | grep 5353
+
+# 4. Testar resolução mDNS
+avahi-browse -a -t
+
+# 5. Verificar logs do Avahi
+sudo journalctl -u avahi-daemon -f
+```
+
+**Soluções:**
+```bash
+# Reiniciar Avahi
+sudo systemctl restart avahi-daemon
+
+# Abrir porta mDNS no firewall
+sudo ufw allow 5353/udp comment "mDNS"
+
+# Se estiver em rede corporativa, verifique:
+# - Switch/roteador permite tráfego multicast
+# - Não há VLANs bloqueando tráfego mDNS
+# - Proxy do navegador não está bloqueando .local
+
+# Alternativa: usar /etc/hosts
+echo "192.168.1.100 hostname hostname.local" | sudo tee -a /etc/hosts
+```
+
+### Problema: Clientes na rede não acessam hostname.local
+
+**Causa:** Clientes não têm suporte a mDNS/Bonjour instalado.
+
+**Soluções por Cliente:**
+
+**Linux/Mac (geralmente funciona automaticamente):**
+```bash
+# Se não funcionar, instalar Avahi:
+# Ubuntu/Debian: sudo apt install avahi-daemon
+# Fedora/RHEL: sudo dnf install avahi
+# macOS: Suporte Bonjour já integrado
+```
+
+**Windows (requer instalação):**
+```powershell
+# Opção 1: Instalar Bonjour Print Services
+# Download: https://support.apple.com/kb/dl999?locale=en_US
+
+# Opção 2: iTunes (inclui Bonjour)
+
+# Testar após instalação:
+ping hostname.local
+```
+
+**Configuração Manual (fallback):**
+```bash
+# Adicionar ao /etc/hosts em cada cliente:
+echo "192.168.1.100 hostname hostname.local" | sudo tee -a /etc/hosts
 ```
 
 ### Logs Importantes
@@ -1120,6 +1471,6 @@ Após a instalação bem-sucedida:
 
 ---
 
-**Última atualização:** 2025-10-14
-**Versão do guia:** 1.1
-**Compatível com:** BorgStack v4+, GNU/Linux (Ubuntu, Debian, CentOS, RHEL, Fedora, Arch, openSUSE)
+**Última atualização:** 2025-10-15
+**Versão do guia:** 2.0
+**Compatível com:** BorgStack em Debian e Ubuntu (outras distribuições: instalação manual)

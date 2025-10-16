@@ -27,14 +27,94 @@ No contexto do BorgStack, o Caddy funciona como:
 ### Localização dos Arquivos
 
 ```bash
-# Caddyfile principal
+# Caddyfile principal (produção)
 config/caddy/Caddyfile
+
+# Caddyfile de desenvolvimento (localhost)
+config/caddy/Caddyfile.dev
 
 # Logs do Caddy
 docker compose logs -f caddy
 
 # Verificar status
 docker compose ps caddy
+```
+
+### Configuração de Desenvolvimento Local
+
+Para desenvolvimento local sem domínio configurado, o BorgStack usa `docker-compose.override.yml` automaticamente:
+
+```bash
+# Iniciar modo desenvolvimento local
+docker compose up -d
+
+# Acesso local: http://localhost:8080/n8n, /chatwoot, etc.
+```
+
+**Configuração Local Diferenças:**
+
+| Característica | Produção | Desenvolvimento Local |
+|---------------|-----------|----------------------|
+| **Domínio** | seu-dominio.com | localhost |
+| **Portas** | 80/443 | 8080/4433 (evita conflitos) |
+| **SSL** | Automático Let's Encrypt | HTTP apenas (AUTO_HTTPS=off) |
+| **Caddyfile** | Caddyfile (produção) | Caddyfile.dev (localhost) |
+| **Comando** | `-f docker-compose.yml -f docker-compose.prod.yml up` | `docker compose up` (automático) |
+
+**Exemplo de Caddyfile.dev:**
+
+```caddyfile
+# Desenvolvimento Local - HTTP apenas
+{
+    auto_https off  # Desabilitar SSL para localhost
+    email admin@localhost
+}
+
+localhost:8080 {
+    handle /n8n* {
+        reverse_proxy n8n:5678
+    }
+
+    handle /chatwoot* {
+        reverse_proxy chatwoot:3000
+    }
+
+    handle /evolution* {
+        reverse_proxy evolution:8080
+    }
+
+    handle /lowcoder* {
+        reverse_proxy lowcoder-frontend:3000
+    }
+
+    handle /directus* {
+        reverse_proxy directus:8055
+    }
+
+    handle /fileflows* {
+        reverse_proxy fileflows:5000
+    }
+
+    handle /duplicati* {
+        reverse_proxy duplicati:8200
+    }
+
+    # Resposta padrão
+    respond "BorgStack Local Mode - Access services: /n8n, /chatwoot, /evolution, /lowcoder, /directus, /fileflows, /duplicati" 200
+}
+```
+
+**Alternar Entre Modos:**
+
+```bash
+# Para modo local (testes/desenvolvimento)
+docker compose up -d
+# Acesso: http://localhost:8080/*
+
+# Para modo produção (domínios reais)
+docker compose down
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# Acesso: https://seu-dominio.com/*
 ```
 
 ### Estrutura do Caddyfile no BorgStack

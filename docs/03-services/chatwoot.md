@@ -1008,4 +1008,4 @@ Ver workflows de exemplo em [docs/09-workflows-exemplo.md](../09-workflows-exemp
 
 **Última atualização:** 2025-10-08
 **Versão do guia:** 1.0
-**Compatível com:** Chatwoot v4.6.0-ce+, BorgStack v4+
+**Compatível com:** Chatwoot v4.6.0-ce+, BorgStack

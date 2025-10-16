@@ -6,6 +6,169 @@ This section defines the deployment setup and operational workflow for BorgStack
 
 **Note:** BorgStack is designed for server deployment. "Local development" means deploying on a local GNU/Linux VM or test server for learning/testing purposes before production deployment.
 
+### Industry-Standard Local Development with Docker Compose Override
+
+BorgStack follows Docker's official industry-standard patterns for local development using `docker-compose.override.yml`. This approach provides automatic configuration loading and seamless switching between local and production environments.
+
+**How Docker Compose Override Works:**
+
+Docker Compose automatically loads and merges `docker-compose.override.yml` when you run `docker compose up` (without explicit file arguments). This is the recommended pattern for local development per Docker's official documentation.
+
+**Local vs Production Deployment:**
+
+| Feature | Local Development (LAN + mDNS) | Production Deployment |
+|---------|----------------------------------|----------------------|
+| **Command** | `docker compose up -d` | `docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d` |
+| **Configuration** | Automatic override loading | Explicit file loading |
+| **Domain** | `hostname.local` / `localhost` | `your-domain.com` |
+| **Ports** | 8080 (HTTP), 4433 (HTTPS) | 80 (HTTP), 443 (HTTPS) |
+| **SSL** | HTTP only (development) | HTTPS auto-generated |
+| **Database Access** | Direct ports exposed (5432, 6379, 27017) | Internal only |
+| **File Mounting** | Live config editing | Production images only |
+| **Network Access** | LAN + localhost (mDNS) | Internet (DNS) |
+| **Setup Required** | `sudo apt install avahi-daemon` | DNS configuration |
+
+**Local Development Workflow:**
+
+```bash
+# 1. Clone and setup
+cd ~/borgstack
+git clone https://github.com/your-org/borgstack.git
+cd borgstack
+
+# 2. Generate environment for local development
+cp .env.example .env
+# Edit .env with mDNS/hostname configuration:
+# HOSTNAME=$(hostname)
+# BORGSTACK_DOMAIN=$HOSTNAME.local
+# CADDY_EMAIL=admin@localhost
+# (other passwords and settings)
+
+# 3. Install Avahi for mDNS hostname discovery
+sudo apt install avahi-daemon
+sudo systemctl enable avahi-daemon
+sudo systemctl start avahi-daemon
+
+# 4. Test mDNS resolution
+ping $(hostname).local
+
+# 5. Start local development (automatic override loading)
+docker compose up -d
+
+# 6. Access services via mDNS (recommended)
+# Via reverse proxy: http://$(hostname).local:8080/n8n, http://$(hostname).local:8080/chatwoot, etc.
+# Via localhost: http://localhost:8080/n8n, http://localhost:8080/chatwoot, etc.
+# Via direct ports: http://localhost:5678 (n8n), http://localhost:3000 (chatwoot), etc.
+
+# 7. Stop when done
+docker compose down
+```
+
+**Override Configuration Benefits:**
+
+- **Zero configuration**: Works automatically with `docker compose up`
+- **Development friendly**: Exposes database ports for debugging
+- **mDNS hostname discovery**: `hostname.local` access from any LAN device
+- **No SSL**: HTTP-only simplifies development
+- **Live editing**: Config files mounted for real-time changes
+- **Industry standard**: Follows Docker Compose best practices
+
+### mDNS/Avahi Configuration for LAN Access
+
+**What is mDNS?**
+
+Multicast DNS (mDNS) is a zero-configuration networking protocol that allows devices on the same local network to resolve hostnames to IP addresses without a central DNS server. When combined with Avahi (Linux implementation), your BorgStack services become accessible via `hostname.local` from any device on the network.
+
+**Installation and Setup:**
+
+```bash
+# 1. Install Avahi daemon
+sudo apt update
+sudo apt install avahi-daemon avahi-utils
+
+# 2. Enable and start the service
+sudo systemctl enable avahi-daemon
+sudo systemctl start avahi-daemon
+
+# 3. Verify Avahi is running
+sudo systemctl status avahi-daemon
+
+# 4. Test mDNS resolution
+hostname=$(hostname)
+ping -c 2 $hostname.local
+
+# 5. Discover services on the network
+avahi-browse -a -t
+```
+
+**Configuration Verification:**
+
+```bash
+# Test hostname resolution
+nslookup $hostname.local
+dig $hostname.local
+
+# Test service access
+curl -I http://$hostname.local:8080
+curl http://$hostname.local:8080
+
+# Verify mDNS service advertising
+avahi-browse -r _http._tcp
+```
+
+**Troubleshooting mDNS:**
+
+| Issue | Cause | Solution |
+|-------|-------|----------|
+| `hostname.local` not resolving | Avahi not running | `sudo systemctl start avahi-daemon` |
+| Can't access from other devices | Firewall blocking mDNS | `sudo ufw allow 5353/udp` |
+| mDNS works intermittently | Network switch configuration | Ensure multicast traffic allowed |
+| Services not accessible | Caddy not binding to all interfaces | Verify `BIND_ALL_INTERFACES: "true"` |
+
+**Client-Side Configuration:**
+
+**Linux/Mac:**
+```bash
+# Test mDNS resolution (should work automatically)
+ping hostname.local
+
+# If not working, ensure Avahi/Bonjour is installed
+# Ubuntu/Debian: sudo apt install avahi-daemon
+# macOS: Built-in Bonjour support
+```
+
+**Windows:**
+```powershell
+# Install Bonjour Print Services (includes mDNS)
+# Or use third-party mDNS responders
+# Test resolution:
+ping hostname.local
+```
+
+**Advanced Configuration:**
+
+```bash
+# Edit Avahi configuration for custom hostname
+sudo nano /etc/avahi/avahi-daemon.conf
+
+# Example configuration:
+[server]
+host-name=borgstack-dev
+domain-name=local
+use-ipv4=yes
+use-ipv6=yes
+
+# Restart Avahi after changes
+sudo systemctl restart avahi-daemon
+```
+
+**Network Requirements:**
+
+- **Multicast Support**: Network switches must allow multicast traffic
+- **UDP Port 5353**: mDNS uses UDP port 5353 for discovery
+- **Same Subnet**: Devices must be on the same network segment
+- **No VLAN Isolation**: mDNS traffic shouldn't be blocked by VLANs
+
 ### Prerequisites
 
 ```bash

@@ -6,71 +6,122 @@
 # in a development environment.
 #
 # Purpose:
-# - Expose service ports to localhost for debugging and testing
+# - Map ports to avoid conflicts with local services (8080/4433 instead of 80/443)
+# - Use localhost instead of external domains
+# - Expose service ports for direct localhost access
 # - Mount local directories for live configuration editing
-# - Disable resource limits for easier local development
-# - Enable verbose logging for troubleshooting
+# - Enable development-friendly settings
 #
-# IMPORTANT: This file should NOT be used in production.
-# Use docker-compose.prod.yml for production deployments.
+# IMPORTANT: This file is automatically loaded by `docker compose up`
+# Do NOT use this file in production. Use docker-compose.prod.yml for production deployments.
 #
 # Usage:
-#   docker compose up           # Automatically uses docker-compose.yml + docker-compose.override.yml
+#   docker compose up -d         # Automatically uses docker-compose.yml + docker-compose.override.yml
 #   docker compose down
-
-# Example service overrides (uncomment when services are added):
-# services:
-#   postgresql:
-#     # Expose PostgreSQL port for local database tools (pgAdmin, DBeaver, etc.)
-#     ports:
-#       - "5432:5432"
 #
-#   redis:
-#     # Expose Redis port for local inspection (RedisInsight, redis-cli)
-#     ports:
-#       - "6379:6379"
+# Access URLs (Industry-Standard mDNS Discovery):
+#   http://[HOSTNAME].local:8080/n8n    # LAN access via mDNS (recommended)
+#   http://[HOSTNAME]:8080/n8n          # LAN access via DNS hostname
+#   http://[VPS_IP]:8080/n8n            # LAN access via IP address
+#   http://localhost:8080/n8n           # Local access on VPS
 #
-#   n8n:
-#     # Expose n8n web interface
-#     ports:
-#       - "5678:5678"
-#     # Mount workflows directory for easy editing
-#     volumes:
-#       - ./config/n8n/workflows:/home/node/.n8n/workflows
-#     # Enable verbose logging
-#     environment:
-#       - N8N_LOG_LEVEL=debug
+# Services:
+#   http://[HOSTNAME].local:8080/n8n       # n8n automation platform
+#   http://[HOSTNAME].local:8080/chatwoot  # Customer service platform
+#   http://[HOSTNAME].local:8080/evolution # WhatsApp Business API
+#   http://[HOSTNAME].local:8080/lowcoder  # Low-code application builder
+#   http://[HOSTNAME].local:8080/directus  # Headless CMS
+#   http://[HOSTNAME].local:8080/fileflows # Media processing
+#   http://[HOSTNAME].local:8080/duplicati # Backup system
 #
-#   chatwoot:
-#     # Expose Chatwoot web interface
-#     ports:
-#       - "3000:3000"
-#     # Enable Rails development mode
-#     environment:
-#       - RAILS_ENV=development
-#       - RAILS_LOG_LEVEL=debug
+# mDNS Setup (required for .local access):
+#   1. Install Avahi: sudo apt install avahi-daemon
+#   2. Enable service: sudo systemctl enable avahi-daemon
+#   3. Start service: sudo systemctl start avahi-daemon
+#   4. Test: ping $(hostname).local
 #
-#   evolution-api:
-#     # Expose Evolution API
-#     ports:
-#       - "8080:8080"
-#
-#   lowcoder:
-#     # Expose Lowcoder interface
-#     ports:
-#       - "3001:3000"
-#
-#   directus:
-#     # Expose Directus admin panel
-#     ports:
-#       - "8055:8055"
-#
-#   fileflows:
-#     # Expose FileFlows web UI
-#     ports:
-#       - "5000:5000"
+# Fallback access methods:
+#   - Direct ports: http://localhost:5678 (n8n), http://localhost:3000 (chatwoot), etc.
+#   - IP address: http://192.168.x.x:8080/n8n (if mDNS fails)
 
 services:
+  caddy:
+    # Override Caddy configuration for local development
+    # Map ports to avoid conflicts with local services
+    ports:
+      - "8080:80"    # HTTP on port 8080
+      - "4433:443"   # HTTPS on port 4433
+    # Use localhost for local development
+    environment:
+      DOMAIN: localhost
+      EMAIL: admin@localhost
+      # Disable automatic HTTPS for local development
+      AUTO_HTTPS: "off"
+    volumes:
+      - ./config/caddy/Caddyfile.dev:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+  postgresql:
+    # Expose PostgreSQL port for local database tools (pgAdmin, DBeaver, etc.)
+    ports:
+      - "5432:5432"
+
+  redis:
+    # Expose Redis port for local inspection (RedisInsight, redis-cli)
+    ports:
+      - "6379:6379"
+
+  mongodb:
+    # Expose MongoDB port for local database tools
+    ports:
+      - "27017:27017"
+
+  n8n:
+    # Expose n8n web interface directly
+    ports:
+      - "5678:5678"
+    # Mount workflows directory for easy editing
+    volumes:
+      - ./config/n8n/workflows:/home/node/.n8n/workflows
+    # Enable verbose logging for development
+    environment:
+      - N8N_LOG_LEVEL=debug
+
+  chatwoot:
+    # Expose Chatwoot web interface directly
+    ports:
+      - "3000:3000"
+    # Enable Rails development mode
+    environment:
+      - RAILS_ENV=development
+      - RAILS_LOG_LEVEL=debug
+
+  evolution:
+    # Expose Evolution API directly
+    ports:
+      - "8081:8080"
+
+  lowcoder-frontend:
+    # Expose Lowcoder frontend directly
+    ports:
+      - "3001:3000"
+
+  directus:
+    # Expose Directus admin panel directly
+    ports:
+      - "8055:8055"
+
+  fileflows:
+    # Expose FileFlows web UI directly
+    ports:
+      - "5000:5000"
+
+  duplicati:
+    # Expose Duplicati web UI directly
+    ports:
+      - "8200:8200"
+
   seaweedfs:
     # Expose SeaweedFS S3 API and admin UI for local development
     # Note: Production should NOT expose these ports (only internal network access)
@@ -78,23 +129,4 @@ services:
       - "8333:8333"  # S3 API
       - "9333:9333"  # Master
       - "8888:8888"  # Filer
-      - "8080:8080"  # Volume
-    # Add to external network to allow port publishing (internal networks block host ports)
-    networks:
-      - internal
-      - external
-#
-#   duplicati:
-#     # Expose Duplicati web UI
-#     ports:
-#       - "8200:8200"
-#
-#   caddy:
-#     # Expose Caddy for local HTTPS testing
-#     # Note: Local development typically accesses services directly via ports above
-#     ports:
-#       - "80:80"
-#       - "443:443"
-#     # Mount Caddyfile for live configuration editing
-#     volumes:
-#       - ./config/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - "8082:8080"  # Volume (changed to avoid conflict with Evolution)

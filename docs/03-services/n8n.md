@@ -984,4 +984,4 @@ WHERE finished = true
 
 **Última atualização:** 2025-10-08
 **Versão do guia:** 1.0
-**Compatível com:** n8n 1.112.6+, BorgStack v4+
+**Compatível com:** n8n 1.112.6+, BorgStack

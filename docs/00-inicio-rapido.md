@@ -116,6 +116,22 @@ graph TB
 
 Antes de começar, verifique se você tem os seguintes recursos disponíveis:
 
+### ✅ Modo de Instalação
+
+Escolha seu modo de instalação:
+
+**🏠 Modo Local (Recomendado para testes)**
+- ✅ Sem necessidade de domínio
+- ✅ Sem configuração DNS
+- ✅ Acesso via `http://localhost:8080`
+- ✅ Ideal para testes e desenvolvimento
+
+**🌐 Modo Produção (Para uso real)**
+- Requer domínio configurado
+- Requer IP público
+- Acesso via `https://seu-dominio.com`
+- Certificados SSL automáticos
+
 ### ✅ Checklist de Hardware
 
 | Recurso | Mínimo | Recomendado | Verificar |
@@ -203,9 +219,84 @@ Este guia assume conhecimento básico de:
 
 ---
 
-## Instalação Rápida (Script Bootstrap)
+## Instalação Rápida
 
-O script `bootstrap.sh` automatiza toda a instalação do BorgStack, desde a validação de requisitos até o deploy dos serviços.
+### Opção A: Modo Local (5 minutos)
+
+**Ideal para testes rápidos e desenvolvimento local**
+
+#### Passo 1: Clonar e Configurar
+
+```bash
+# Clone o repositório
+git clone https://github.com/yourusername/borgstack.git
+cd borgstack
+
+# Copie arquivo de ambiente
+cp .env.example .env
+```
+
+#### Passo 2: Iniciar Serviços
+
+```bash
+# Inicia automaticamente com configuração local
+docker compose up -d
+```
+
+**Isso vai:**
+- Baixar todas as imagens Docker (8-12 GB)
+- Iniciar todos os 14 serviços
+- Configurar acesso via `localhost:8080`
+- Expor portas diretas para desenvolvimento
+
+#### Passo 3: Acessar Serviços
+
+**Acesso via Caddy:**
+```bash
+http://localhost:8080/n8n        # n8n (automação)
+http://localhost:8080/chatwoot   # Chatwoot (atendimento)
+http://localhost:8080/evolution  # Evolution API (WhatsApp)
+http://localhost:8080/lowcoder   # Lowcoder (low-code)
+http://localhost:8080/directus   # Directus (CMS)
+http://localhost:8080/fileflows  # FileFlows (mídia)
+http://localhost:8080/duplicati  # Duplicati (backup)
+```
+
+**Acesso direto:**
+```bash
+http://localhost:5678   # n8n (direto)
+http://localhost:3000   # Chatwoot (direto)
+http://localhost:8081   # Evolution API (direto)
+http://localhost:3001   # Lowcoder (direto)
+http://localhost:8055   # Directus (direto)
+http://localhost:5000   # FileFlows (direto)
+http://localhost:8200   # Duplicati (direto)
+```
+
+#### Passo 4: Primeiro Login
+
+Crie contas de administrador:
+- **n8n:** http://localhost:8080/n8n → Criar conta
+- **Chatwoot:** http://localhost:8080/chatwoot → Criar workspace
+- **Directus:** http://localhost:8080/directus/admin → Usar credenciais `.env`
+
+#### Passo 5: Verificar Instalação
+
+```bash
+# Verificar status
+docker compose ps
+
+# Ver logs se algum serviço não iniciar
+docker compose logs -f
+```
+
+**🎉 Pronto! BorgStack funcionando em modo local em 5 minutos!**
+
+---
+
+### Opção B: Script Bootstrap (Modo Produção)
+
+O script `bootstrap.sh` automatiza toda a instalação do BorgStack para produção, desde a validação de requisitos até o deploy dos serviços.
 
 ### Passo 1: Conectar ao Servidor
 
@@ -501,20 +592,37 @@ Agora que o BorgStack está instalado, vamos acessar cada serviço pela primeira
 
 ### Lista de URLs de Acesso
 
-Acesse os serviços usando os domínios que você configurou:
+Dependendo do seu modo de instalação, as URLs serão diferentes:
 
-| Serviço | URL | Credenciais Iniciais |
-|---------|-----|----------------------|
-| **n8n** | https://n8n.example.com.br | Criar na primeira execução |
-| **Chatwoot** | https://chatwoot.example.com.br | Criar na primeira execução |
-| **Evolution API** | https://evolution.example.com.br | `EVOLUTION_API_KEY` no .env |
-| **Lowcoder** | https://lowcoder.example.com.br | Criar na primeira execução |
-| **Directus** | https://directus.example.com.br | Admin: `DIRECTUS_ADMIN_EMAIL` / `DIRECTUS_ADMIN_PASSWORD` |
-| **FileFlows** | https://fileflows.example.com.br | Configurar na primeira execução |
-| **Duplicati** | https://duplicati.example.com.br | Sem autenticação inicialmente |
-| **SeaweedFS** | https://seaweedfs.example.com.br | API pública (restrita por rede interna) |
+#### 🏠 Modo Local
+Se você usou a instalação rápida (modo local):
 
-**💡 Dica:** Substitua `example.com.br` pelos seus domínios reais.
+| Serviço | URL Local | Acesso Direto | Credenciais |
+|---------|-----------|---------------|-------------|
+| **n8n** | http://localhost:8080/n8n | http://localhost:5678 | Criar na primeira execução |
+| **Chatwoot** | http://localhost:8080/chatwoot | http://localhost:3000 | Criar na primeira execução |
+| **Evolution API** | http://localhost:8080/evolution | http://localhost:8081 | `EVOLUTION_API_KEY` no .env |
+| **Lowcoder** | http://localhost:8080/lowcoder | http://localhost:3001 | Criar na primeira execução |
+| **Directus** | http://localhost:8080/directus | http://localhost:8055 | Admin: `DIRECTUS_ADMIN_EMAIL` / `DIRECTUS_ADMIN_PASSWORD` |
+| **FileFlows** | http://localhost:8080/fileflows | http://localhost:5000 | Configurar na primeira execução |
+| **Duplicati** | http://localhost:8080/duplicati | http://localhost:8200 | Configurar senha de acesso |
+| **SeaweedFS** | http://localhost:8080/seaweedfs | API pública (localhost) | API pública |
+
+#### 🌐 Modo Produção
+Se você usou o script bootstrap (produção):
+
+| Serviço | URL Produção | Credenciais Iniciais |
+|---------|-------------|----------------------|
+| **n8n** | https://n8n.seu-dominio.com | Criar na primeira execução |
+| **Chatwoot** | https://chatwoot.seu-dominio.com | Criar na primeira execução |
+| **Evolution API** | https://evolution.seu-dominio.com | `EVOLUTION_API_KEY` no .env |
+| **Lowcoder** | https://lowcoder.seu-dominio.com | Criar na primeira execução |
+| **Directus** | https://directus.seu-dominio.com | Admin: `DIRECTUS_ADMIN_EMAIL` / `DIRECTUS_ADMIN_PASSWORD` |
+| **FileFlows** | https://fileflows.seu-dominio.com | Configurar na primeira execução |
+| **Duplicati** | https://duplicati.seu-dominio.com | Configurar senha de acesso |
+| **SeaweedFS** | https://seaweedfs.seu-dominio.com | API pública (restrita por rede interna) |
+
+**💡 Dica:** Substitua `seu-dominio.com` pelos seus domínios reais (modo produção).
 
 ### 1. Primeiro Acesso ao n8n
 

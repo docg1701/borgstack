@@ -8,7 +8,7 @@
 
 ### Requisitos do Sistema
 
-- **Sistema Operacional:** GNU/Linux (Ubuntu, Debian, CentOS, RHEL, Fedora, Arch, openSUSE)
+- **Sistema Operacional:** Debian ou Ubuntu (outras distros: instalação manual necessária)
 - **CPU:** 4 núcleos vCPU (mínimo, 8 recomendado)
 - **RAM:** 8 GB (mínimo, 18 GB recomendado)
 - **Armazenamento:** 100 GB SSD (mínimo, 250 GB recomendado)
@@ -28,14 +28,29 @@
    ./scripts/bootstrap.sh
    ```
 
-   O script de bootstrap irá:
-   - Validar requisitos do sistema (GNU/Linux, RAM, CPU, disco)
+   O script de bootstrap oferece dois modos de instalação:
+
+   **🏠 Modo Local (LAN)** - Ideal para testes e desenvolvimento:
+   - Acesso via `http://hostname.local:8080` (mDNS automático)
+   - Instala e configura Avahi/mDNS automaticamente
+   - Sem necessidade de domínios ou SSL
+   - Portas de bancos de dados expostas para debugging
+
+   **🌐 Modo Produção** - Para uso em produção:
+   - Acesso via `https://seu-dominio.com` (SSL automático)
+   - Requer configuração de domínios/DNS
+   - Firewall e segurança otimizados
+   - Certificados Let's Encrypt automáticos
+
+   O script irá:
+   - Apresentar menu interativo para selecionar modo de instalação
+   - Validar requisitos do sistema (Debian/Ubuntu, RAM, CPU, disco)
    - Instalar Docker Engine e Docker Compose v2
-   - Configurar firewall UFW (portas 22, 80, 443)
-   - Gerar arquivo `.env` com senhas fortes
+   - Configurar firewall UFW (portas 22, 80, 443 + mDNS se modo local)
+   - Gerar arquivo `.env` com senhas fortes (diferente para cada modo)
    - Fazer deploy de todos os serviços
    - Validar health checks
-   - Exibir instruções de configuração DNS/SSL
+   - Exibir instruções específicas para o modo selecionado
 
 3. **Configuração manual (Alternativa):**
    ```bash
@@ -60,12 +75,12 @@
 
 ## 🎯 Detalhes do Script Bootstrap
 
-O script de bootstrap automatizado (`scripts/bootstrap.sh`) cuida de todo o processo de configuração para servidores GNU/Linux.
+O script de bootstrap automatizado (`scripts/bootstrap.sh`) cuida de todo o processo de configuração para servidores Debian e Ubuntu.
 
 ### O Que Ele Faz
 
 1. **Validação do Sistema:**
-   - Verifica distribuição GNU/Linux compatível
+   - Verifica distribuição Debian ou Ubuntu
    - Valida RAM (mínimo 8GB, recomendado 18GB)
    - Valida espaço em disco (mínimo 100GB, recomendado 250GB)
    - Valida núcleos de CPU (mínimo 2, recomendado 4)
@@ -96,10 +111,12 @@ O script de bootstrap automatizado (`scripts/bootstrap.sh`) cuida de todo o proc
 
 ### Pré-requisitos
 
-- Servidor GNU/Linux com distribuição compatível
+- Servidor Debian ou Ubuntu
 - Usuário não-root com privilégios sudo
 - Conexão com internet
 - Endereço IP público (para certificados SSL)
+
+**Nota:** Para outras distribuições Linux (CentOS, RHEL, Fedora, Arch, etc.), consulte [docs/01-instalacao.md](docs/01-instalacao.md) para instruções de instalação manual.
 
 ### Uso
 
@@ -192,34 +209,104 @@ nano .env
 
 ---
 
-## 🛠️ Desenvolvimento
+## 🛠️ Development
 
-### Desenvolvimento Local
+### Local Development
 
-Desenvolvimento local usa `docker-compose.override.yml` automaticamente:
+Local development uses `docker-compose.override.yml` automatically (industry standard) with **mDNS hostname discovery** for LAN access:
 
 ```bash
-# Inicie com overrides locais
+# Start with local overrides (localhost:8080)
 docker compose up -d
 
-# Visualize logs
+# Access services via mDNS (recommended for LAN):
+# http://hostname.local:8080/n8n
+# http://hostname.local:8080/chatwoot
+# http://hostname.local:8080/evolution
+# http://hostname.local:8080/lowcoder
+# http://hostname.local:8080/directus
+# http://hostname.local:8080/fileflows
+# http://hostname.local:8080/duplicati
+
+# Access services locally:
+# http://localhost:8080/n8n
+# http://localhost:8080/chatwoot
+# http://localhost:8080/evolution
+# http://localhost:8080/lowcoder
+# http://localhost:8080/directus
+# http://localhost:8080/fileflows
+# http://localhost:8080/duplicati
+
+# Or access services directly via exposed ports:
+# http://localhost:5678 (n8n)
+# http://localhost:3000 (chatwoot)
+# http://localhost:8081 (evolution)
+# http://localhost:3001 (lowcoder)
+# http://localhost:8055 (directus)
+# http://localhost:5000 (fileflows)
+# http://localhost:8200 (duplicati)
+
+# View logs
 docker compose logs -f
 
-# Pare os serviços
+# Stop services
 docker compose down
 ```
 
-### Deploy de Produção
+#### mDNS Setup (for .local access)
 
-Deploy de produção usa `docker-compose.prod.yml`:
+To enable `hostname.local` access on the server:
 
 ```bash
-# Inicie com configuração de produção
+# Install Avahi for mDNS hostname discovery
+sudo apt install avahi-daemon
+
+# Enable and start the service
+sudo systemctl enable avahi-daemon
+sudo systemctl start avahi-daemon
+
+# Test mDNS resolution
+ping $(hostname).local
+```
+
+#### Access Methods
+
+| Method | URL | Use Case |
+|--------|-----|----------|
+| **mDNS** | `http://hostname.local:8080/n8n` | LAN access from any device |
+| **IP Address** | `http://192.168.x.x:8080/n8n` | Fallback if mDNS fails |
+| **Localhost** | `http://localhost:8080/n8n` | Local access on server |
+
+### Production Deployment
+
+Production deployment uses `docker-compose.prod.yml` with explicit file loading:
+
+```bash
+# Start with production configuration
 docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 
-# Verifique a saúde dos serviços
+# Verify service health
 docker compose -f docker-compose.yml -f docker-compose.prod.yml ps
+
+# Access services via your configured domains:
+# https://n8n.yourdomain.com
+# https://chatwoot.yourdomain.com
+# https://evolution.yourdomain.com
+# etc.
 ```
+
+### Development vs Production Comparison
+
+| Feature | Local Development (LAN + mDNS) | Production |
+|---------|----------------------------------|------------|
+| **Command** | `docker compose up -d` | `docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d` |
+| **Domain** | `hostname.local` / `localhost` | `your-domain.com` |
+| **Ports** | 8080/4433 (avoids conflicts) | 80/443 (standard) |
+| **SSL** | HTTP only (development) | HTTPS auto-generated |
+| **Database Access** | Direct (5432, 6379, 27017) | Internal only |
+| **File Mounting** | Live config editing | Production images only |
+| **Network Access** | LAN + localhost (mDNS) | Internet (DNS) |
+| **Setup Required** | `sudo apt install avahi-daemon` | DNS configuration |
 
 ---
 
