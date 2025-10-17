@@ -59,7 +59,6 @@ Você não precisa ser desenvolvedor para contribuir! Veja as opções:
 
 ### Template de Bug Report
 
-```markdown
 **Descrição do Bug**
 Descrição clara do que aconteceu.
 
@@ -80,7 +79,6 @@ O que deveria acontecer.
 **Logs**
 ```bash
 docker compose logs serviço --tail 50
-```
 ```
 
 ### Boas Práticas
@@ -106,7 +104,6 @@ docker compose logs serviço --tail 50
 
 ### Template de Feature Request
 
-```markdown
 **Problema a Resolver**
 Qual problema esta funcionalidade resolve?
 Exemplo: "Como usuário, não consigo X porque Y"
@@ -125,7 +122,6 @@ Que outras abordagens você pensou?
 
 **Implementação** (opcional)
 Se tiver ideias técnicas, compartilhe!
-```
 
 ### Processo RFC (Funcionalidades Grandes)
 
@@ -221,7 +217,6 @@ git push origin feature/minha-funcionalidade
 
 ### Pull Request Template
 
-```markdown
 ## Descrição
 O que este PR faz? Por quê?
 
@@ -242,7 +237,6 @@ Closes #123
 
 ## Testes Realizados
 Descreva como testou as mudanças.
-```
 
 ### Padrões de Código
 
@@ -310,31 +304,14 @@ Seguimos o framework **Diátaxis**:
 ### Padrões de Documentação
 
 **Estrutura de Arquivo:**
-```markdown
-# Título Principal
 
-> **Descrição breve**
-
-Parágrafo introdutório.
-
----
-
-## Índice
-(gerado automaticamente ou manual)
-
-## Seção 1
-Conteúdo...
-
-## Seção 2
-Conteúdo...
-
----
-
-## Navegação
-- [← Anterior](link.md)
-- [→ Próximo](link.md)
-- [↑ Hub](README.md)
-```
+Padrão para documentos:
+- Título principal (H1)
+- Descrição breve em destaque (blockquote)
+- Parágrafo introdutório
+- Índice (se necessário)
+- Seções com H2
+- Navegação ao final (links para anterior/próximo/hub)
 
 **Code Blocks:**
 ```bash
@@ -347,13 +324,10 @@ output-esperado
 ```
 
 **Diagramas Mermaid:**
-```markdown
-```mermaid
-graph LR
-    A[Start] --> B[Process]
-    B --> C[End]
-```
-```
+
+Use blocos de código mermaid para fluxogramas e diagramas:
+- Tipo: `graph LR` (left to right), `graph TD` (top down)
+- Sintaxe: `A[Label] --> B[Label]`
 
 **Tradução:**
 - Termos técnicos: use português quando natural (`configuração`, `instalação`)
@@ -509,18 +483,16 @@ Seguimos **Semantic Versioning** (semver):
 
 ### Como Responder a Feedback
 
-```markdown
-# ✅ Boa resposta
+**✅ Boa resposta:**
 > Maintainer: "Poderia adicionar validação de input aqui?"
 
 Boa sugestão! Adicionei validação em commit abc123.
 Também adicionei teste para edge case em commit def456.
 
-# ❌ Má resposta
+**❌ Má resposta:**
 > Maintainer: "Poderia adicionar validação de input aqui?"
 
 Não acho necessário.
-```
 
 ---
 
