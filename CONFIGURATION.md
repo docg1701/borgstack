@@ -223,7 +223,7 @@ Após configurar o `.env`:
 1. **Iniciar serviços:** `docker compose up -d`
 2. **Verificar logs:** `docker compose logs -f`
 3. **Configurar serviços individuais:** Ver `docs/services.md`
-4. **Configurar backups:** Ver `docs/maintenance.md` *(em breve)*
+4. **Configurar backups:** Ver `docs/maintenance.md`
 
 ---
 

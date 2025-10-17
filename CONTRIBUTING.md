@@ -290,13 +290,6 @@ docs/02-example.md  # ✅ Numbered in docs/
 Installation.md   # ❌ Wrong case
 
 # Sempre especificar linguagem em code blocks
-```bash  # ✅
-comando aqui
-```
-
-```
-comando aqui  # ❌ sem linguagem
-```
 ```
 
 ---
