@@ -204,7 +204,7 @@ docker compose ps  # Todos "Up (healthy)"
 
 ## Próximos Passos
 
-1. **Configuração:** [CONFIGURATION.md](CONFIGURATION.md) *(em breve)*
+1. **Configuração:** [CONFIGURATION.md](CONFIGURATION.md) - Referência de variáveis de ambiente
 2. **Backups:** Configure Duplicati
 3. **Segurança:** [docs/architecture/security-and-performance.md](docs/architecture/security-and-performance.md)
 4. **Integrações:** [docs/integrations.md](docs/integrations.md) *(em breve)*

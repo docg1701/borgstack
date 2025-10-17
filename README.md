@@ -65,12 +65,12 @@ cd borgstack
 ### Documentação Essencial
 
 - **[INSTALL.md](INSTALL.md)** - Guia de instalação completo (local e produção)
-- **[CONFIGURATION.md](CONFIGURATION.md)** - Configuração de variáveis de ambiente e serviços *(em breve)*
+- **[CONFIGURATION.md](CONFIGURATION.md)** - Referência rápida de variáveis de ambiente do BorgStack
 - **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - Solução de problemas e diagnóstico *(em breve)*
 
 ### Guias Detalhados
 
-- **[docs/services.md](docs/services.md)** - Guias específicos de cada serviço *(em breve)*
+- **[docs/services.md](docs/services.md)** - Visão geral dos serviços com links para documentação oficial
 - **[docs/integrations.md](docs/integrations.md)** - Tutoriais de integração entre serviços *(em breve)*
 - **[docs/maintenance.md](docs/maintenance.md)** - Manutenção, atualizações e backups *(em breve)*
 
